@@ -1,4 +1,5 @@
 'use client';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +9,16 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { mockUsers } from "@/lib/mock-data";
 import { useRouter } from "next/navigation";
+import { CheckCircle } from "lucide-react";
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const currentUser = mockUsers[0];
+
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otp, setOtp] = useState('');
 
   const handleUpdateProfile = () => {
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
@@ -26,6 +32,21 @@ export default function ProfilePage() {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
     router.push('/login');
   };
+
+  const handleSendOtp = () => {
+    setOtpSent(true);
+    toast({ title: "OTP Sent", description: "An OTP has been sent to your email address." });
+  };
+  
+  const handleVerifyOtp = () => {
+    if (otp) { // In a real app, you'd verify the OTP value
+        setOtpVerified(true);
+        toast({ title: "Email Verified", description: "Your email has been successfully verified." });
+    } else {
+        toast({ variant: "destructive", title: "Invalid OTP", description: "Please enter the OTP." });
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -53,10 +74,34 @@ export default function ProfilePage() {
               <Label htmlFor="username">Username</Label>
               <Input id="username" defaultValue={currentUser.username} />
             </div>
-            <div className="space-y-2">
+             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={currentUser.email} />
+              <div className="flex items-center gap-2">
+                <Input id="email" type="email" defaultValue={currentUser.email} disabled={otpSent} />
+                {!otpVerified && (
+                  <Button onClick={handleSendOtp} disabled={otpSent} className="w-40">
+                    {otpSent ? 'OTP Sent' : 'Send OTP'}
+                  </Button>
+                )}
+                 {otpVerified && (
+                  <div className="flex items-center gap-2 text-green-500 font-medium">
+                    <CheckCircle className="h-5 w-5" />
+                    <span>Verified</span>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {otpSent && !otpVerified && (
+              <div className="space-y-2 animate-in fade-in">
+                <Label htmlFor="otp">Enter OTP</Label>
+                <div className="flex items-center gap-2">
+                  <Input id="otp" type="text" placeholder="6-digit code" value={otp} onChange={(e) => setOtp(e.target.value)} />
+                  <Button onClick={handleVerifyOtp} className="w-40">Verify OTP</Button>
+                </div>
+              </div>
+            )}
+
             <Button onClick={handleUpdateProfile} className="w-full">Update Profile</Button>
         </CardContent>
       </Card>
