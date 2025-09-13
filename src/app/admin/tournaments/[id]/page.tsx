@@ -1,0 +1,113 @@
+import { mockTournaments } from '@/lib/mock-data';
+import { notFound } from 'next/navigation';
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users } from "lucide-react";
+import Link from "next/link";
+import { format } from 'date-fns';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { WinnerSuggestion } from './components/WinnerSuggestion';
+import { Separator } from '@/components/ui/separator';
+
+export default function ManageTournamentPage({ params }: { params: { id: string } }) {
+  const tournament = mockTournaments.find(t => t.id === params.id);
+
+  if (!tournament) {
+    notFound();
+  }
+
+  const statCards = [
+    { title: "Status", value: tournament.status, icon: Clock },
+    { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
+    { title: "Entry Fee", value: `₹${tournament.entryFee}`, icon: DollarSign },
+    { title: "Participants", value: tournament.participants.length, icon: Users },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/admin/tournaments">
+            <Button variant="outline" size="icon" className="h-7 w-7">
+                <ArrowLeft className="h-4 w-4" />
+                <span className="sr-only">Back</span>
+            </Button>
+        </Link>
+        <div>
+            <h1 className="font-headline text-3xl font-bold">{tournament.title}</h1>
+            <p className="text-muted-foreground">Manage details for this tournament.</p>
+        </div>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {statCards.map((stat) => (
+            <Card key={stat.title}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                    <stat.icon className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{stat.value}</div>
+                </CardContent>
+            </Card>
+        ))}
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Room Details</CardTitle>
+                <CardDescription>Update match room info. This will set the tournament status to 'Live'.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="room-id">Room ID</Label>
+                    <Input id="room-id" defaultValue={tournament.roomId} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="room-password">Room Password</Label>
+                    <Input id="room-password" defaultValue={tournament.roomPassword} />
+                </div>
+                <Button>Update & Go Live</Button>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline">Participants</CardTitle>
+                 <CardDescription>List of all players who joined this tournament.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Username</TableHead>
+                            <TableHead>Result</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {tournament.participants.map(p => (
+                            <TableRow key={p.id}>
+                                <TableCell>{p.user.username}</TableCell>
+                                <TableCell>
+                                    <Badge variant={p.result === 'Winner' ? 'default' : 'outline'}>
+                                        {p.result ?? 'N/A'}
+                                    </Badge>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      </div>
+
+       <Separator />
+      
+       <WinnerSuggestion tournament={tournament} />
+
+    </div>
+  );
+}
