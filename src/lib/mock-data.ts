@@ -17,7 +17,7 @@ export const mockParticipants: Participant[] = [
       user,
       tournamentId: 't-2',
       result: null,
-      joinedAt: new Date()
+      joinedAt: new Date('2024-08-15T10:00:00Z')
     })),
 ];
 
@@ -28,7 +28,7 @@ export const mockTournaments: Tournament[] = [
     gameName: 'BGMI',
     entryFee: 50,
     prizePool: 5000,
-    matchTime: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // In 2 days
+    matchTime: new Date('2025-09-17T14:00:00Z'),
     status: 'Upcoming',
     commissionPercentage: 10,
     participants: [],
@@ -41,7 +41,7 @@ export const mockTournaments: Tournament[] = [
     gameName: 'BGMI',
     entryFee: 100,
     prizePool: 10000,
-    matchTime: new Date(Date.now() + 1 * 60 * 60 * 1000), // In 1 hour
+    matchTime: new Date('2025-09-15T21:15:00Z'),
     status: 'Live',
     roomId: 'BGMI12345',
     roomPassword: 'GOFORIT',
@@ -56,7 +56,7 @@ export const mockTournaments: Tournament[] = [
     gameName: 'BGMI',
     entryFee: 75,
     prizePool: 7500,
-    matchTime: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+    matchTime: new Date('2025-09-10T18:30:00Z'),
     status: 'Completed',
     commissionPercentage: 12,
     participants: mockParticipants.filter(p => p.tournamentId === 't-3'),
@@ -70,7 +70,7 @@ export const mockTournaments: Tournament[] = [
     gameName: 'BGMI',
     entryFee: 200,
     prizePool: 20000,
-    matchTime: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // In 1 week
+    matchTime: new Date('2025-09-22T16:00:00Z'),
     status: 'Upcoming',
     commissionPercentage: 10,
     participants: [],
