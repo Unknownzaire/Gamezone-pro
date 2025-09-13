@@ -38,4 +38,5 @@ export type User = {
   email: string;
   walletBalance: number;
   avatarUrl: string;
+  mobile?: string;
 };

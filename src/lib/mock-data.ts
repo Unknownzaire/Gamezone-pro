@@ -1,10 +1,10 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
 export const mockUsers: User[] = [
-  { id: 'user-1', username: 'PlayerOne', email: 'playerone@example.com', walletBalance: 500, avatarUrl: 'https://picsum.photos/seed/u1/100/100' },
-  { id: 'user-2', username: 'ShadowStrike', email: 'shadow@example.com', walletBalance: 1200, avatarUrl: 'https://picsum.photos/seed/u2/100/100' },
-  { id: 'user-3', username: 'NinjaGamer', email: 'ninja@example.com', walletBalance: 750, avatarUrl: 'https://picsum.photos/seed/u3/100/100' },
-  { id: 'user-4', username: 'Phoenix', email: 'phoenix@example.com', walletBalance: 250, avatarUrl: 'https://picsum.photos/seed/u4/100/100' },
+  { id: 'user-1', username: 'PlayerOne', email: 'playerone@example.com', walletBalance: 500, avatarUrl: 'https://picsum.photos/seed/u1/100/100', mobile: '123-456-7890' },
+  { id: 'user-2', username: 'ShadowStrike', email: 'shadow@example.com', walletBalance: 1200, avatarUrl: 'https://picsum.photos/seed/u2/100/100', mobile: '234-567-8901' },
+  { id: 'user-3', username: 'NinjaGamer', email: 'ninja@example.com', walletBalance: 750, avatarUrl: 'https://picsum.photos/seed/u3/100/100', mobile: '345-678-9012' },
+  { id: 'user-4', username: 'Phoenix', email: 'phoenix@example.com', walletBalance: 250, avatarUrl: 'https://picsum.photos/seed/u4/100/100', mobile: '456-789-0123' },
 ];
 
 export const mockParticipants: Participant[] = [

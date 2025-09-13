@@ -57,6 +57,10 @@ export default function ProfilePage() {
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" defaultValue={currentUser.email} />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="mobile">Mobile Number</Label>
+              <Input id="mobile" type="tel" defaultValue={currentUser.mobile} />
+            </div>
             <Button onClick={handleUpdateProfile} className="w-full">Update Profile</Button>
         </CardContent>
       </Card>
