@@ -41,11 +41,81 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   };
 
   const terms = [
-    "You must have a valid BGMI account.",
-    "Entry fee is non-refundable.",
-    "Room details will be available 15 minutes before match time.",
-    "Cheating will result in a permanent ban.",
-    "The organizer's decision is final."
+    {
+      title: "Eligibility",
+      points: [
+        "Participants must register with their correct BGMI Username and BGMI ID.",
+        "Multiple accounts are not allowed.",
+        "Players must be 18 years or older (or have parental consent if under 18).",
+      ],
+    },
+    {
+      title: "Registration",
+      points: [
+        "All players must complete the registration form with valid details.",
+        "Entry fees (if applicable) must be paid before the registration deadline.",
+        "Once registered, fees are non-refundable, except in case of tournament cancellation by organizers.",
+      ],
+    },
+    {
+      title: "Gameplay Rules",
+      points: [
+        "Players must use the official BGMI app only (no modded APKs, scripts, or cheats).",
+        "Teaming, hacking, exploiting, or use of third-party software will result in immediate disqualification.",
+        "Players must join the custom room with the correct ID and password provided by organizers.",
+      ],
+    },
+    {
+      title: "Match Participation",
+      points: [
+        "Players should join matches 10 minutes before start time.",
+        "No extra time will be provided for late participants.",
+        "In case of connection issues, the match will continue, and no rematch will be given.",
+      ],
+    },
+    {
+      title: "Prize Distribution",
+      points: [
+        "Winners will be announced on the app/website after verification.",
+        "Prizes will be credited to the player’s wallet/bank/UPI within 7–14 business days.",
+        "Any tax or processing charges (if applicable) will be borne by the winner.",
+      ],
+    },
+    {
+      title: "Fair Play Policy",
+      points: [
+        "Use of hacks, mods, emulators, or unfair methods is strictly prohibited.",
+        "Any suspicious activity will be reviewed, and the decision of the organizers will be final and binding.",
+      ],
+    },
+    {
+      title: "Disqualification",
+      points: [
+        "Providing false details during registration.",
+        "Using inappropriate in-game names, abusive language, or unsportsmanlike behavior.",
+        "Violation of any rules mentioned in these terms.",
+      ],
+    },
+    {
+      title: "Organizer Rights",
+      points: [
+        "Organizers reserve the right to modify rules, reschedule matches, or cancel tournaments if necessary.",
+        "Decisions made by the organizers regarding disputes will be final.",
+      ],
+    },
+    {
+      title: "Liability Disclaimer",
+      points: [
+        "The tournament is not affiliated with or endorsed by Krafton, BGMI, or PUBG Mobile.",
+        "Organizers are not responsible for network issues, technical glitches, or player device problems.",
+      ],
+    },
+    {
+      title: "Acceptance",
+      points: [
+        "By registering and participating, you accept all the above Terms & Conditions.",
+      ],
+    },
   ];
 
   return (
@@ -108,13 +178,20 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <ShieldCheck className="text-primary" />
-            Terms & Conditions
+            BGMI Tournament – Terms & Conditions
             </CardTitle>
         </CardHeader>
-        <CardContent>
-            <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
-                {terms.map((term, i) => <li key={i}>{term}</li>)}
-            </ul>
+        <CardContent className="space-y-4">
+          {terms.map((section, sectionIndex) => (
+            <div key={sectionIndex}>
+              <h3 className="font-semibold text-base mb-2">{`${sectionIndex + 1}. ${section.title}`}</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground list-disc pl-5">
+                {section.points.map((point, pointIndex) => (
+                  <li key={pointIndex}>{point}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
         </CardContent>
       </Card>
 
