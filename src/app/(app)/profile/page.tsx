@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,25 @@ export default function ProfilePage() {
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [mobileVerified, setMobileVerified] = useState(false);
+  
+  const [emailCountdown, setEmailCountdown] = useState(0);
+  const [mobileCountdown, setMobileCountdown] = useState(0);
+  
+  useEffect(() => {
+    let emailTimer: NodeJS.Timeout;
+    if (emailCountdown > 0) {
+      emailTimer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
+    }
+    return () => clearTimeout(emailTimer);
+  }, [emailCountdown]);
+
+  useEffect(() => {
+    let mobileTimer: NodeJS.Timeout;
+    if (mobileCountdown > 0) {
+      mobileTimer = setTimeout(() => setMobileCountdown(mobileCountdown - 1), 1000);
+    }
+    return () => clearTimeout(mobileTimer);
+  }, [mobileCountdown]);
 
   const handleUpdateProfile = () => {
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
@@ -35,6 +54,7 @@ export default function ProfilePage() {
   
   const handleSendEmailOtp = () => {
     setEmailOtpSent(true);
+    setEmailCountdown(30);
     toast({ title: "OTP Sent", description: `An OTP has been sent to ${currentUser.email}`});
   };
 
@@ -46,6 +66,7 @@ export default function ProfilePage() {
   
   const handleSendMobileOtp = () => {
     setMobileOtpSent(true);
+    setMobileCountdown(30);
     toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number.`});
   };
 
@@ -87,8 +108,8 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                     <Input id="email" type="email" defaultValue={currentUser.email} disabled />
                     {!emailVerified && (
-                        <Button onClick={handleSendEmailOtp} className="w-40" disabled={emailOtpSent}>
-                            Send OTP
+                        <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
+                            {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
                         </Button>
                     )}
                     {emailVerified && <CheckCircle className="text-green-500" />}
@@ -105,8 +126,8 @@ export default function ProfilePage() {
                <div className="flex items-center gap-2">
                     <Input id="mobile" type="tel" defaultValue={currentUser.mobile} />
                      {!mobileVerified && (
-                        <Button onClick={handleSendMobileOtp} className="w-40" disabled={mobileOtpSent}>
-                            Send OTP
+                        <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
+                           {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                         </Button>
                     )}
                     {mobileVerified && <CheckCircle className="text-green-500" />}
