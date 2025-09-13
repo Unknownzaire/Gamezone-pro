@@ -15,6 +15,11 @@ export default function ProfilePage() {
   const { toast } = useToast();
   const currentUser = mockUsers[0];
 
+  const [emailOtp, setEmailOtp] = useState('');
+  const [mobileOtp, setMobileOtp] = useState('');
+  const [emailOtpInput, setEmailOtpInput] = useState('');
+  const [mobileOtpInput, setMobileOtpInput] = useState('');
+
   const [emailOtpSent, setEmailOtpSent] = useState(false);
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -52,28 +57,42 @@ export default function ProfilePage() {
     router.push('/login');
   };
   
+  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
   const handleSendEmailOtp = () => {
+    const newOtp = generateOtp();
+    setEmailOtp(newOtp);
     setEmailOtpSent(true);
     setEmailCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${currentUser.email}`});
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${currentUser.email}. (OTP: ${newOtp})`});
   };
 
   const handleVerifyEmailOtp = () => {
-    setEmailVerified(true);
-    setEmailOtpSent(false);
-    toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
+    if(emailOtpInput === emailOtp) {
+      setEmailVerified(true);
+      setEmailOtpSent(false);
+      toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
+    } else {
+      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
+    }
   };
   
   const handleSendMobileOtp = () => {
+    const newOtp = generateOtp();
+    setMobileOtp(newOtp);
     setMobileOtpSent(true);
     setMobileCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number.`});
+    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
   };
 
   const handleVerifyMobileOtp = () => {
-    setMobileVerified(true);
-    setMobileOtpSent(false);
-    toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
+     if(mobileOtpInput === mobileOtp) {
+      setMobileVerified(true);
+      setMobileOtpSent(false);
+      toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
+    } else {
+      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
+    }
   };
 
 
@@ -116,7 +135,7 @@ export default function ProfilePage() {
                 </div>
                 {emailOtpSent && !emailVerified && (
                     <div className="flex items-center gap-2 pt-2">
-                        <Input placeholder="Enter OTP" />
+                        <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
                         <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
                     </div>
                 )}
@@ -134,7 +153,7 @@ export default function ProfilePage() {
                 </div>
                  {mobileOtpSent && !mobileVerified && (
                     <div className="flex items-center gap-2 pt-2">
-                        <Input placeholder="Enter OTP" />
+                        <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
                         <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
                     </div>
                 )}
