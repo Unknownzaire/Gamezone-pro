@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,11 +8,17 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { mockUsers } from "@/lib/mock-data";
 import { useRouter } from "next/navigation";
+import { CheckCircle } from 'lucide-react';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const currentUser = mockUsers[0];
+
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [mobileOtpSent, setMobileOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [mobileVerified, setMobileVerified] = useState(false);
 
   const handleUpdateProfile = () => {
     toast({ title: "Profile Updated", description: "Your profile information has been saved." });
@@ -26,6 +32,29 @@ export default function ProfilePage() {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
     router.push('/login');
   };
+  
+  const handleSendEmailOtp = () => {
+    setEmailOtpSent(true);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${currentUser.email}`});
+  };
+
+  const handleVerifyEmailOtp = () => {
+    setEmailVerified(true);
+    setEmailOtpSent(false);
+    toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
+  };
+  
+  const handleSendMobileOtp = () => {
+    setMobileOtpSent(true);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number.`});
+  };
+
+  const handleVerifyMobileOtp = () => {
+    setMobileVerified(true);
+    setMobileOtpSent(false);
+    toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -55,11 +84,39 @@ export default function ProfilePage() {
             </div>
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" defaultValue={currentUser.email} />
+                <div className="flex items-center gap-2">
+                    <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                    {!emailVerified && (
+                        <Button onClick={handleSendEmailOtp} className="w-40" disabled={emailOtpSent}>
+                            Send OTP
+                        </Button>
+                    )}
+                    {emailVerified && <CheckCircle className="text-green-500" />}
+                </div>
+                {emailOtpSent && !emailVerified && (
+                    <div className="flex items-center gap-2 pt-2">
+                        <Input placeholder="Enter OTP" />
+                        <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
+                    </div>
+                )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="mobile">Mobile Number</Label>
-              <Input id="mobile" type="tel" defaultValue={currentUser.mobile} />
+               <div className="flex items-center gap-2">
+                    <Input id="mobile" type="tel" defaultValue={currentUser.mobile} />
+                     {!mobileVerified && (
+                        <Button onClick={handleSendMobileOtp} className="w-40" disabled={mobileOtpSent}>
+                            Send OTP
+                        </Button>
+                    )}
+                    {mobileVerified && <CheckCircle className="text-green-500" />}
+                </div>
+                 {mobileOtpSent && !mobileVerified && (
+                    <div className="flex items-center gap-2 pt-2">
+                        <Input placeholder="Enter OTP" />
+                        <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
+                    </div>
+                )}
             </div>
             <Button onClick={handleUpdateProfile} className="w-full">Update Profile</Button>
         </CardContent>
