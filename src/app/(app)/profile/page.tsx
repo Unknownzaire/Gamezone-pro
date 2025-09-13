@@ -77,7 +77,7 @@ export default function ProfilePage() {
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="flex items-center gap-2">
-                <Input id="email" type="email" defaultValue={currentUser.email} disabled={otpSent} />
+                <Input id="email" type="email" defaultValue={currentUser.email} disabled />
                 {!otpVerified && (
                   <Button onClick={handleSendOtp} disabled={otpSent} className="w-40">
                     {otpSent ? 'OTP Sent' : 'Send OTP'}
