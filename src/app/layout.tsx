@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Arena Ace',
+  title: 'Gamezone Pro',
   description: 'BGMI Tournament Web App',
 };
 

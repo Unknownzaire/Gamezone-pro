@@ -41,7 +41,7 @@ const Logo = ({ className }: { className?: string }) => (
         strokeLinejoin="round"
       />
     </svg>
-    <span className="font-headline text-xl font-bold text-foreground">Arena Ace</span>
+    <span className="font-headline text-xl font-bold text-foreground">Gamezone Pro</span>
   </div>
 );
 
