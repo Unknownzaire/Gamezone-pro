@@ -9,19 +9,13 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Clock, Trophy, Users } from "lucide-react";
+import Link from "next/link";
 
 export default function HomePage() {
   const { toast } = useToast();
   const upcomingOrLiveTournaments = mockTournaments.filter(
     (t) => t.status === "Upcoming" || t.status === "Live"
   );
-
-  const handleJoin = (tournament: Tournament) => {
-    toast({
-      title: "Successfully Joined!",
-      description: `You have joined the "${tournament.title}" tournament.`,
-    });
-  };
 
   return (
     <div className="space-y-6">
@@ -30,13 +24,15 @@ export default function HomePage() {
         {upcomingOrLiveTournaments.map((tournament) => (
           <Card key={tournament.id} className="overflow-hidden">
             <div className="relative h-40 w-full">
-              <Image
-                src={tournament.imageUrl}
-                alt={tournament.title}
-                fill
-                className="object-cover"
-                data-ai-hint={tournament.imageHint}
-              />
+               <Link href={`/tournaments/${tournament.id}`}>
+                <Image
+                  src={tournament.imageUrl}
+                  alt={tournament.title}
+                  fill
+                  className="object-cover"
+                  data-ai-hint={tournament.imageHint}
+                />
+              </Link>
               <Badge
                 variant={tournament.status === "Live" ? "destructive" : "secondary"}
                 className="absolute right-2 top-2"
@@ -62,12 +58,13 @@ export default function HomePage() {
               </div>
             </CardContent>
             <CardFooter>
-              <Button
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
-                onClick={() => handleJoin(tournament)}
-              >
-                Join Now
-              </Button>
+                <Link href={`/tournaments/${tournament.id}`} className="w-full">
+                    <Button
+                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                    >
+                        View Details
+                    </Button>
+                </Link>
             </CardFooter>
           </Card>
         ))}
