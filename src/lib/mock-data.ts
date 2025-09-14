@@ -28,7 +28,7 @@ export const mockTournaments: Tournament[] = [
     gameName: 'BGMI',
     entryFee: 50,
     prizePool: 5000,
-    matchTime: new Date('2025-09-17T14:00:00Z'),
+    matchTime: new Date('2025-09-17T19:30:00Z'),
     status: 'Upcoming',
     commissionPercentage: 10,
     participants: [],
