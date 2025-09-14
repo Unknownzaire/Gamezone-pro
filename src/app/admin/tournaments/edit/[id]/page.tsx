@@ -29,7 +29,7 @@ const toDateTimeLocal = (date: Date): string => {
 export default function EditTournamentPage() {
   const router = useRouter();
   const params = useParams();
-  const { id } = params;
+  const id = params.id as string;
   const { toast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);

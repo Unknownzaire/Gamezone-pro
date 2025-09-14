@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,7 +15,7 @@ import Link from 'next/link';
 export default function EditUserPage() {
   const router = useRouter();
   const params = useParams();
-  const { id } = params;
+  const id = params.id as string;
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
@@ -38,8 +39,8 @@ export default function EditUserPage() {
   }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -47,7 +48,7 @@ export default function EditUserPage() {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
       let users: User[] = JSON.parse(storedUsers);
-      users = users.map(u => (u.id === id ? { ...u, ...formData } : u));
+      users = users.map(u => (u.id === id ? { ...user, ...formData } as User : u));
       localStorage.setItem('allUsers', JSON.stringify(users));
       toast({
         title: "User Updated",
