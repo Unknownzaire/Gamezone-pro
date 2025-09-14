@@ -111,6 +111,8 @@ function LoginFormComponent() {
     };
 
     signup(newUser);
+    
+    setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
 
     toast({
       title: 'Sign Up Successful',
