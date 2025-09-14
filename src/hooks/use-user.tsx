@@ -29,6 +29,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -46,20 +47,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setAllTransactions(mockTransactions);
       localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
     }
+    setLoading(false);
   }, []);
 
   useEffect(() => {
-    if (allUsers.length > 0) {
-      localStorage.setItem('allUsers', JSON.stringify(allUsers));
+    if (!loading) {
+      if (allUsers.length > 0) {
+        localStorage.setItem('allUsers', JSON.stringify(allUsers));
+      }
     }
-  }, [allUsers]);
+  }, [allUsers, loading]);
 
   useEffect(() => {
-    if (allTransactions.length > 0) {
-      localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+    if (!loading) {
+      if (allTransactions.length > 0) {
+        localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+      }
     }
-  }, [allTransactions]);
-
+  }, [allTransactions, loading]);
 
   const login = (email: string, password: string): boolean | 'blocked' => {
     const userToLogin = allUsers.find(u => u.email === email);
@@ -76,7 +81,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     const currentUser = { ...userToLogin };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
-    sessionStorage.removeItem('isNewUser');
     
     const userTransactions = allTransactions.filter(tx => tx.userId === currentUser.id);
 
@@ -108,17 +112,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setAllUsers(prevUsers => [...prevUsers, newUser]);
     
     sessionStorage.setItem('currentUser', JSON.stringify(newUser));
-    sessionStorage.setItem('isNewUser', 'true');
     setUser(newUser);
     setTransactions([]);
   };
 
-
   useEffect(() => {
+    if (loading) return;
     const storedUser = sessionStorage.getItem('currentUser');
     if (storedUser) {
         const loggedInUser: User = JSON.parse(storedUser);
-        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
 
         // Find the latest user data from allUsers, which may have been updated by an admin
         const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
@@ -131,14 +133,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
 
-
-            const userTransactions = isNewUser ? [] : allTransactions.filter(tx => tx.userId === liveUserData.id);
+            const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
             const completedBalance = userTransactions.reduce((acc, tx) => {
                 if(tx.status !== 'completed') return acc;
                 if (tx.type === 'credit') return acc + tx.amount;
                 if (tx.type === 'debit') return acc - tx.amount;
                 return acc;
-            }, isNewUser ? 0 : 0);
+            }, 0);
 
             const pendingDebits = userTransactions
                 .filter(tx => tx.status === 'pending' && tx.type === 'debit')
@@ -148,19 +149,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
             setUser({ ...liveUserData, walletBalance: finalBalance });
             setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        } else if (isNewUser) {
-            // New user not yet in allUsers, use session data
-            setUser(loggedInUser);
-            setTransactions([]);
         }
         else {
-            // User not found in allUsers, maybe deleted by admin, so log out
-            sessionStorage.removeItem('currentUser');
-            setUser(null);
-            setTransactions([]);
+            // User not found in allUsers, maybe deleted by admin or is a new signup, so log out or use session
+            const isNewUser = allUsers.every(u => u.id !== loggedInUser.id);
+            if (isNewUser) {
+                 setUser(loggedInUser);
+                 setTransactions([]);
+            } else {
+                sessionStorage.removeItem('currentUser');
+                setUser(null);
+                setTransactions([]);
+            }
         }
     }
-  }, [allUsers, allTransactions]);
+  }, [allUsers, allTransactions, loading]);
 
   useEffect(() => {
     if (user) {
@@ -170,10 +173,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         sessionStorage.setItem('currentUser', JSON.stringify(dataToStore));
     } else {
         sessionStorage.removeItem('currentUser');
-        sessionStorage.removeItem('isNewUser');
     }
   }, [user, allUsers]);
-
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
