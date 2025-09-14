@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament } from '@/lib/types';
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import Link from 'next/link';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
@@ -173,6 +174,15 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
             )}
         </CardContent>
       </Card>
+
+      {(tournament.status === 'Completed' || tournament.status === 'Live') && (
+        <Link href={`/leaderboard?tournamentId=${tournament.id}`}>
+          <Button variant="outline" className="w-full">
+            <BarChart3 className="mr-2 h-4 w-4" />
+            View Leaderboard
+          </Button>
+        </Link>
+      )}
       
        <Card>
         <CardHeader>
