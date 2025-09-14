@@ -125,7 +125,9 @@ export default function AdminUsersPage() {
                         <DropdownMenuItem asChild>
                           <Link href={`/admin/users/edit/${user.id}`}>Edit User</Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem>View Match History</DropdownMenuItem>
+                         <DropdownMenuItem asChild>
+                          <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
                           {user.isBlocked ? 'Unblock User' : 'Block User'}
