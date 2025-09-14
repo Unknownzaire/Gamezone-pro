@@ -21,7 +21,7 @@ type UserMatchHistory = {
 
 export default function UserMatchHistoryPage() {
   const params = useParams();
-  const { userId } = params;
+  const userId = params.userId as string;
 
   const [user, setUser] = useState<User | null>(null);
   const [matchHistory, setMatchHistory] = useState<UserMatchHistory[]>([]);
@@ -46,7 +46,7 @@ export default function UserMatchHistoryPage() {
         }
       });
 
-      setMatchHistory(history.sort((a,b) => b.tournament.matchTime.getTime() - a.tournament.matchTime.getTime()));
+      setMatchHistory(history.sort((a,b) => new Date(b.tournament.matchTime).getTime() - new Date(a.tournament.matchTime).getTime()));
     }
     
     setLoading(false);
