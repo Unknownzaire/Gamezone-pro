@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter, notFound, useParams } from 'next/navigation';
 import { User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,17 +11,21 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditUserPage({ params }: { params: { id: string } }) {
+export default function EditUserPage() {
   const router = useRouter();
+  const params = useParams();
+  const { id } = params;
+
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<Partial<User>>({});
 
   useEffect(() => {
+    if (!id) return;
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
       const users: User[] = JSON.parse(storedUsers);
-      const userToEdit = users.find(u => u.id === params.id);
+      const userToEdit = users.find(u => u.id === id);
       if (userToEdit) {
         setUser(userToEdit);
         setFormData(userToEdit);
@@ -31,7 +35,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     } else {
       notFound();
     }
-  }, [params.id]);
+  }, [id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -43,7 +47,7 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
       let users: User[] = JSON.parse(storedUsers);
-      users = users.map(u => (u.id === params.id ? { ...u, ...formData } : u));
+      users = users.map(u => (u.id === id ? { ...u, ...formData } : u));
       localStorage.setItem('allUsers', JSON.stringify(users));
       toast({
         title: "User Updated",
