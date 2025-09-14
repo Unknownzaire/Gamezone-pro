@@ -61,18 +61,9 @@ function LoginFormComponent() {
 
     toast({
       title: 'Sign Up Successful',
-      description: 'Your account has been created. Please log in.',
+      description: 'Welcome to Arena Ace!',
     });
     
-    setSignupForm({
-        username: '',
-        bgmiUsername: '',
-        bgmiId: '',
-        mobile: '',
-        email: '',
-        password: ''
-    });
-    setActiveTab('login');
     router.push('/home');
   };
 

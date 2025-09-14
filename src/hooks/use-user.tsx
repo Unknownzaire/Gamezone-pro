@@ -56,7 +56,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         walletBalance: 100, // Initial balance
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
     };
-    sessionStorage.setItem('newUser', JSON.stringify(newUser));
+    sessionStorage.setItem('currentUser', JSON.stringify(newUser));
+    sessionStorage.setItem('isNewUser', 'true');
     setUser(newUser);
     setTransactions([]);
   };
@@ -95,6 +96,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem('currentUser', JSON.stringify(user));
     } else {
       sessionStorage.removeItem('currentUser');
+      sessionStorage.removeItem('isNewUser');
     }
   }, [user]);
 
