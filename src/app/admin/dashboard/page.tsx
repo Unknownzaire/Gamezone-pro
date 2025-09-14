@@ -179,77 +179,81 @@ export default function AdminDashboardPage() {
             </CardContent>
         </Card>
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
-                    <ArrowUpRight className="text-red-500" />
-                    Pending Withdrawals
-                </CardTitle>
-                <CardDescription>Review and process user withdrawal requests.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {pendingWithdrawals.length > 0 ? (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Payment Details</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {pendingWithdrawals.map(tx => {
-                                const user = getUserById(tx.userId);
-                                return (
-                                    <TableRow key={tx.id}>
-                                        <TableCell>
-                                            {user ? (
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="font-medium">{user.username}</div>
-                                                </div>
-                                            ) : 'Unknown User'}
-                                        </TableCell>
-                                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
-                                        <TableCell>
-                                            {tx.paymentDetails ? (
-                                                <div className="text-xs">
-                                                    <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
-                                                    {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
-                                                    {tx.paymentDetails.method === 'bank' && (
-                                                        <div>
-                                                            <p>{tx.paymentDetails.accountHolderName}</p>
-                                                            <p>A/C: {tx.paymentDetails.accountNumber}</p>
-                                                            <p>IFSC: {tx.paymentDetails.ifscCode}</p>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                <p className="text-muted-foreground">N/A</p>
-                                            )}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex gap-2 justify-end">
-                                                <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
-                                                <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                )
-                            })}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <p className="text-muted-foreground text-center py-8">No pending withdrawals.</p>
-                )}
-            </CardContent>
+          <CardHeader>
+            <div className="space-y-2">
+              <CardTitle className="font-headline flex items-center gap-2">
+                <ArrowUpRight className="text-red-500" />
+                Pending Withdrawals
+              </CardTitle>
+              <CardDescription>Review and process user withdrawal requests.</CardDescription>
+            </div>
+            {pendingWithdrawals.length > 0 && (
+              <Table className="mt-4">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Payment Details</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
+            )}
+          </CardHeader>
+          <CardContent className="p-0">
+            {pendingWithdrawals.length > 0 ? (
+              <Table>
+                <TableBody>
+                  {pendingWithdrawals.map(tx => {
+                    const user = getUserById(tx.userId);
+                    return (
+                      <TableRow key={tx.id}>
+                        <TableCell>
+                          {user ? (
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="font-medium">{user.username}</div>
+                            </div>
+                          ) : 'Unknown User'}
+                        </TableCell>
+                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                        <TableCell>
+                          {tx.paymentDetails ? (
+                            <div className="text-xs">
+                              <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
+                              {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
+                              {tx.paymentDetails.method === 'bank' && (
+                                <div>
+                                  <p>{tx.paymentDetails.accountHolderName}</p>
+                                  <p>A/C: {tx.paymentDetails.accountNumber}</p>
+                                  <p>IFSC: {tx.paymentDetails.ifscCode}</p>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-muted-foreground">N/A</p>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
+                            <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-muted-foreground text-center py-8 px-6">No pending withdrawals.</p>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>
   );
 }
-
-    
