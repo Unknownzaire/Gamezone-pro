@@ -30,6 +30,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import Link from 'next/link';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
@@ -200,6 +202,38 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                     <Clock className="h-4 w-4 text-primary" />
                     <span>{format(new Date(tournament.matchTime), "PPp")}</span>
                 </div>
+                 <div className="flex items-center gap-2 col-span-2">
+                    <Users className="h-4 w-4 text-primary" />
+                    <span>Players: {tournament.participants.length} joined</span>
+                     <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs">
+                          View Players <ChevronRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Registered Players ({tournament.participants.length})</DialogTitle>
+                          <DialogDescription>
+                            The following players have joined this tournament.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <ScrollArea className="h-72">
+                            <div className="space-y-3 pr-4">
+                            {tournament.participants.map((p) => (
+                                <div key={p.id} className="flex items-center gap-3 rounded-md bg-muted p-2">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
+                                    <AvatarFallback>{p.user.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <span className="font-semibold">{p.user.username}</span>
+                                </div>
+                            ))}
+                            </div>
+                        </ScrollArea>
+                      </DialogContent>
+                    </Dialog>
+                </div>
             </div>
             {tournament.status === 'Live' && tournament.roomId && (
                  <Card className="bg-muted p-4">
@@ -273,3 +307,5 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     </div>
   );
 }
+
+    
