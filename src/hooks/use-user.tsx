@@ -12,7 +12,7 @@ interface UserContextType {
   user: User | null;
   transactions: Transaction[];
   tournaments: Tournament[];
-  addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId' | 'status'>) => void;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
 }
@@ -44,17 +44,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, []);
 
-  const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'| 'status'>) => {
+  const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
     const newTx: Transaction = {
       ...tx,
       id: `tx-${Date.now()}`,
       userId: user.id,
       createdAt: new Date(),
-      status: 'completed',
     };
     setTransactions(prev => [newTx, ...prev]);
-    if (user) {
+    if (user && newTx.status === 'completed') {
       const newBalance = tx.type === 'credit' ? user.walletBalance + tx.amount : user.walletBalance - tx.amount;
       setUser({ ...user, walletBalance: newBalance });
     }
@@ -66,23 +65,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  const joinTournament = (tournamentId: string, user: User) => {
-    setTournaments(prevTournaments => {
-        return prevTournaments.map(t => {
-            if(t.id === tournamentId) {
-                const newParticipant = {
-                    id: `p-${t.id}-${user.id}`,
-                    user: user,
-                    tournamentId: t.id,
-                    result: null,
-                    joinedAt: new Date(),
-                };
-                return { ...t, participants: [...t.participants, newParticipant] };
-            }
-            return t;
-        })
-    });
-  }
+  const joinTournament = (tournamentId: string, userToJoin: User) => {
+    setTournaments(prevTournaments => 
+      prevTournaments.map(t => {
+        if (t.id === tournamentId) {
+          // Check if user is already a participant
+          if (t.participants.some(p => p.user.id === userToJoin.id)) {
+            return t; // User already joined, return tournament as is
+          }
+          const newParticipant = {
+            id: `p-${t.id}-${userToJoin.id}`,
+            user: userToJoin,
+            tournamentId: t.id,
+            result: null,
+            joinedAt: new Date(),
+          };
+          return { ...t, participants: [...t.participants, newParticipant] };
+        }
+        return t;
+      })
+    );
+  };
 
   return (
     <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament }}>

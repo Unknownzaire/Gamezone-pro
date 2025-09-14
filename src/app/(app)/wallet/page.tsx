@@ -68,7 +68,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions } = useUser();
+  const { user, transactions, addTransaction } = useUser();
   const { toast } = useToast();
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('upi');
@@ -84,7 +84,14 @@ export default function WalletPage() {
       toast({ variant: 'destructive', title: "Insufficient Balance", description: "You cannot withdraw more than your available balance." });
       return;
     }
-    // In a real app, this would trigger a server action
+    
+    addTransaction({
+        amount,
+        type: 'debit',
+        description: `Withdrawal via ${withdrawMethod}`,
+        status: 'pending'
+    });
+
     toast({ title: "Withdrawal Request Submitted", description: `Your request to withdraw ₹${amount.toLocaleString()} has been submitted.` });
     setWithdrawAmount('');
   };
@@ -243,7 +250,7 @@ export default function WalletPage() {
             <TabsContent value="pending" className="mt-4">
                 <Card>
                     <CardContent className="p-0">
-                       <TransactionList transactions={pendingTransactions} />
+                       <TransactionList transactions={pendingTransactions} showStatus={true}/>
                     </CardContent>
                 </Card>
             </TabsContent>
