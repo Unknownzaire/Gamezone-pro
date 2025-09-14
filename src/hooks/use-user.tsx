@@ -16,6 +16,7 @@ interface UserContextType {
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (isNewUser?: boolean) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -46,20 +47,31 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const currentUser = { ...mockUsers[0] };
       const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
-      const balance = userTransactions.reduce((acc, tx) => {
+      const completedBalance = userTransactions.reduce((acc, tx) => {
         if(tx.status !== 'completed') return acc;
           if (tx.type === 'credit') return acc + tx.amount;
           if (tx.type === 'debit') return acc - tx.amount;
           return acc;
       }, 0);
 
-      const pendingDebits = transactions
-        .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+      const pendingDebits = mockTransactions
+        .filter(tx => tx.userId === currentUser.id && tx.status === 'pending' && tx.type === 'debit')
         .reduce((acc, tx) => acc + tx.amount, 0);
 
-      setUser({ ...currentUser, walletBalance: balance - pendingDebits });
+      setUser({ ...currentUser, walletBalance: completedBalance - pendingDebits });
       setTransactions(mockTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }
+  };
+
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => {
+    const newUser: User = {
+        ...userDetails,
+        id: `user-${Date.now()}`,
+        walletBalance: 100, // Initial balance
+        avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
+    };
+    setUser(newUser);
+    setTransactions([]);
   };
 
 
@@ -67,7 +79,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     // By default, log in as an existing user.
     // A specific action (like completing signup) will call login(true)
     if (!user) {
-        login();
+        // login(); // We will not auto-login anymore to support signup flow
     }
   }, [user]);
 
@@ -81,7 +93,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
     setTransactions(prev => [newTx, ...prev]);
     
-    if (user && newTx.type === 'debit') {
+    // Only deduct from balance if it's a new pending withdrawal
+    if (user && newTx.type === 'debit' && newTx.status === 'pending') {
       const newBalance = user.walletBalance - tx.amount;
       setUser({ ...user, walletBalance: newBalance });
     }
@@ -116,7 +129,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament, login }}>
+    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup }}>
       {children}
     </UserContext.Provider>
   );
