@@ -1,23 +1,31 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
-export const mockUsers: User[] = [
-  { id: 'user-1', username: 'PlayerOne', email: 'playerone@example.com', walletBalance: 500, avatarUrl: 'https://picsum.photos/seed/u1/100/100', mobile: '123-456-7890' },
-  { id: 'user-2', username: 'ShadowStrike', email: 'shadow@example.com', walletBalance: 1200, avatarUrl: 'https://picsum.photos/seed/u2/100/100', mobile: '234-567-8901' },
-  { id: 'user-3', username: 'NinjaGamer', email: 'ninja@example.com', walletBalance: 750, avatarUrl: 'https://picsum.photos/seed/u3/100/100', mobile: '345-678-9012' },
-  { id: 'user-4', username: 'Phoenix', email: 'phoenix@example.com', walletBalance: 250, avatarUrl: 'https://picsum.photos/seed/u4/100/100', mobile: '456-789-0123' },
-];
+export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
+  id: `user-${i + 1}`,
+  username: `Player${i + 1}`,
+  email: `player${i + 1}@example.com`,
+  walletBalance: Math.floor(Math.random() * 2000) + 50,
+  avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
+  mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+}));
+
 
 export const mockParticipants: Participant[] = [
-    { id: 'p-1', user: mockUsers[0], tournamentId: 't-2', result: 'Participated', joinedAt: new Date('2024-08-01T10:00:00Z') },
-    { id: 'p-2', user: mockUsers[1], tournamentId: 't-2', result: 'Participated', joinedAt: new Date('2024-08-01T10:05:00Z') },
-    { id: 'p-3', user: mockUsers[2], tournamentId: 't-3', result: 'Winner', joinedAt: new Date('2024-07-20T12:00:00Z') },
-    { id: 'p-4', user: mockUsers[3], tournamentId: 't-3', result: 'Participated', joinedAt: new Date('2024-07-20T12:05:00Z') },
-    ...mockUsers.map((user, index) => ({
-      id: `p-live-${index + 1}`,
+    // Participants for t-2 (Live) - first 50 users
+    ...mockUsers.slice(0, 50).map((user, index) => ({
+      id: `p-t2-${index + 1}`,
       user,
       tournamentId: 't-2',
       result: null,
-      joinedAt: new Date('2024-08-15T10:00:00Z')
+      joinedAt: new Date(new Date('2025-09-15T21:15:00Z').getTime() - (50-index) * 60000)
+    })),
+    // Participants for t-3 (Completed) - next 25 users
+    ...mockUsers.slice(50, 75).map((user, index) => ({
+      id: `p-t3-${index + 1}`,
+      user,
+      tournamentId: 't-3',
+      result: index === 0 ? 'Winner' : 'Participated',
+      joinedAt: new Date(new Date('2025-09-10T18:30:00Z').getTime() - (25-index) * 60000)
     })),
 ];
 
@@ -60,7 +68,7 @@ export const mockTournaments: Tournament[] = [
     status: 'Completed',
     commissionPercentage: 12,
     participants: mockParticipants.filter(p => p.tournamentId === 't-3'),
-    winner: mockUsers[2],
+    winner: mockUsers[50], // Winner is the first participant of t-3
     imageUrl: 'https://picsum.photos/seed/3/600/400',
     imageHint: 'victory landscape'
   },
@@ -82,6 +90,6 @@ export const mockTournaments: Tournament[] = [
 export const mockTransactions: Transaction[] = [
   { id: 'tx-1', userId: 'user-1', amount: 500, type: 'credit', description: 'Initial wallet load', createdAt: new Date('2024-07-28T09:00:00Z') },
   { id: 'tx-2', userId: 'user-2', amount: 100, type: 'debit', description: 'Joined Midnight Mayhem', createdAt: new Date('2024-08-01T10:05:00Z') },
-  { id: 'tx-3', userId: 'user-3', amount: 6600, type: 'credit', description: 'Prize from Victory Valley', createdAt: new Date('2024-07-25T18:00:00Z') },
-  { id: 'tx-4', userId: 'user-3', amount: 75, type: 'debit', description: 'Joined Victory Valley', createdAt: new Date('2024-07-20T12:00:00Z') },
+  { id: 'tx-3', userId: 'user-51', amount: 6600, type: 'credit', description: 'Prize from Victory Valley', createdAt: new Date('2024-07-25T18:00:00Z') },
+  { id: 'tx-4', userId: 'user-51', amount: 75, type: 'debit', description: 'Joined Victory Valley', createdAt: new Date('2024-07-20T12:00:00Z') },
 ];
