@@ -1,15 +1,36 @@
+
+'use client';
+
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { mockParticipants, mockTournaments } from "@/lib/mock-data";
 import { Clock, Eye, Trophy } from "lucide-react";
 import { format } from "date-fns";
+import { useUser } from "@/hooks/use-user.tsx";
+import { useEffect, useState } from "react";
+import { Tournament } from "@/lib/types";
 
 export default function MyTournamentsPage() {
-  // We look at the mockParticipants array to see which tournaments the user has joined.
-  const currentUser = 'user-1'; // Assuming current user is user-1
-  const joinedTournamentIds = [...new Set(mockParticipants.filter(p => p.user.id === currentUser).map(p => p.tournamentId))];
-  const joinedTournaments = mockTournaments.filter(t => joinedTournamentIds.includes(t.id));
+  const { user: currentUser } = useUser();
+  const [joinedTournaments, setJoinedTournaments] = useState<Tournament[]>([]);
+
+  useEffect(() => {
+    if (currentUser) {
+      // We look at the mockParticipants array to see which tournaments the user has joined.
+      // In a real app, you might fetch this from a server or have it in the user context.
+      // For now, we also need to check the local state of tournaments that might have been joined in the session.
+      const allParticipants = [
+        ...mockParticipants,
+        ...mockTournaments.flatMap(t => t.participants)
+      ];
+      
+      const joinedTournamentIds = [...new Set(allParticipants.filter(p => p.user.id === currentUser.id).map(p => p.tournamentId))];
+      const userJoinedTournaments = mockTournaments.filter(t => joinedTournamentIds.includes(t.id));
+      setJoinedTournaments(userJoinedTournaments);
+    }
+  }, [currentUser]);
+
 
   const upcomingLive = joinedTournaments.filter(t => t.status !== 'Completed');
   const completed = joinedTournaments.filter(t => t.status === 'Completed');
@@ -65,7 +86,7 @@ export default function MyTournamentsPage() {
                 <CardContent className="flex justify-between items-center">
                    <div className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-yellow-400" />
-                    <p>Result: <span className="font-semibold text-primary">{t.participants.find(p => p.user.id === 'user-3')?.result}</span></p>
+                    <p>Result: <span className="font-semibold text-primary">{t.participants.find(p => p.user.id === currentUser?.id)?.result}</span></p>
                    </div>
                    <div className="flex items-center gap-2">
                     <Eye className="h-4 w-4" />
