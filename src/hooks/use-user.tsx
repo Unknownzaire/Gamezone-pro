@@ -127,18 +127,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
-        const completedBalance = userTransactions.reduce((acc, tx) => {
-            if(tx.status !== 'completed') return acc;
-            if (tx.type === 'credit') return acc + tx.amount;
-            if (tx.type === 'debit') return acc - tx.amount;
-            return acc;
-        }, liveUserData.walletBalance || 0);
+        
+        const baseBalance = liveUserData.walletBalance || 0;
 
+        const completedCredits = userTransactions
+            .filter(tx => tx.status === 'completed' && tx.type === 'credit')
+            .reduce((acc, tx) => acc + tx.amount, 0);
+
+        const completedDebits = userTransactions
+            .filter(tx => tx.status === 'completed' && tx.type === 'debit')
+            .reduce((acc, tx) => acc + tx.amount, 0);
+        
         const pendingDebits = userTransactions
             .filter(tx => tx.status === 'pending' && tx.type === 'debit')
             .reduce((acc, tx) => acc + tx.amount, 0);
         
-        const finalBalance = completedBalance - pendingDebits;
+        // Let's assume baseBalance is a snapshot from the db, and transactions add on top.
+        // A more robust system would calculate from a ledger. For now, let's derive from a base + tx log
+        let finalBalance = baseBalance + completedCredits - completedDebits - pendingDebits;
 
         const currentUser = { ...liveUserData, walletBalance: finalBalance };
         setUser(currentUser);
@@ -158,7 +164,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const loggedInUser: User = JSON.parse(storedUser);
             loadUserContext(loggedInUser.id);
         } else {
-            if (pathname.startsWith('/app/')) {
+            if (pathname !== '/login' && !pathname.startsWith('/admin')) {
                 logout();
             }
         }
@@ -183,7 +189,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateBalance = (newBalance: number) => {
     if(user) {
-        setUser({...user, walletBalance: newBalance});
+        setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, walletBalance: newBalance} : u))
     }
   }
 
