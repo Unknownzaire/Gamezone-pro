@@ -18,19 +18,21 @@ export default function ForgotPasswordPage() {
   const handleSendEmailResetLink = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
-      title: 'Reset Link Sent',
-      description: 'If an account exists with that email, a password reset link has been sent.',
+      title: 'OTP Sent',
+      description: 'If an account exists with that email, an OTP has been sent.',
     });
-    router.push('/login');
+    // In a real app, you would likely navigate to a new page to enter the OTP
+    // router.push('/verify-otp'); 
   };
 
   const handleSendMobileResetLink = (e: React.FormEvent) => {
     e.preventDefault();
     toast({
-      title: 'Reset Link Sent',
-      description: 'If an account exists with that mobile number, a password reset link has been sent via SMS.',
+      title: 'OTP Sent',
+      description: 'If an account exists with that mobile number, an OTP has been sent via SMS.',
     });
-    router.push('/login');
+    // In a real app, you would likely navigate to a new page to enter the OTP
+    // router.push('/verify-otp');
   };
 
   return (
@@ -56,7 +58,7 @@ export default function ForgotPasswordPage() {
                     <Label htmlFor="email">Email</Label>
                     <Input id="email" type="email" placeholder="you@example.com" required />
                   </div>
-                  <Button type="submit" className="w-full">Send Reset Link</Button>
+                  <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
               </TabsContent>
               <TabsContent value="mobile" className="mt-4">
@@ -65,7 +67,7 @@ export default function ForgotPasswordPage() {
                     <Label htmlFor="mobile">Mobile Number</Label>
                     <Input id="mobile" type="tel" placeholder="Your mobile number" required />
                   </div>
-                  <Button type="submit" className="w-full">Send Reset Link</Button>
+                  <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
               </TabsContent>
             </Tabs>
