@@ -187,7 +187,7 @@ export default function WalletPage() {
     )
   }
   
-  const completedTransactions = transactions.filter(tx => tx.status === 'completed');
+  const completedTransactions = transactions.filter(tx => tx.status === 'completed' || tx.status === 'declined');
   const creditTransactions = completedTransactions.filter(tx => tx.type === 'credit');
   const debitTransactions = completedTransactions.filter(tx => tx.type === 'debit');
   const pendingTransactions = transactions.filter(tx => tx.status === 'pending');
@@ -202,7 +202,7 @@ export default function WalletPage() {
         <CardHeader className="text-center">
           <CardDescription>Current Balance</CardDescription>
           <CardTitle className="font-headline text-5xl text-primary">
-            ₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+            ₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -213,7 +213,7 @@ export default function WalletPage() {
                 <Label>Scan and Pay</Label>
                  <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                    <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
-                   <p className="font-mono text-xs">{upiId}</p>
+                   <p className="font-mono text-xs text-black">{upiId}</p>
                  </div>
               </div>
                <div className="space-y-2">
@@ -351,4 +351,6 @@ export default function WalletPage() {
 }
 
     
+    
+
     
