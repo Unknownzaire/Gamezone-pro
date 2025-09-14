@@ -4,7 +4,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockParticipants, mockTournaments } from "@/lib/mock-data";
+import { mockTournaments } from "@/lib/mock-data";
 import { Clock, Eye, Trophy } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
@@ -17,19 +17,14 @@ export default function MyTournamentsPage() {
 
   useEffect(() => {
     if (currentUser) {
-      // We look at the mockParticipants array to see which tournaments the user has joined.
-      // In a real app, you might fetch this from a server or have it in the user context.
-      // For now, we also need to check the local state of tournaments that might have been joined in the session.
-      const allParticipants = [
-        ...mockParticipants,
-        ...mockTournaments.flatMap(t => t.participants)
-      ];
-      
-      const joinedTournamentIds = [...new Set(allParticipants.filter(p => p.user.id === currentUser.id).map(p => p.tournamentId))];
-      const userJoinedTournaments = mockTournaments.filter(t => joinedTournamentIds.includes(t.id));
+      // In a real app, this data would come from a server.
+      // For this prototype, we filter the mockTournaments to find which ones the user has joined.
+      const userJoinedTournaments = mockTournaments.filter(tournament => 
+        tournament.participants.some(participant => participant.user.id === currentUser.id)
+      );
       setJoinedTournaments(userJoinedTournaments);
     }
-  }, [currentUser]);
+  }, [currentUser, mockTournaments]); // Depend on mockTournaments to re-render when a user joins.
 
 
   const upcomingLive = joinedTournaments.filter(t => t.status !== 'Completed');
