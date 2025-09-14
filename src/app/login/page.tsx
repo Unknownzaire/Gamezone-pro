@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,6 +58,11 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
                     <Input id="login-password" type="password" required />
+                    <div className="flex items-center justify-end pt-1">
+                       <Link href="#" className="text-sm text-muted-foreground hover:text-primary underline">
+                          Forgot Password?
+                        </Link>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full">Login</Button>
                 </form>
