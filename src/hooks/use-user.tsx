@@ -2,8 +2,8 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
-import { mockUsers, mockTransactions } from '@/lib/mock-data';
-import { User, Transaction } from '@/lib/types';
+import { mockUsers, mockTransactions, mockTournaments } from '@/lib/mock-data';
+import { User, Transaction, Tournament } from '@/lib/types';
 
 // Let's create a very simple global state for our user
 // In a real app, you'd use a more robust state management library or React Context with more features
@@ -11,8 +11,10 @@ import { User, Transaction } from '@/lib/types';
 interface UserContextType {
   user: User | null;
   transactions: Transaction[];
+  tournaments: Tournament[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
+  joinTournament: (tournamentId: string, user: User) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
 
   useEffect(() => {
     // In a real app, you'd fetch the current user from an API
@@ -60,8 +63,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const joinTournament = (tournamentId: string, user: User) => {
+    setTournaments(prevTournaments => {
+        return prevTournaments.map(t => {
+            if(t.id === tournamentId) {
+                const newParticipant = {
+                    id: `p-${t.id}-${user.id}`,
+                    user: user,
+                    tournamentId: t.id,
+                    result: null,
+                    joinedAt: new Date(),
+                };
+                return { ...t, participants: [...t.participants, newParticipant] };
+            }
+            return t;
+        })
+    });
+  }
+
   return (
-    <UserContext.Provider value={{ user, transactions, addTransaction, updateBalance }}>
+    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament }}>
       {children}
     </UserContext.Provider>
   );

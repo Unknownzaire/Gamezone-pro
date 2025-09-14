@@ -12,19 +12,19 @@ import { useEffect, useState } from "react";
 import { Tournament } from "@/lib/types";
 
 export default function MyTournamentsPage() {
-  const { user: currentUser } = useUser();
+  const { user: currentUser, tournaments } = useUser();
   const [joinedTournaments, setJoinedTournaments] = useState<Tournament[]>([]);
 
   useEffect(() => {
     if (currentUser) {
       // In a real app, this data would come from a server.
       // For this prototype, we filter the mockTournaments to find which ones the user has joined.
-      const userJoinedTournaments = mockTournaments.filter(tournament => 
+      const userJoinedTournaments = tournaments.filter(tournament => 
         tournament.participants.some(participant => participant.user.id === currentUser.id)
       );
       setJoinedTournaments(userJoinedTournaments);
     }
-  }, [currentUser, mockTournaments]); // Depend on mockTournaments to re-render when a user joins.
+  }, [currentUser, tournaments]);
 
 
   const upcomingLive = joinedTournaments.filter(t => t.status !== 'Completed');

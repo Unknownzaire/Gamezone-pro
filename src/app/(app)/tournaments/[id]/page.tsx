@@ -2,7 +2,7 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
-import { mockTournaments, mockUsers, mockParticipants } from '@/lib/mock-data';
+import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -40,9 +40,9 @@ import { useUser } from '@/hooks/use-user.tsx';
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  // We use a local state for the tournament to update the participants list visually
-  const [tournament, setTournament] = React.useState(() => mockTournaments.find((t) => t.id === params.id));
-  const { user: currentUser, updateBalance, addTransaction } = useUser();
+  const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
+
+  const tournament = tournaments.find((t) => t.id === params.id);
 
   if (!tournament) {
     notFound();
@@ -86,16 +86,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         description: `Joined "${tournamentToJoin.title}"`,
     });
     
-    const newParticipant = {
-        id: `p-${tournamentToJoin.id}-${currentUser.id}`,
-        user: currentUser,
-        tournamentId: tournamentToJoin.id,
-        result: null,
-        joinedAt: new Date(),
-    };
-
-    // This is a local update for demonstration. In a real app, this would come from the server.
-    setTournament(prev => prev ? { ...prev, participants: [...prev.participants, newParticipant] } : null);
+    joinTournament(tournamentToJoin.id, currentUser);
 
     toast({
       title: "Successfully Joined!",
