@@ -31,10 +31,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       // For a new user, create a fresh state
       const newUser: User = {
         ...mockUsers[0], // Use a base template, but customize
+        id: `user-${Date.now()}`,
         username: 'NewPlayer',
         email: 'newplayer@example.com',
         walletBalance: 100, // Start with a default balance
         avatarUrl: 'https://picsum.photos/seed/newuser/100/100',
+        bgmiUsername: 'NewPlayerBGMI',
+        bgmiId: '5' + Math.floor(100000000 + Math.random() * 900000000),
       };
       setUser(newUser);
       setTransactions([]); // No initial transactions
@@ -44,14 +47,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
       const balance = userTransactions.reduce((acc, tx) => {
+        if(tx.status !== 'completed') return acc;
           if (tx.type === 'credit') return acc + tx.amount;
           if (tx.type === 'debit') return acc - tx.amount;
           return acc;
       }, 0);
 
+      const pendingDebits = transactions
+        .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+        .reduce((acc, tx) => acc + tx.amount, 0);
 
-      setUser({ ...currentUser, walletBalance: balance });
-      setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setUser({ ...currentUser, walletBalance: balance - pendingDebits });
+      setTransactions(mockTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }
   };
 
