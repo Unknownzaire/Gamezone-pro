@@ -217,47 +217,49 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                     <div className="space-y-4 rounded-lg bg-card p-4">
-                        <div className="space-y-2">
+                     <div className="grid grid-cols-2 gap-6 rounded-lg bg-card p-4">
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="add-amount">Amount (₹)</Label>
+                                <Input 
+                                id="add-amount" 
+                                type="number" 
+                                placeholder="e.g., 500" 
+                                value={addAmount} 
+                                onChange={(e) => setAddAmount(e.target.value)} 
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Quick Add</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {quickAmounts.map(amount => (
+                                        <Button 
+                                            key={amount} 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => setAddAmount(amount.toString())}
+                                        >
+                                            ₹{amount}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
+                                <Input 
+                                id="upi-ref" 
+                                placeholder="Enter the 12-digit number"
+                                value={upiRef}
+                                onChange={(e) => setUpiRef(e.target.value)}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2 flex flex-col items-center justify-center">
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                             <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
                             <p className="font-mono text-xs text-black">{upiId}</p>
                             </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="add-amount">Amount (₹)</Label>
-                            <Input 
-                            id="add-amount" 
-                            type="number" 
-                            placeholder="e.g., 500" 
-                            value={addAmount} 
-                            onChange={(e) => setAddAmount(e.target.value)} 
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label>Quick Add</Label>
-                            <div className="flex flex-wrap gap-2">
-                                {quickAmounts.map(amount => (
-                                    <Button 
-                                        key={amount} 
-                                        variant="outline" 
-                                        size="sm"
-                                        onClick={() => setAddAmount(amount.toString())}
-                                    >
-                                        ₹{amount}
-                                    </Button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
-                            <Input 
-                            id="upi-ref" 
-                            placeholder="Enter the 12-digit number"
-                            value={upiRef}
-                            onChange={(e) => setUpiRef(e.target.value)}
-                            />
                         </div>
                     </div>
                     <DialogFooter>
@@ -378,3 +380,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
