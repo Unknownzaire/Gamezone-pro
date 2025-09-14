@@ -1,4 +1,7 @@
-import { mockTournaments } from '@/lib/mock-data';
+
+'use client';
+
+import { mockTournaments, mockUsers } from '@/lib/mock-data';
 import { notFound } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,13 +14,48 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WinnerSuggestion } from './components/WinnerSuggestion';
 import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
+import { useToast } from '@/hooks/use-toast';
+import { Tournament } from '@/lib/types';
+
 
 export default function ManageTournamentPage({ params }: { params: { id: string } }) {
-  const tournament = mockTournaments.find(t => t.id === params.id);
+  const { toast } = useToast();
+  const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
+  const tournament = tournaments.find(t => t.id === params.id);
+
+  const [roomId, setRoomId] = useState(tournament?.roomId || '');
+  const [roomPassword, setRoomPassword] = useState(tournament?.roomPassword || '');
+
 
   if (!tournament) {
     notFound();
   }
+  
+  const handleUpdateAndGoLive = () => {
+    if (!roomId || !roomPassword) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Details',
+        description: 'Please provide both a Room ID and a Password.',
+      });
+      return;
+    }
+    
+    // In a real app, this would be a server action to update the database
+    setTournaments(prev => 
+      prev.map(t => 
+        t.id === tournament.id 
+          ? { ...t, status: 'Live', roomId, roomPassword } 
+          : t
+      )
+    );
+
+    toast({
+      title: 'Tournament is Live!',
+      description: 'Room details have been updated and status is set to Live.',
+    });
+  };
 
   const statCards = [
     { title: "Status", value: tournament.status, icon: Clock },
@@ -64,13 +102,13 @@ export default function ManageTournamentPage({ params }: { params: { id: string 
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="room-id">Room ID</Label>
-                    <Input id="room-id" defaultValue={tournament.roomId} />
+                    <Input id="room-id" value={roomId} onChange={(e) => setRoomId(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="room-password">Room Password</Label>
-                    <Input id="room-password" defaultValue={tournament.roomPassword} />
+                    <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} />
                 </div>
-                <Button>Update & Go Live</Button>
+                <Button onClick={handleUpdateAndGoLive}>Update & Go Live</Button>
             </CardContent>
         </Card>
 
