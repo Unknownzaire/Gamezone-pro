@@ -1,10 +1,24 @@
+'use client';
+
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { mockTournaments, mockUsers } from "@/lib/mock-data";
+import { User } from '@/lib/types';
 import { DollarSign, Swords, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 
 export default function AdminDashboardPage() {
-  const totalUsers = mockUsers.length;
+  const [totalUsers, setTotalUsers] = useState(mockUsers.length);
+
+  useEffect(() => {
+    const storedUsers = localStorage.getItem('allUsers');
+    if (storedUsers) {
+      const users: User[] = JSON.parse(storedUsers);
+      setTotalUsers(users.length);
+    }
+  }, []);
+
+
   const totalTournaments = mockTournaments.length;
   const totalPrizeDistributed = mockTournaments
     .filter(t => t.status === 'Completed')
