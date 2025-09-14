@@ -9,10 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
+import { useState } from "react";
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState('login');
+
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,7 +32,7 @@ export default function LoginPage() {
       title: 'Sign Up Successful',
       description: 'Your account has been created. Please log in.',
     });
-    // In a real app, you might switch to the login tab here.
+    setActiveTab('login');
   };
 
   return (
@@ -38,7 +41,7 @@ export default function LoginPage() {
         <div className="flex justify-center">
             <Logo />
         </div>
-        <Tabs defaultValue="login" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
