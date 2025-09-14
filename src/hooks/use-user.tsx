@@ -53,8 +53,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
     setTransactions(prev => [newTx, ...prev]);
-    if (user && newTx.status === 'completed') {
-      const newBalance = tx.type === 'credit' ? user.walletBalance + tx.amount : user.walletBalance - tx.amount;
+    // For pending transactions, we don't adjust the balance immediately.
+    // Let's assume the balance is only affected when a transaction is 'completed'.
+    // The initial balance calculation already handles this.
+    // If a withdrawal request is made, we add it as 'pending', but don't deduct from balance yet.
+    // The admin would later approve it, changing status to 'completed' and then balance is deducted.
+    // For now, the mock data is simple. Let's make an exception for the 'join' flow.
+    if (user && newTx.status === 'completed' && newTx.type === 'debit' && newTx.description.includes('Joined')) {
+      const newBalance = user.walletBalance - tx.amount;
       setUser({ ...user, walletBalance: newBalance });
     }
   };

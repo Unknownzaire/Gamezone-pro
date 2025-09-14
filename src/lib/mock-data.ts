@@ -105,5 +105,5 @@ export const mockTransactions: Transaction[] = [
   { id: 'tx-5', userId: 'user-1', amount: 50, type: 'debit', description: 'Joined "Sunrise Skirmish"', createdAt: new Date('2025-09-16T10:00:00Z'), status: 'completed' },
   { id: 'tx-6', userId: 'user-1', amount: 1000, type: 'credit', description: 'Prize from "Old Tournament"', createdAt: new Date('2024-07-20T18:00:00Z'), status: 'completed' },
   { id: 'tx-7', userId: 'user-1', amount: 200, type: 'credit', description: 'Referral Bonus', createdAt: new Date('2024-07-22T11:30:00Z'), status: 'completed' },
-  { id: 'tx-8', userId: 'user-1', amount: 250, type: 'credit', description: 'Withdrawal from Bank', createdAt: new Date('2024-07-29T14:00:00Z'), status: 'pending' },
+  { id: 'tx-8', userId: 'user-1', amount: 250, type: 'debit', description: 'Withdrawal from Bank', createdAt: new Date('2024-07-29T14:00:00Z'), status: 'pending' },
 ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
