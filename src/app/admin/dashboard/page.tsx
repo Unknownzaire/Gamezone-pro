@@ -22,6 +22,9 @@ export default function AdminDashboardPage() {
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
+  
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
+  const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -101,6 +104,9 @@ export default function AdminDashboardPage() {
       title: `Request ${status === 'completed' ? 'Approved' : 'Declined'}`,
       description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
     });
+    
+    if (isDeposit && pendingDeposits.length === 1) setIsDepositModalOpen(false);
+    if (!isDeposit && pendingWithdrawals.length === 1) setIsWithdrawalModalOpen(false);
   };
   
   const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -126,7 +132,7 @@ export default function AdminDashboardPage() {
         })}
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Dialog>
+        <Dialog open={isDepositModalOpen} onOpenChange={setIsDepositModalOpen}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -193,7 +199,7 @@ export default function AdminDashboardPage() {
           </DialogContent>
         </Dialog>
         
-        <Dialog>
+        <Dialog open={isWithdrawalModalOpen} onOpenChange={setIsWithdrawalModalOpen}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
