@@ -76,7 +76,6 @@ export default function WalletPage() {
 
   const [addAmount, setAddAmount] = useState('');
   const [upiRef, setUpiRef] = useState('');
-  const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const quickAmounts = [50, 100, 200, 500, 1000];
 
   const handleWithdraw = () => {
@@ -126,7 +125,6 @@ export default function WalletPage() {
     toast({ title: "Money Added!", description: `₹${amount.toLocaleString()} has been successfully added to your wallet.` });
     setAddAmount('');
     setUpiRef('');
-    setIsAddMoneyOpen(false);
   }
 
   const upiId = 'arenaace@upi';
@@ -172,150 +170,112 @@ export default function WalletPage() {
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">My Wallet</h1>
 
-      <Card className="text-center">
-        <CardHeader>
+      <Card>
+        <CardHeader className="text-center">
           <CardDescription>Current Balance</CardDescription>
           <CardTitle className="font-headline text-5xl text-primary">
             ₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-2 gap-4">
-           <Dialog open={isAddMoneyOpen} onOpenChange={setIsAddMoneyOpen}>
-            <DialogTrigger asChild>
-              <Button className="w-full">Add Money</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Add Money to Wallet</DialogTitle>
-                <DialogDescription>
-                  Scan the QR code with your UPI app and enter the reference number to add funds.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-2">
-                 <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="add-amount">Amount (₹)</Label>
-                      <Input 
-                        id="add-amount" 
-                        type="number" 
-                        placeholder="e.g., 500" 
-                        value={addAmount} 
-                        onChange={(e) => setAddAmount(e.target.value)} 
-                      />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Quick Add</Label>
-                        <div className="flex flex-wrap gap-2">
-                            {quickAmounts.map(amount => (
-                                <Button 
-                                    key={amount} 
-                                    variant="outline" 
-                                    size="sm"
-                                    onClick={() => setAddAmount(amount.toString())}
-                                >
-                                    ₹{amount}
-                                </Button>
-                            ))}
-                        </div>
-                    </div>
-                     <div className="space-y-2">
-                      <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
-                      <Input 
-                        id="upi-ref" 
-                        placeholder="Enter the 12-digit reference number"
-                        value={upiRef}
-                        onChange={(e) => setUpiRef(e.target.value)}
-                      />
-                    </div>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Add Money Column */}
+          <div className="space-y-4 rounded-lg border bg-card-nested p-4">
+             <h3 className="font-headline text-xl font-semibold">Add Money</h3>
+              <div className="space-y-2">
+                <Label>Scan and Pay</Label>
+                 <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
+                   <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
+                   <p className="font-mono text-xs">{upiId}</p>
                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                     <p className="text-sm text-muted-foreground">Scan and Pay</p>
-                     <div className="p-2 bg-white rounded-lg">
-                       <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
-                     </div>
-                      <p className="font-mono text-xs">{upiId}</p>
+              </div>
+               <div className="space-y-2">
+                <Label htmlFor="add-amount">Amount (₹)</Label>
+                <Input 
+                  id="add-amount" 
+                  type="number" 
+                  placeholder="e.g., 500" 
+                  value={addAmount} 
+                  onChange={(e) => setAddAmount(e.target.value)} 
+                />
+              </div>
+              <div className="space-y-2">
+                  <Label>Quick Add</Label>
+                  <div className="flex flex-wrap gap-2">
+                      {quickAmounts.map(amount => (
+                          <Button 
+                              key={amount} 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setAddAmount(amount.toString())}
+                          >
+                              ₹{amount}
+                          </Button>
+                      ))}
                   </div>
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleAddMoney}>Submit & Add Funds</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+               <div className="space-y-2">
+                <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
+                <Input 
+                  id="upi-ref" 
+                  placeholder="Enter the 12-digit number"
+                  value={upiRef}
+                  onChange={(e) => setUpiRef(e.target.value)}
+                />
+              </div>
+              <Button onClick={handleAddMoney} className="w-full">Add Funds</Button>
+          </div>
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="secondary" className="w-full">Withdraw</Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Request Withdrawal</DialogTitle>
-                <DialogDescription>
-                  Enter the amount and select a method for withdrawal. Requests are processed within 2-3 business days.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="amount">Amount (₹)</Label>
-                  <Input 
-                    id="amount" 
-                    type="number" 
-                    placeholder="e.g., 500" 
-                    value={withdrawAmount} 
-                    onChange={(e) => setWithdrawAmount(e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Withdrawal Method</Label>
-                  <RadioGroup defaultValue="upi" onValueChange={setWithdrawMethod}>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="upi" id="upi" />
-                      <Label htmlFor="upi">UPI</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="bank" id="bank" />
-                      <Label htmlFor="bank">Bank Transfer</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                {withdrawMethod === 'upi' && (
-                  <div className="space-y-2">
-                    <Label htmlFor="upi-id">UPI ID</Label>
-                    <Input id="upi-id" placeholder="yourname@bank" />
-                  </div>
-                )}
-                 {withdrawMethod === 'bank' && (
-                  <div className="space-y-4 rounded-md border p-4">
-                     <p className="text-sm font-medium">Bank Account Details</p>
-                     <div className="space-y-2">
-                        <Label htmlFor="acc-number">Account Number</Label>
-                        <Input id="acc-number" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="ifsc">IFSC Code</Label>
-                        <Input id="ifsc" />
-                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="acc-holder">Account Holder Name</Label>
-                        <Input id="acc-holder" />
-                     </div>
-                  </div>
-                )}
+          {/* Withdraw Column */}
+          <div className="space-y-4 rounded-lg border bg-card-nested p-4">
+              <h3 className="font-headline text-xl font-semibold">Withdraw Funds</h3>
+               <div className="space-y-2">
+                <Label htmlFor="amount">Amount (₹)</Label>
+                <Input 
+                  id="amount" 
+                  type="number" 
+                  placeholder="e.g., 500" 
+                  value={withdrawAmount} 
+                  onChange={(e) => setWithdrawAmount(e.target.value)} 
+                />
               </div>
-              <DialogFooter>
-                <DialogClose asChild>
-                  <Button type="button" variant="secondary">
-                    Cancel
-                  </Button>
-                </DialogClose>
-                <DialogClose asChild>
-                    <Button type="submit" onClick={handleWithdraw}>Submit Request</Button>
-                </DialogClose>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+              <div className="space-y-2">
+                <Label>Withdrawal Method</Label>
+                <RadioGroup defaultValue="upi" onValueChange={setWithdrawMethod} className="flex gap-4">
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="upi" id="upi" />
+                    <Label htmlFor="upi">UPI</Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="bank" id="bank" />
+                    <Label htmlFor="bank">Bank Transfer</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              {withdrawMethod === 'upi' && (
+                <div className="space-y-2">
+                  <Label htmlFor="upi-id">UPI ID</Label>
+                  <Input id="upi-id" placeholder="yourname@bank" />
+                </div>
+              )}
+               {withdrawMethod === 'bank' && (
+                <div className="space-y-4 rounded-md border p-4">
+                   <p className="text-sm font-medium">Bank Account Details</p>
+                   <div className="space-y-2">
+                      <Label htmlFor="acc-number">Account Number</Label>
+                      <Input id="acc-number" />
+                   </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="ifsc">IFSC Code</Label>
+                      <Input id="ifsc" />
+                   </div>
+                   <div className="space-y-2">
+                      <Label htmlFor="acc-holder">Account Holder Name</Label>
+                      <Input id="acc-holder" />
+                   </div>
+                </div>
+              )}
+               <Button variant="secondary" onClick={handleWithdraw} className="w-full">Submit Request</Button>
+          </div>
         </CardContent>
       </Card>
       
