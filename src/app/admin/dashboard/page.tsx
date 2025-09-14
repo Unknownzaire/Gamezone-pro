@@ -52,7 +52,7 @@ export default function AdminDashboardPage() {
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: Trophy, href: null },
   ];
   
-  const handleRequest = (transactionId: string, status: 'approved' | 'declined', type: 'credit' | 'debit') => {
+  const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit') => {
     const isDeposit = type === 'credit';
     const transactionList = isDeposit ? pendingDeposits : pendingWithdrawals;
     const setTransactionList = isDeposit ? setPendingDeposits : setPendingWithdrawals;
@@ -64,7 +64,7 @@ export default function AdminDashboardPage() {
     const userToUpdate = allUsers.find(u => u.id === transaction.userId);
 
     if (userToUpdate) {
-        if (status === 'approved') {
+        if (status === 'completed') {
             if (isDeposit) {
                 // Add to balance for approved deposit
                 updatedUsers = updatedUsers.map(u => 
@@ -92,14 +92,14 @@ export default function AdminDashboardPage() {
     
     const storedTransactions = localStorage.getItem('allTransactions');
     let allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : initialTransactions;
-    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status === 'approved' ? 'completed' : 'declined' } : t);
+    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status } : t);
     localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
 
     setTransactionList(prev => prev.filter(tx => tx.id !== transactionId));
     
     toast({
-      title: `Request ${status}`,
-      description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status}.`,
+      title: `Request ${status === 'completed' ? 'Approved' : 'Declined'}`,
+      description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
     });
   };
   
@@ -178,7 +178,7 @@ export default function AdminDashboardPage() {
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
                               <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'credit')}>Decline</Button>
-                              <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'credit')}>Approve</Button>
+                              <Button size="sm" onClick={() => handleRequest(tx.id, 'completed', 'credit')}>Approve</Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -261,7 +261,7 @@ export default function AdminDashboardPage() {
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
                               <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
-                              <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
+                              <Button size="sm" onClick={() => handleRequest(tx.id, 'completed', 'debit')}>Approve</Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -279,3 +279,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
