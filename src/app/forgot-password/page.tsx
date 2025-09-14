@@ -17,9 +17,10 @@ export default function ForgotPasswordPage() {
 
   const handleSendEmailResetLink = (e: React.FormEvent) => {
     e.preventDefault();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     toast({
       title: 'OTP Sent',
-      description: 'If an account exists with that email, an OTP has been sent.',
+      description: `If an account exists, an OTP has been sent. (OTP: ${otp})`,
     });
     // In a real app, you would likely navigate to a new page to enter the OTP
     // router.push('/verify-otp'); 
@@ -27,9 +28,10 @@ export default function ForgotPasswordPage() {
 
   const handleSendMobileResetLink = (e: React.FormEvent) => {
     e.preventDefault();
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
     toast({
       title: 'OTP Sent',
-      description: 'If an account exists with that mobile number, an OTP has been sent via SMS.',
+      description: `If an account exists, an OTP has been sent via SMS. (OTP: ${otp})`,
     });
     // In a real app, you would likely navigate to a new page to enter the OTP
     // router.push('/verify-otp');
