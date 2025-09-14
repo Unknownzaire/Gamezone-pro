@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -14,8 +15,12 @@ import { Skeleton } from '@/components/ui/skeleton';
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser } = useUser();
+  const { user: currentUser, setUser } = useUser();
 
+  const [username, setUsername] = useState('');
+  const [bgmiUsername, setBgmiUsername] = useState('');
+  const [bgmiId, setBgmiId] = useState('');
+  const [mobile, setMobile] = useState('');
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -29,6 +34,15 @@ export default function ProfilePage() {
   
   const [emailCountdown, setEmailCountdown] = useState(0);
   const [mobileCountdown, setMobileCountdown] = useState(0);
+
+  useEffect(() => {
+    if (currentUser) {
+      setUsername(currentUser.username || '');
+      setBgmiUsername(currentUser.bgmiUsername || '');
+      setBgmiId(currentUser.bgmiId || '');
+      setMobile(currentUser.mobile || '');
+    }
+  }, [currentUser]);
   
   useEffect(() => {
     let emailTimer: NodeJS.Timeout;
@@ -47,7 +61,16 @@ export default function ProfilePage() {
   }, [mobileCountdown]);
 
   const handleUpdateProfile = () => {
-    toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+    if (currentUser) {
+      setUser({
+        ...currentUser,
+        username,
+        bgmiUsername,
+        bgmiId,
+        mobile
+      });
+      toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+    }
   };
 
   const handleChangePassword = () => {
@@ -142,15 +165,15 @@ export default function ProfilePage() {
             <h2 className="font-headline text-xl font-semibold">Edit Profile</h2>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" defaultValue={currentUser.username} />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
-              <Input id="bgmiUsername" defaultValue={currentUser.bgmiUsername} placeholder="Your in-game name" disabled />
+              <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" />
             </div>
              <div className="space-y-2">
               <Label htmlFor="bgmiId">BGMI User ID</Label>
-              <Input id="bgmiId" defaultValue={currentUser.bgmiId} placeholder="Your numeric game ID" disabled />
+              <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" />
             </div>
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -173,7 +196,7 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="mobile">Mobile Number</Label>
                <div className="flex items-center gap-2">
-                    <Input id="mobile" type="tel" defaultValue={currentUser.mobile} />
+                    <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
                      {!mobileVerified && (
                         <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
                            {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
@@ -215,3 +238,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    

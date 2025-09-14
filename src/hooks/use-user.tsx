@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
 
@@ -10,6 +10,7 @@ import { User, Transaction, Tournament } from '@/lib/types';
 
 interface UserContextType {
   user: User | null;
+  setUser: Dispatch<SetStateAction<User | null>>;
   transactions: Transaction[];
   tournaments: Tournament[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
@@ -197,7 +198,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup }}>
       {children}
     </UserContext.Provider>
   );
@@ -211,3 +212,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
