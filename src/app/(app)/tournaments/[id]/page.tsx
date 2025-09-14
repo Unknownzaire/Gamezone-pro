@@ -34,7 +34,7 @@ import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import React from 'react';
-import { useUser } from '@/hooks/use-user';
+import { useUser } from '@/hooks/use-user.tsx';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {

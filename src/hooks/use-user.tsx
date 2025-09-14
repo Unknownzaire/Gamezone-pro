@@ -28,16 +28,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const currentUser = { ...mockUsers[0] };
     const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
-    // Recalculate balance based on transactions for consistency
-    const initialBalance = mockTransactions
-      .filter(tx => tx.userId === currentUser.id)
-      .reduce((acc, tx) => {
-        if (tx.type === 'credit') return acc + tx.amount;
-        return acc - tx.amount;
-      }, 0);
-
-    // Let's find an initial "Credit" to represent starting balance
-    const deposit = userTransactions.find(tx => tx.description === 'Added to wallet');
     const balance = userTransactions.reduce((acc, tx) => {
         if (tx.type === 'credit') return acc + tx.amount;
         if (tx.type === 'debit') return acc - tx.amount;
@@ -46,7 +36,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
     setUser({ ...currentUser, walletBalance: balance });
-    setTransactions(userTransactions);
+    setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, []);
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {

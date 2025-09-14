@@ -4,7 +4,7 @@
 import { Wallet } from "lucide-react";
 import Logo from "./Logo";
 import Link from "next/link";
-import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "./ui/skeleton";
 
 export default function AppHeader() {

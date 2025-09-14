@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { format } from "date-fns";
-import { useUser } from "@/hooks/use-user";
+import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function WalletPage() {

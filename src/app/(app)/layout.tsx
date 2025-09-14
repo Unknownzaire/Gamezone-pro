@@ -4,7 +4,7 @@
 import React from 'react';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
-import { UserProvider } from '@/hooks/use-user';
+import { UserProvider } from '@/hooks/use-user.tsx';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
