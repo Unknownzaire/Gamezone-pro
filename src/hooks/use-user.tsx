@@ -149,12 +149,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (user) {
-      sessionStorage.setItem('currentUser', JSON.stringify(user));
+        // Ensure that the user data in storage is the most up-to-date
+        const liveUserData = allUsers.find(u => u.id === user.id);
+        const dataToStore = liveUserData || user;
+        sessionStorage.setItem('currentUser', JSON.stringify(dataToStore));
     } else {
-      sessionStorage.removeItem('currentUser');
-      sessionStorage.removeItem('isNewUser');
+        sessionStorage.removeItem('currentUser');
+        sessionStorage.removeItem('isNewUser');
     }
-  }, [user]);
+  }, [user, allUsers]);
 
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
