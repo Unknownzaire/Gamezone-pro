@@ -6,14 +6,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { mockUsers } from "@/lib/mock-data";
 import { useRouter } from "next/navigation";
 import { CheckCircle } from 'lucide-react';
+import { useUser } from '@/hooks/use-user.tsx';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const currentUser = mockUsers[0];
+  const { user: currentUser } = useUser();
+
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -60,6 +62,7 @@ export default function ProfilePage() {
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
   const handleSendEmailOtp = () => {
+    if(!currentUser) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailOtpSent(true);
@@ -95,6 +98,25 @@ export default function ProfilePage() {
     }
   };
 
+  if (!currentUser) {
+    return (
+      <div className="space-y-6">
+        <h1 className="font-headline text-3xl font-bold">My Profile</h1>
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex flex-col items-center space-y-4">
+              <Skeleton className="h-24 w-24 rounded-full" />
+              <div className="text-center space-y-2">
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-5 w-48" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
 
   return (
     <div className="space-y-6">
@@ -121,6 +143,14 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
               <Input id="username" defaultValue={currentUser.username} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bgmiUsername">BGMI Username</Label>
+              <Input id="bgmiUsername" defaultValue={currentUser.bgmiUsername} placeholder="Your in-game name" />
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="bgmiId">BGMI User ID</Label>
+              <Input id="bgmiId" defaultValue={currentUser.bgmiId} placeholder="Your numeric game ID" />
             </div>
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

@@ -39,4 +39,6 @@ export type User = {
   walletBalance: number;
   avatarUrl: string;
   mobile?: string;
+  bgmiUsername?: string;
+  bgmiId?: string;
 };
