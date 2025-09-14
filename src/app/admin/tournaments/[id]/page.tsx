@@ -2,7 +2,7 @@
 'use client';
 
 import { mockTournaments, mockUsers } from '@/lib/mock-data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,9 +19,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Tournament } from '@/lib/types';
 
 
-export default function ManageTournamentPage({ params }: { params: { id: string } }) {
+export default function ManageTournamentPage() {
   const { toast } = useToast();
-  const id = params.id;
+  const params = useParams();
+  const id = params.id as string;
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
   const tournament = tournaments.find(t => t.id === id);
 
