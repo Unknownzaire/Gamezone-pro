@@ -83,6 +83,9 @@ export default function WalletPage() {
   const [upiRef, setUpiRef] = useState('');
   const quickAmounts = [50, 100, 200, 500, 1000];
 
+  const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
+  const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+
   const handleWithdraw = () => {
     if (!user) return;
     const amount = parseFloat(withdrawAmount);
@@ -124,7 +127,7 @@ export default function WalletPage() {
     setAccountNumber('');
     setIfscCode('');
     setAccountHolderName('');
-    // Would be good to close the dialog here
+    setIsWithdrawOpen(false);
   };
 
   const handleAddMoney = () => {
@@ -153,7 +156,7 @@ export default function WalletPage() {
     toast({ title: "Deposit Request Submitted", description: `Your request to add ₹${amount.toLocaleString()} is pending approval.` });
     setAddAmount('');
     setUpiRef('');
-    // Would be good to close the dialog here
+    setIsAddMoneyOpen(false);
   }
 
   const upiId = 'arenaace@upi';
@@ -208,7 +211,7 @@ export default function WalletPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
-            <Dialog>
+            <Dialog open={isAddMoneyOpen} onOpenChange={setIsAddMoneyOpen}>
                 <DialogTrigger asChild>
                     <Button className="w-full">Add Money</Button>
                 </DialogTrigger>
@@ -217,8 +220,8 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                     <div className="grid grid-cols-2 gap-6 rounded-lg bg-card p-4">
-                        <div className="space-y-4">
+                    <div className="flex gap-6 rounded-lg bg-card p-4">
+                        <div className="w-1/2 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
                                 <Input 
@@ -254,7 +257,7 @@ export default function WalletPage() {
                                 />
                             </div>
                         </div>
-                        <div className="space-y-2 flex flex-col items-center justify-center">
+                        <div className="w-1/2 space-y-2 flex flex-col items-center justify-center">
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                             <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
@@ -270,7 +273,7 @@ export default function WalletPage() {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-            <Dialog>
+            <Dialog open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
                 <DialogTrigger asChild>
                     <Button variant="secondary" className="w-full">Withdraw</Button>
                 </DialogTrigger>
@@ -380,5 +383,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
