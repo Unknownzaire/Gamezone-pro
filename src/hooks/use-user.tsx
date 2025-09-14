@@ -18,6 +18,7 @@ interface UserContextType {
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => void;
+  logout: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -32,20 +33,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const storedUsers = localStorage.getItem('allUsers');
-    if (storedUsers) {
-      setAllUsers(JSON.parse(storedUsers));
-    } else {
-      setAllUsers(mockUsers);
-      localStorage.setItem('allUsers', JSON.stringify(mockUsers));
-    }
-    
-    const storedTransactions = localStorage.getItem('allTransactions');
-    if (storedTransactions) {
-      setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
-    } else {
-      setAllTransactions(mockTransactions);
-      localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
+    try {
+        const storedUsers = localStorage.getItem('allUsers');
+        if (storedUsers) {
+        setAllUsers(JSON.parse(storedUsers));
+        } else {
+        setAllUsers(mockUsers);
+        localStorage.setItem('allUsers', JSON.stringify(mockUsers));
+        }
+        
+        const storedTransactions = localStorage.getItem('allTransactions');
+        if (storedTransactions) {
+        setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
+        } else {
+        setAllTransactions(mockTransactions);
+        localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
+        }
+    } catch(e) {
+        console.error("Error loading data from localStorage", e);
+        setAllUsers(mockUsers);
+        setAllTransactions(mockTransactions);
     }
     setLoading(false);
   }, []);
@@ -82,21 +89,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const currentUser = { ...userToLogin };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    const userTransactions = allTransactions.filter(tx => tx.userId === currentUser.id);
-
-    const completedBalance = userTransactions.reduce((acc, tx) => {
-      if(tx.status !== 'completed') return acc;
-        if (tx.type === 'credit') return acc + tx.amount;
-        if (tx.type === 'debit') return acc - tx.amount;
-        return acc;
-    }, 0);
-
-    const pendingDebits = userTransactions
-      .filter(tx => tx.status === 'pending' && tx.type === 'debit')
-      .reduce((acc, tx) => acc + tx.amount, 0);
-
-    setUser({ ...currentUser, walletBalance: completedBalance - pendingDebits });
-    setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    loadUserContext(currentUser.id);
     return true;
   };
   
@@ -116,63 +109,63 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setTransactions([]);
   };
 
+  const logout = () => {
+    sessionStorage.removeItem('currentUser');
+    setUser(null);
+    setTransactions([]);
+  }
+
+  const loadUserContext = (userId: string) => {
+    const liveUserData = allUsers.find(u => u.id === userId);
+
+    if (liveUserData) {
+        if (liveUserData.isBlocked) {
+            logout();
+            return;
+        }
+
+        const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
+        const completedBalance = userTransactions.reduce((acc, tx) => {
+            if(tx.status !== 'completed') return acc;
+            if (tx.type === 'credit') return acc + tx.amount;
+            if (tx.type === 'debit') return acc - tx.amount;
+            return acc;
+        }, 0);
+
+        const pendingDebits = userTransactions
+            .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+            .reduce((acc, tx) => acc + tx.amount, 0);
+        
+        const finalBalance = completedBalance - pendingDebits;
+
+        setUser({ ...liveUserData, walletBalance: finalBalance });
+        setTransactions(userTransactions);
+    } else {
+        logout();
+    }
+  }
+
+
   useEffect(() => {
     if (loading) return;
-    const storedUser = sessionStorage.getItem('currentUser');
-    if (storedUser) {
-        const loggedInUser: User = JSON.parse(storedUser);
-
-        // Find the latest user data from allUsers, which may have been updated by an admin
-        const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
-        if (liveUserData) {
-            if (liveUserData.isBlocked) {
-                // If user is blocked, log them out
-                sessionStorage.removeItem('currentUser');
-                setUser(null);
-                setTransactions([]);
-                return;
-            }
-
-            const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
-            const completedBalance = userTransactions.reduce((acc, tx) => {
-                if(tx.status !== 'completed') return acc;
-                if (tx.type === 'credit') return acc + tx.amount;
-                if (tx.type === 'debit') return acc - tx.amount;
-                return acc;
-            }, 0);
-
-            const pendingDebits = userTransactions
-                .filter(tx => tx.status === 'pending' && tx.type === 'debit')
-                .reduce((acc, tx) => acc + tx.amount, 0);
-            
-            const finalBalance = completedBalance - pendingDebits;
-
-            setUser({ ...liveUserData, walletBalance: finalBalance });
-            setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    try {
+        const storedUser = sessionStorage.getItem('currentUser');
+        if (storedUser) {
+            const loggedInUser: User = JSON.parse(storedUser);
+            loadUserContext(loggedInUser.id);
         }
-        else {
-            // User not found in allUsers, maybe deleted by admin or is a new signup, so log out or use session
-            const isNewUser = allUsers.every(u => u.id !== loggedInUser.id);
-            if (isNewUser) {
-                 setUser(loggedInUser);
-                 setTransactions([]);
-            } else {
-                sessionStorage.removeItem('currentUser');
-                setUser(null);
-                setTransactions([]);
-            }
-        }
+    } catch(e) {
+        console.error("Error loading user from sessionStorage", e);
+        logout();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allUsers, allTransactions, loading]);
 
   useEffect(() => {
     if (user) {
-        // Ensure that the user data in storage is the most up-to-date
         const liveUserData = allUsers.find(u => u.id === user.id);
         const dataToStore = liveUserData || user;
         sessionStorage.setItem('currentUser', JSON.stringify(dataToStore));
-    } else {
-        sessionStorage.removeItem('currentUser');
     }
   }, [user, allUsers]);
 
@@ -184,10 +177,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       userId: user.id,
       createdAt: new Date(),
     };
-    setTransactions(prev => [newTx, ...prev]);
     setAllTransactions(prev => [newTx, ...prev]);
     
-    // Only deduct from balance if it's a new pending withdrawal
+    // Also update the local transactions for the current user
+    setTransactions(prev => [newTx, ...prev]);
+    
     if (user && newTx.type === 'debit' && newTx.status === 'pending') {
       const newBalance = user.walletBalance - tx.amount;
       setUser({ ...user, walletBalance: newBalance });
@@ -204,9 +198,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setTournaments(prevTournaments => 
       prevTournaments.map(t => {
         if (t.id === tournamentId) {
-          // Check if user is already a participant
           if (t.participants.some(p => p.user.id === userToJoin.id)) {
-            return t; // User already joined, return tournament as is
+            return t; 
           }
           const newParticipant = {
             id: `p-${t.id}-${userToJoin.id}`,
@@ -223,8 +216,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup }}>
-      {children}
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup, logout }}>
+      {!loading && children}
     </UserContext.Provider>
   );
 };
@@ -238,4 +231,5 @@ export const useUser = () => {
   return context;
 };
 
+    
     

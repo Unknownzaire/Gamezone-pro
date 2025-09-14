@@ -53,10 +53,10 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                             <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
                                 {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
                             </p>
-                            {showStatus && tx.status === 'pending' && (
-                                <Badge variant="outline" className="mt-1 flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    Pending
+                            {showStatus && tx.status && tx.status !== 'completed' && (
+                                <Badge variant={tx.status === 'pending' ? 'outline' : 'destructive'} className="mt-1 flex items-center gap-1 capitalize">
+                                    {tx.status === 'pending' && <Clock className="h-3 w-3" />}
+                                    {tx.status}
                                 </Badge>
                             )}
                         </div>
@@ -191,6 +191,7 @@ export default function WalletPage() {
   const creditTransactions = completedTransactions.filter(tx => tx.type === 'credit');
   const debitTransactions = completedTransactions.filter(tx => tx.type === 'debit');
   const pendingTransactions = transactions.filter(tx => tx.status === 'pending');
+  const allSortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
 
   return (
@@ -318,7 +319,7 @@ export default function WalletPage() {
             <TabsContent value="all" className="mt-4">
                 <Card>
                     <CardContent className="p-0">
-                       <TransactionList transactions={transactions} showStatus={true} />
+                       <TransactionList transactions={allSortedTransactions} showStatus={true} />
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -349,4 +350,5 @@ export default function WalletPage() {
   );
 }
 
+    
     
