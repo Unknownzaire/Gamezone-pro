@@ -20,6 +20,11 @@ function LoginFormComponent() {
   const [activeTab, setActiveTab] = useState('login');
   const { login, signup } = useUser();
   
+  const [loginForm, setLoginForm] = useState({
+    email: 'player1@example.com',
+    password: 'password'
+  });
+
   const [signupForm, setSignupForm] = useState({
       username: '',
       bgmiUsername: '',
@@ -48,6 +53,13 @@ function LoginFormComponent() {
     }
   };
 
+  const handleLoginChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setLoginForm({
+        ...loginForm,
+        [e.target.name]: e.target.value
+    });
+  };
+
   const handleSignupChange = (e: ChangeEvent<HTMLInputElement>) => {
       setSignupForm({
           ...signupForm,
@@ -57,12 +69,20 @@ function LoginFormComponent() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    login();
-    toast({
-      title: 'Login Successful',
-      description: 'Welcome back!',
-    });
-    router.push('/home');
+    const loggedIn = login(loginForm.email, loginForm.password);
+    if(loggedIn) {
+        toast({
+            title: 'Login Successful',
+            description: 'Welcome back!',
+        });
+        router.push('/home');
+    } else {
+        toast({
+            variant: 'destructive',
+            title: 'Login Failed',
+            description: 'Invalid email or password. Please try again.',
+        });
+    }
   };
 
   const handleSignUp = (e: React.FormEvent) => {
@@ -107,11 +127,11 @@ function LoginFormComponent() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" type="email" placeholder="you@example.com" required defaultValue="player1@example.com" />
+                    <Input id="login-email" name="email" type="email" placeholder="you@example.com" required value={loginForm.email} onChange={handleLoginChange} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
-                    <Input id="login-password" type="password" required defaultValue="password" />
+                    <Input id="login-password" name="password" type="password" required value={loginForm.password} onChange={handleLoginChange} />
                     <div className="flex items-center justify-end pt-1">
                        <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
                           Forgot Password?
