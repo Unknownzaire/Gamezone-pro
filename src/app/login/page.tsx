@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useRef } from "react";
 import { UserProvider, useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 
@@ -29,10 +29,29 @@ function LoginFormComponent() {
       password: ''
   });
 
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const bgmiUsernameRef = useRef<HTMLInputElement>(null);
+  const bgmiIdRef = useRef<HTMLInputElement>(null);
+  const mobileRef = useRef<HTMLInputElement>(null);
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const signupButtonRef = useRef<HTMLButtonElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (isLastField) {
+        signupButtonRef.current?.click();
+      } else if (nextFieldRef?.current) {
+        nextFieldRef.current.focus();
+      }
+    }
+  };
+
   const handleSignupChange = (e: ChangeEvent<HTMLInputElement>) => {
       setSignupForm({
           ...signupForm,
-          [e.target.id.replace('signup-', '')]: e.target.value
+          [e.target.name]: e.target.value
       });
   };
 
@@ -114,29 +133,29 @@ function LoginFormComponent() {
                 <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="signup-username">Username</Label>
-                        <Input id="signup-username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} />
+                        <Input id="signup-username" name="username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} ref={usernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiUsernameRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
-                        <Input id="signup-bgmiUsername" placeholder="Your in-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} />
+                        <Input id="signup-bgmiUsername" name="bgmiUsername" placeholder="Your in-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} ref={bgmiUsernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiIdRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
-                        <Input id="signup-bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} />
+                        <Input id="signup-bgmiId" name="bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
-                        <Input id="signup-mobile" type="tel" placeholder="Your mobile number" required onChange={handleSignupChange} value={signupForm.mobile} />
+                        <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
-                        <Input id="signup-email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} />
+                        <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
-                        <Input id="signup-password" type="password" required onChange={handleSignupChange} value={signupForm.password}/>
+                        <Input id="signup-password" name="password" type="password" required onChange={handleSignupChange} value={signupForm.password} ref={passwordRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
-                    <Button type="submit" className="w-full">Sign Up</Button>
+                    <Button type="submit" className="w-full" ref={signupButtonRef}>Sign Up</Button>
                 </form>
               </CardContent>
             </Card>
