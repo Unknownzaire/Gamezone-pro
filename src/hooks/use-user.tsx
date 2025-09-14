@@ -4,6 +4,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
+import { usePathname, useRouter } from 'next/navigation';
 
 // Let's create a very simple global state for our user
 // In a real app, you'd use a more robust state management library or React Context with more features
@@ -31,6 +32,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     try {
@@ -85,11 +88,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     
     // For demo, we are not checking password. In a real app, you'd check a hashed password.
-
-    const currentUser = { ...userToLogin };
-    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     
-    loadUserContext(currentUser.id);
+    loadUserContext(userToLogin.id);
     return true;
   };
   
@@ -104,7 +104,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
     
-    sessionStorage.setItem('currentUser', JSON.stringify(newUser));
     setUser(newUser);
     setTransactions([]);
   };
@@ -113,6 +112,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('currentUser');
     setUser(null);
     setTransactions([]);
+    if (pathname !== '/login' && pathname !== '/signup') {
+        router.push('/login');
+    }
   }
 
   const loadUserContext = (userId: string) => {
@@ -138,8 +140,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         
         const finalBalance = completedBalance - pendingDebits;
 
-        setUser({ ...liveUserData, walletBalance: finalBalance });
+        const currentUser = { ...liveUserData, walletBalance: finalBalance };
+        setUser(currentUser);
         setTransactions(userTransactions);
+        sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
         logout();
     }
@@ -153,21 +157,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedUser) {
             const loggedInUser: User = JSON.parse(storedUser);
             loadUserContext(loggedInUser.id);
+        } else {
+            if (pathname.startsWith('/app/')) {
+                logout();
+            }
         }
     } catch(e) {
         console.error("Error loading user from sessionStorage", e);
         logout();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allUsers, allTransactions, loading]);
+  }, [allUsers, allTransactions, loading, pathname]);
 
-  useEffect(() => {
-    if (user) {
-        const liveUserData = allUsers.find(u => u.id === user.id);
-        const dataToStore = liveUserData || user;
-        sessionStorage.setItem('currentUser', JSON.stringify(dataToStore));
-    }
-  }, [user, allUsers]);
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
@@ -178,14 +179,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
     setAllTransactions(prev => [newTx, ...prev]);
-    
-    // Also update the local transactions for the current user
-    setTransactions(prev => [newTx, ...prev]);
-    
-    if (user && newTx.type === 'debit' && newTx.status === 'pending') {
-      const newBalance = user.walletBalance - tx.amount;
-      setUser({ ...user, walletBalance: newBalance });
-    }
   };
   
   const updateBalance = (newBalance: number) => {
@@ -230,6 +223,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    
-    
