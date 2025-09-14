@@ -31,6 +31,13 @@ export type Transaction = {
   description: string;
   createdAt: Date;
   status: 'completed' | 'pending';
+  paymentDetails?: {
+    method: 'upi' | 'bank';
+    upiId?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    accountHolderName?: string;
+  }
 };
 
 export type User = {

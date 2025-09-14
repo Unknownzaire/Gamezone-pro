@@ -111,6 +111,7 @@ export default function AdminDashboardPage() {
                         <TableRow>
                             <TableHead>User</TableHead>
                             <TableHead>Amount</TableHead>
+                            <TableHead>Payment Details</TableHead>
                             <TableHead>Date</TableHead>
                              <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -132,6 +133,23 @@ export default function AdminDashboardPage() {
                                         ) : 'Unknown User'}
                                     </TableCell>
                                     <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                                    <TableCell>
+                                        {tx.paymentDetails ? (
+                                            <div className="text-xs">
+                                                <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
+                                                {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
+                                                {tx.paymentDetails.method === 'bank' && (
+                                                    <div>
+                                                        <p>{tx.paymentDetails.accountHolderName}</p>
+                                                        <p>A/C: {tx.paymentDetails.accountNumber}</p>
+                                                        <p>IFSC: {tx.paymentDetails.ifscCode}</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <p className="text-muted-foreground">N/A</p>
+                                        )}
+                                    </TableCell>
                                     <TableCell>{format(new Date(tx.createdAt), 'PP')}</TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex gap-2 justify-end">

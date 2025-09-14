@@ -72,7 +72,12 @@ export default function WalletPage() {
   const { user, transactions, addTransaction, updateBalance } = useUser();
   const { toast } = useToast();
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState('upi');
+  const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank'>('upi');
+  
+  const [upiIdInput, setUpiIdInput] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [ifscCode, setIfscCode] = useState('');
+  const [accountHolderName, setAccountHolderName] = useState('');
 
   const [addAmount, setAddAmount] = useState('');
   const [upiRef, setUpiRef] = useState('');
@@ -89,16 +94,36 @@ export default function WalletPage() {
       toast({ variant: 'destructive', title: "Insufficient Balance", description: "You cannot withdraw more than your available balance." });
       return;
     }
+
+    let paymentDetails: Transaction['paymentDetails'];
+    if (withdrawMethod === 'upi') {
+      if (!upiIdInput) {
+        toast({ variant: 'destructive', title: "Missing UPI ID", description: "Please enter your UPI ID." });
+        return;
+      }
+      paymentDetails = { method: 'upi', upiId: upiIdInput };
+    } else {
+      if (!accountNumber || !ifscCode || !accountHolderName) {
+        toast({ variant: 'destructive', title: "Missing Bank Details", description: "Please fill in all bank account details." });
+        return;
+      }
+      paymentDetails = { method: 'bank', accountNumber, ifscCode, accountHolderName };
+    }
     
     addTransaction({
         amount,
         type: 'debit',
-        description: `Withdrawal via ${withdrawMethod}`,
-        status: 'pending'
+        description: `Withdrawal via ${withdrawMethod.toUpperCase()}`,
+        status: 'pending',
+        paymentDetails
     });
 
     toast({ title: "Withdrawal Request Submitted", description: `Your request to withdraw ₹${amount.toLocaleString()} has been submitted.` });
     setWithdrawAmount('');
+    setUpiIdInput('');
+    setAccountNumber('');
+    setIfscCode('');
+    setAccountHolderName('');
   };
 
   const handleAddMoney = () => {
@@ -179,7 +204,7 @@ export default function WalletPage() {
         </CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Add Money Column */}
-          <div className="space-y-4 rounded-lg border bg-card-nested p-4">
+          <div className="space-y-4 rounded-lg border bg-card p-4">
              <h3 className="font-headline text-xl font-semibold">Add Money</h3>
               <div className="space-y-2">
                 <Label>Scan and Pay</Label>
@@ -226,7 +251,7 @@ export default function WalletPage() {
           </div>
 
           {/* Withdraw Column */}
-          <div className="space-y-4 rounded-lg border bg-card-nested p-4">
+          <div className="space-y-4 rounded-lg border bg-card p-4">
               <h3 className="font-headline text-xl font-semibold">Withdraw Funds</h3>
                <div className="space-y-2">
                 <Label htmlFor="amount">Amount (₹)</Label>
@@ -240,7 +265,7 @@ export default function WalletPage() {
               </div>
               <div className="space-y-2">
                 <Label>Withdrawal Method</Label>
-                <RadioGroup defaultValue="upi" onValueChange={setWithdrawMethod} className="flex gap-4">
+                <RadioGroup defaultValue="upi" onValueChange={(v) => setWithdrawMethod(v as 'upi' | 'bank')} className="flex gap-4">
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="upi" id="upi" />
                     <Label htmlFor="upi">UPI</Label>
@@ -254,7 +279,7 @@ export default function WalletPage() {
               {withdrawMethod === 'upi' && (
                 <div className="space-y-2">
                   <Label htmlFor="upi-id">UPI ID</Label>
-                  <Input id="upi-id" placeholder="yourname@bank" />
+                  <Input id="upi-id" placeholder="yourname@bank" value={upiIdInput} onChange={(e) => setUpiIdInput(e.target.value)} />
                 </div>
               )}
                {withdrawMethod === 'bank' && (
@@ -262,15 +287,15 @@ export default function WalletPage() {
                    <p className="text-sm font-medium">Bank Account Details</p>
                    <div className="space-y-2">
                       <Label htmlFor="acc-number">Account Number</Label>
-                      <Input id="acc-number" />
+                      <Input id="acc-number" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value)}/>
                    </div>
                    <div className="space-y-2">
                       <Label htmlFor="ifsc">IFSC Code</Label>
-                      <Input id="ifsc" />
+                      <Input id="ifsc" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} />
                    </div>
                    <div className="space-y-2">
                       <Label htmlFor="acc-holder">Account Holder Name</Label>
-                      <Input id="acc-holder" />
+                      <Input id="acc-holder" value={accountHolderName} onChange={(e) => setAccountHolderName(e.target.value)} />
                    </div>
                 </div>
               )}
