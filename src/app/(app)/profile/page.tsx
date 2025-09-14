@@ -146,11 +146,11 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
-              <Input id="bgmiUsername" defaultValue={currentUser.bgmiUsername} placeholder="Your in-game name" />
+              <Input id="bgmiUsername" defaultValue={currentUser.bgmiUsername} placeholder="Your in-game name" disabled />
             </div>
              <div className="space-y-2">
               <Label htmlFor="bgmiId">BGMI User ID</Label>
-              <Input id="bgmiId" defaultValue={currentUser.bgmiId} placeholder="Your numeric game ID" />
+              <Input id="bgmiId" defaultValue={currentUser.bgmiId} placeholder="Your numeric game ID" disabled />
             </div>
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
