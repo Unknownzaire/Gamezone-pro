@@ -6,7 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers } from "@/lib/mock-data";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import { User } from "@/lib/types";
 import {
@@ -71,9 +71,19 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="font-headline text-3xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Manage all registered users.</p>
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+          <Link href="/admin/dashboard" className="hidden md:block">
+              <Button variant="outline" size="icon" className="h-7 w-7">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Back</span>
+              </Button>
+          </Link>
+          <div>
+            <h1 className="font-headline text-3xl font-bold">Users</h1>
+            <p className="text-muted-foreground">Manage all registered users.</p>
+          </div>
+        </div>
       </div>
 
       <Card>
