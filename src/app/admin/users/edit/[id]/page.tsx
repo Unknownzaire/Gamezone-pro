@@ -1,0 +1,109 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, notFound } from 'next/navigation';
+import { User } from '@/lib/types';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft } from 'lucide-react';
+import Link from 'next/link';
+
+export default function EditUserPage({ params }: { params: { id: string } }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [user, setUser] = useState<User | null>(null);
+  const [formData, setFormData] = useState<Partial<User>>({});
+
+  useEffect(() => {
+    const storedUsers = localStorage.getItem('allUsers');
+    if (storedUsers) {
+      const users: User[] = JSON.parse(storedUsers);
+      const userToEdit = users.find(u => u.id === params.id);
+      if (userToEdit) {
+        setUser(userToEdit);
+        setFormData(userToEdit);
+      } else {
+        notFound();
+      }
+    } else {
+      notFound();
+    }
+  }, [params.id]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const storedUsers = localStorage.getItem('allUsers');
+    if (storedUsers) {
+      let users: User[] = JSON.parse(storedUsers);
+      users = users.map(u => (u.id === params.id ? { ...u, ...formData } : u));
+      localStorage.setItem('allUsers', JSON.stringify(users));
+      toast({
+        title: "User Updated",
+        description: `Details for ${formData.username} have been updated.`,
+      });
+      router.push('/admin/users');
+    }
+  };
+
+  if (!user) {
+    return <div>Loading...</div>; // Or a skeleton loader
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link href="/admin/users">
+          <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="font-headline text-3xl font-bold">Edit User</h1>
+          <p className="text-muted-foreground">Editing profile for {user.username}</p>
+        </div>
+      </div>
+
+      <Card>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input id="username" name="username" value={formData.username || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="mobile">Mobile</Label>
+              <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
+                <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance || 0} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bgmiUsername">BGMI Username</Label>
+              <Input id="bgmiUsername" name="bgmiUsername" value={formData.bgmiUsername || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bgmiId">BGMI ID</Label>
+              <Input id="bgmiId" name="bgmiId" value={formData.bgmiId || ''} onChange={handleChange} />
+            </div>
+            <div className="md:col-span-2 flex justify-end">
+              <Button type="submit">Save Changes</Button>
+            </div>
+          </CardContent>
+        </form>
+      </Card>
+    </div>
+  );
+}

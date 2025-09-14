@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
-import { useState, ChangeEvent, useRef } from "react";
+import { useState, ChangeEvent, useRef, useEffect } from "react";
 import { UserProvider, useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 
@@ -18,7 +18,7 @@ function LoginFormComponent() {
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('login');
-  const { login, signup } = useUser();
+  const { login, signup, user } = useUser();
   
   const [loginForm, setLoginForm] = useState({
     email: 'player1@example.com',
@@ -41,6 +41,13 @@ function LoginFormComponent() {
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const signupButtonRef = useRef<HTMLButtonElement>(null);
+  
+  useEffect(() => {
+    if (user) {
+      router.push('/home');
+    }
+  }, [user, router]);
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
     if (e.key === 'Enter') {
@@ -70,13 +77,20 @@ function LoginFormComponent() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     const loggedIn = login(loginForm.email, loginForm.password);
-    if(loggedIn) {
+    if(loggedIn === true) {
         toast({
             title: 'Login Successful',
             description: 'Welcome back!',
         });
         router.push('/home');
-    } else {
+    } else if (loggedIn === 'blocked') {
+        toast({
+            variant: 'destructive',
+            title: 'Account Blocked',
+            description: 'Your account has been blocked. Please contact support.',
+        });
+    }
+    else {
         toast({
             variant: 'destructive',
             title: 'Login Failed',
@@ -88,7 +102,7 @@ function LoginFormComponent() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'> = {
+    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,

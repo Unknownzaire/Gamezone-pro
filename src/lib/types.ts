@@ -42,4 +42,5 @@ export type User = {
   mobile?: string;
   bgmiUsername?: string;
   bgmiId?: string;
+  isBlocked?: boolean;
 };

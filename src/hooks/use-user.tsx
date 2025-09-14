@@ -15,8 +15,8 @@ interface UserContextType {
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
-  login: (email: string, password: string) => boolean;
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => void;
+  login: (email: string, password: string) => boolean | 'blocked';
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -45,17 +45,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [allUsers]);
 
 
-  const login = (email: string, password: string): boolean => {
-    // NOTE: In a real app, password should be hashed and checked on the server.
-    // This is a simplified example for demonstration purposes.
+  const login = (email: string, password: string): boolean | 'blocked' => {
     const userToLogin = allUsers.find(u => u.email === email);
     
     if (!userToLogin) {
-      return false; // User not found
+      return false; 
+    }
+
+    if (userToLogin.isBlocked) {
+        return 'blocked';
     }
     
     // For demo, we are not checking password. In a real app, you'd check a hashed password.
-    // if(userToLogin.password !== password) return false;
 
     const currentUser = { ...userToLogin };
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -79,12 +80,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => {
     const newUser: User = {
         ...userDetails,
         id: `user-${Date.now()}`,
-        walletBalance: 0, // Initial balance
+        walletBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
+        isBlocked: false,
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
@@ -97,30 +99,45 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-    // This is a simple way to persist user state across reloads.
-    // In a real app, you'd use localStorage or a server-side session.
     const storedUser = sessionStorage.getItem('currentUser');
     if (storedUser) {
-        const loggedInUser = JSON.parse(storedUser);
-        
-        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
+        const loggedInUser: User = JSON.parse(storedUser);
 
-        const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === loggedInUser.id);
-        const completedBalance = userTransactions.reduce((acc, tx) => {
-            if(tx.status !== 'completed') return acc;
-            if (tx.type === 'credit') return acc + tx.amount;
-            if (tx.type === 'debit') return acc - tx.amount;
-            return acc;
-        }, isNewUser ? loggedInUser.walletBalance : 0);
+        // Find the latest user data from allUsers, which may have been updated by an admin
+        const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
+        if (liveUserData) {
+            if (liveUserData.isBlocked) {
+                // If user is blocked, log them out
+                sessionStorage.removeItem('currentUser');
+                setUser(null);
+                setTransactions([]);
+                return;
+            }
 
-        const pendingDebits = userTransactions
-            .filter(tx => tx.status === 'pending' && tx.type === 'debit')
-            .reduce((acc, tx) => acc + tx.amount, 0);
-        
-        loggedInUser.walletBalance = completedBalance - pendingDebits;
+            const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
 
-        setUser(loggedInUser);
-        setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+            const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === liveUserData.id);
+            const completedBalance = userTransactions.reduce((acc, tx) => {
+                if(tx.status !== 'completed') return acc;
+                if (tx.type === 'credit') return acc + tx.amount;
+                if (tx.type === 'debit') return acc - tx.amount;
+                return acc;
+            }, isNewUser ? liveUserData.walletBalance : 0);
+
+            const pendingDebits = userTransactions
+                .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+                .reduce((acc, tx) => acc + tx.amount, 0);
+            
+            liveUserData.walletBalance = completedBalance - pendingDebits;
+
+            setUser(liveUserData);
+            setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+        } else {
+            // User not found in allUsers, maybe deleted by admin, so log out
+            sessionStorage.removeItem('currentUser');
+            setUser(null);
+            setTransactions([]);
+        }
     }
   }, [allUsers]);
 
