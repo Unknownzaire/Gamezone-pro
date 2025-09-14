@@ -122,6 +122,7 @@ export default function ManageTournamentPage({ params }: { params: { id: string 
                     <TableHeader>
                         <TableRow>
                             <TableHead>Username</TableHead>
+                            <TableHead>BGMI ID</TableHead>
                             <TableHead>Result</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -129,6 +130,7 @@ export default function ManageTournamentPage({ params }: { params: { id: string 
                         {tournament.participants.map(p => (
                             <TableRow key={p.id}>
                                 <TableCell>{p.user.username}</TableCell>
+                                <TableCell>{p.user.bgmiId}</TableCell>
                                 <TableCell>
                                     <Badge variant={p.result === 'Winner' ? 'default' : 'outline'}>
                                         {p.result ?? 'N/A'}
