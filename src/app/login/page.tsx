@@ -36,10 +36,9 @@ function LoginFormComponent() {
       });
   };
 
-  const handleLogin = (e: React.FormEvent, isNewUser = false) => {
+  const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    sessionStorage.setItem('isNewUser', String(isNewUser));
-    login(isNewUser);
+    login();
     toast({
       title: 'Login Successful',
       description: 'Welcome back!',
@@ -74,6 +73,7 @@ function LoginFormComponent() {
         password: ''
     });
     setActiveTab('login');
+    router.push('/home');
   };
 
   return (
@@ -94,7 +94,7 @@ function LoginFormComponent() {
                 <CardDescription>Enter your credentials to access your account.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={(e) => handleLogin(e, false)} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
                     <Input id="login-email" type="email" placeholder="you@example.com" required defaultValue="player1@example.com" />
@@ -109,7 +109,6 @@ function LoginFormComponent() {
                     </div>
                   </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Login</Button>
-                   <Button type="button" variant="outline" onClick={(e) => handleLogin(e as any, true)} className="w-full">Login as New User (Demo)</Button>
                 </form>
               </CardContent>
             </Card>

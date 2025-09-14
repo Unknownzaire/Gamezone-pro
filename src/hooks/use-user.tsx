@@ -15,7 +15,7 @@ interface UserContextType {
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
-  login: (isNewUser?: boolean) => void;
+  login: () => void;
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => void;
 }
 
@@ -27,43 +27,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
 
-  const login = (isNewUser = false) => {
-    const userToLogin = isNewUser ? (sessionStorage.getItem('newUser') ? JSON.parse(sessionStorage.getItem('newUser')!) : null) : mockUsers[0];
-    if (!userToLogin && isNewUser) {
-      // fallback for new user if session storage is empty
-       const newUser: User = {
-        ...mockUsers[0], // Use a base template, but customize
-        id: `user-${Date.now()}`,
-        username: 'NewPlayer',
-        email: 'newplayer@example.com',
-        walletBalance: 100, // Start with a default balance
-        avatarUrl: 'https://picsum.photos/seed/newuser/100/100',
-        bgmiUsername: 'NewPlayerBGMI',
-        bgmiId: '5' + Math.floor(100000000 + Math.random() * 900000000),
-      };
-      setUser(newUser);
-      setTransactions([]);
-      return;
-    }
-
+  const login = () => {
+    const userToLogin = mockUsers[0];
     if (!userToLogin) return;
 
     const currentUser = { ...userToLogin };
-    const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === currentUser.id);
+    const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
     const completedBalance = userTransactions.reduce((acc, tx) => {
       if(tx.status !== 'completed') return acc;
         if (tx.type === 'credit') return acc + tx.amount;
         if (tx.type === 'debit') return acc - tx.amount;
         return acc;
-    }, isNewUser ? currentUser.walletBalance : 0);
+    }, 0);
 
     const pendingDebits = userTransactions
       .filter(tx => tx.status === 'pending' && tx.type === 'debit')
       .reduce((acc, tx) => acc + tx.amount, 0);
 
     setUser({ ...currentUser, walletBalance: completedBalance - pendingDebits });
-    setTransactions(isNewUser ? [] : userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   };
   
   const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => {
