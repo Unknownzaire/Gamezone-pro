@@ -118,12 +118,12 @@ function LoginFormComponent() {
                         <Input id="signup-username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="signup-bgmi-username">BGMI Username</Label>
-                        <Input id="signup-bgmi-username" placeholder="Your in-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} />
+                        <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
+                        <Input id="signup-bgmiUsername" placeholder="Your in-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="signup-bgmi-id">BGMI User ID</Label>
-                        <Input id="signup-bgmi-id" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} />
+                        <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
+                        <Input id="signup-bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
