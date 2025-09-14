@@ -81,15 +81,27 @@ export default function LoginPage() {
                         <Label htmlFor="signup-username">Username</Label>
                         <Input id="signup-username" placeholder="PlayerOne" required />
                     </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-email">Email</Label>
-                    <Input id="signup-email" type="email" placeholder="you@example.com" required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="signup-password">Password</Label>
-                    <Input id="signup-password" type="password" required />
-                  </div>
-                  <Button type="submit" className="w-full">Sign Up</Button>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-bgmi-username">BGMI Username</Label>
+                        <Input id="signup-bgmi-username" placeholder="Your in-game name" required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-bgmi-id">BGMI User ID</Label>
+                        <Input id="signup-bgmi-id" placeholder="Your numeric game ID" required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-mobile">Mobile Number</Label>
+                        <Input id="signup-mobile" type="tel" placeholder="Your mobile number" required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-email">Email</Label>
+                        <Input id="signup-email" type="email" placeholder="you@example.com" required />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-password">Password</Label>
+                        <Input id="signup-password" type="password" required />
+                    </div>
+                    <Button type="submit" className="w-full">Sign Up</Button>
                 </form>
               </CardContent>
             </Card>
