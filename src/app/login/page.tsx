@@ -59,12 +59,12 @@ export default function LoginPage() {
                     <Label htmlFor="login-password">Password</Label>
                     <Input id="login-password" type="password" required />
                     <div className="flex items-center justify-end pt-1">
-                       <Link href="#" className="text-sm text-muted-foreground hover:text-primary underline">
+                       <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
                           Forgot Password?
                         </Link>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full">Login</Button>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Login</Button>
                 </form>
               </CardContent>
             </Card>
