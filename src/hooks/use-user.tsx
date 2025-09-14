@@ -26,11 +26,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
+  const [allUsers, setAllUsers] = useState<User[]>(mockUsers);
+
 
   const login = (email: string, password: string): boolean => {
     // NOTE: In a real app, password should be hashed and checked on the server.
     // This is a simplified example for demonstration purposes.
-    const userToLogin = mockUsers.find(u => u.email === email);
+    const userToLogin = allUsers.find(u => u.email === email);
     
     if (!userToLogin) {
       return false; // User not found
@@ -68,6 +70,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         walletBalance: 0, // Initial balance
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
     };
+    
+    setAllUsers(prevUsers => [...prevUsers, newUser]);
+    
     sessionStorage.setItem('currentUser', JSON.stringify(newUser));
     sessionStorage.setItem('isNewUser', 'true');
     setUser(newUser);
