@@ -4,7 +4,7 @@ export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   id: `user-${i + 1}`,
   username: `Player${i + 1}`,
   email: `player${i + 1}@example.com`,
-  walletBalance: Math.floor(Math.random() * 2000) + 50,
+  walletBalance: i === 0 ? 0 : Math.floor(Math.random() * 2000) + 50,
   avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
   mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
   bgmiUsername: `Player${i + 1}BGMI`,
@@ -98,12 +98,10 @@ export const mockTournaments: Tournament[] = [
 ];
 
 export const mockTransactions: Transaction[] = [
-  { id: 'tx-1', userId: 'user-1', amount: 500, type: 'credit', description: 'Added to wallet', createdAt: new Date('2024-07-28T09:00:00Z'), status: 'completed' },
-  { id: 'tx-2', userId: 'user-1', amount: 100, type: 'debit', description: 'Joined "Midnight Mayhem"', createdAt: new Date('2025-09-15T10:05:00Z'), status: 'completed' },
+  { id: 'tx-2', userId: 'user-2', amount: 100, type: 'debit', description: 'Joined "Midnight Mayhem"', createdAt: new Date('2025-09-15T10:05:00Z'), status: 'completed' },
   { id: 'tx-3', userId: 'user-51', amount: 6600, type: 'credit', description: 'Prize from "Victory Valley"', createdAt: new Date('2025-09-10T20:00:00Z'), status: 'completed' },
   { id: 'tx-4', userId: 'user-51', amount: 75, type: 'debit', description: 'Joined "Victory Valley"', createdAt: new Date('2025-09-09T12:00:00Z'), status: 'completed' },
-  { id: 'tx-5', userId: 'user-1', amount: 50, type: 'debit', description: 'Joined "Sunrise Skirmish"', createdAt: new Date('2025-09-16T10:00:00Z'), status: 'completed' },
-  { id: 'tx-6', userId: 'user-1', amount: 1000, type: 'credit', description: 'Prize from "Old Tournament"', createdAt: new Date('2024-07-20T18:00:00Z'), status: 'completed' },
-  { id: 'tx-7', userId: 'user-1', amount: 200, type: 'credit', description: 'Referral Bonus', createdAt: new Date('2024-07-22T11:30:00Z'), status: 'completed' },
-  { id: 'tx-8', userId: 'user-1', amount: 250, type: 'debit', description: 'Withdrawal from Bank', createdAt: new Date('2024-07-29T14:00:00Z'), status: 'pending' },
+  { id: 'tx-6', userId: 'user-2', amount: 1000, type: 'credit', description: 'Prize from "Old Tournament"', createdAt: new Date('2024-07-20T18:00:00Z'), status: 'completed' },
+  { id: 'tx-7', userId: 'user-2', amount: 200, type: 'credit', description: 'Referral Bonus', createdAt: new Date('2024-07-22T11:30:00Z'), status: 'completed' },
+  { id: 'tx-8', userId: 'user-2', amount: 250, type: 'debit', description: 'Withdrawal from Bank', createdAt: new Date('2024-07-29T14:00:00Z'), status: 'pending' },
 ].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());

@@ -132,7 +132,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             if (tx.type === 'credit') return acc + tx.amount;
             if (tx.type === 'debit') return acc - tx.amount;
             return acc;
-        }, 0);
+        }, liveUserData.walletBalance || 0);
 
         const pendingDebits = userTransactions
             .filter(tx => tx.status === 'pending' && tx.type === 'debit')
