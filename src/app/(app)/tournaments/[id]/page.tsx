@@ -1,3 +1,4 @@
+
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
@@ -33,19 +34,30 @@ import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import React from 'react';
+import { useUser } from '@/hooks/use-user';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
+  // We use a local state for the tournament to update the participants list visually
   const [tournament, setTournament] = React.useState(() => mockTournaments.find((t) => t.id === params.id));
-  const currentUser = mockUsers[0]; // Assuming user-1 is logged in
+  const { user: currentUser, updateBalance, addTransaction } = useUser();
 
   if (!tournament) {
     notFound();
   }
   
   const handleJoin = (tournamentToJoin: Tournament) => {
+    if (!currentUser) {
+        toast({
+            variant: 'destructive',
+            title: "Not Logged In",
+            description: `Please log in to join a tournament.`,
+        });
+        return;
+    }
+
     if (currentUser.walletBalance < tournamentToJoin.entryFee) {
        toast({
         variant: 'destructive',
@@ -56,7 +68,14 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     }
 
     // This would be a server action in a real app
-    currentUser.walletBalance -= tournamentToJoin.entryFee;
+    const newBalance = currentUser.walletBalance - tournamentToJoin.entryFee;
+    updateBalance(newBalance);
+
+    addTransaction({
+        amount: tournamentToJoin.entryFee,
+        type: 'debit',
+        description: `Joined "${tournamentToJoin.title}"`,
+    });
     
     const newParticipant = {
         id: `p-${tournamentToJoin.id}-${currentUser.id}`,
@@ -66,20 +85,13 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         joinedAt: new Date(),
     };
 
-    // Update mock data for demonstration
-    mockParticipants.push(newParticipant);
-    const updatedTournament = mockTournaments.find(t => t.id === tournamentToJoin.id);
-    if(updatedTournament) {
-        updatedTournament.participants.push(newParticipant);
-        setTournament({...updatedTournament});
-    }
+    // This is a local update for demonstration. In a real app, this would come from the server.
+    setTournament(prev => prev ? { ...prev, participants: [...prev.participants, newParticipant] } : null);
 
     toast({
       title: "Successfully Joined!",
       description: `You have joined the "${tournamentToJoin.title}" tournament. ₹${tournamentToJoin.entryFee} has been deducted.`,
     });
-    // No longer redirecting immediately to see the change
-    // router.push('/my-tournaments');
   };
 
   const prizeDistribution = [
@@ -167,7 +179,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     },
   ];
 
-  const isAlreadyJoined = tournament.participants.some(p => p.user.id === currentUser.id);
+  const isAlreadyJoined = currentUser ? tournament.participants.some(p => p.user.id === currentUser.id) : false;
 
   return (
     <div className="space-y-6">
@@ -313,7 +325,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={tournament.status !== 'Upcoming' || isAlreadyJoined}>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined}>
               {isAlreadyJoined ? 'Already Joined' : tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
             </Button>
           </AlertDialogTrigger>
@@ -340,7 +352,3 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     </div>
   );
 }
-
-    
-
-    
