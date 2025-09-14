@@ -77,6 +77,7 @@ export default function WalletPage() {
   const [addAmount, setAddAmount] = useState('');
   const [upiRef, setUpiRef] = useState('');
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
+  const quickAmounts = [50, 100, 200, 500, 1000];
 
   const handleWithdraw = () => {
     if (!user) return;
@@ -201,6 +202,21 @@ export default function WalletPage() {
                         value={addAmount} 
                         onChange={(e) => setAddAmount(e.target.value)} 
                       />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Quick Add</Label>
+                        <div className="flex flex-wrap gap-2">
+                            {quickAmounts.map(amount => (
+                                <Button 
+                                    key={amount} 
+                                    variant="outline" 
+                                    size="sm"
+                                    onClick={() => setAddAmount(amount.toString())}
+                                >
+                                    ₹{amount}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
                      <div className="space-y-2">
                       <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
@@ -345,5 +361,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
