@@ -190,32 +190,34 @@ export default function WalletPage() {
                   Scan the QR code with your UPI app and enter the reference number to add funds.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="add-amount">Amount (₹)</Label>
-                    <Input 
-                      id="add-amount" 
-                      type="number" 
-                      placeholder="e.g., 500" 
-                      value={addAmount} 
-                      onChange={(e) => setAddAmount(e.target.value)} 
-                    />
-                  </div>
-                  <div className="flex flex-col items-center gap-4">
+              <div className="grid grid-cols-1 gap-4 py-4 md:grid-cols-2">
+                 <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="add-amount">Amount (₹)</Label>
+                      <Input 
+                        id="add-amount" 
+                        type="number" 
+                        placeholder="e.g., 500" 
+                        value={addAmount} 
+                        onChange={(e) => setAddAmount(e.target.value)} 
+                      />
+                    </div>
+                     <div className="space-y-2">
+                      <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
+                      <Input 
+                        id="upi-ref" 
+                        placeholder="Enter the 12-digit reference number"
+                        value={upiRef}
+                        onChange={(e) => setUpiRef(e.target.value)}
+                      />
+                    </div>
+                 </div>
+                  <div className="flex flex-col items-center gap-2">
                      <p className="text-sm text-muted-foreground">Scan and Pay</p>
-                     <div className="p-4 bg-white rounded-lg">
-                       <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} />
+                     <div className="p-2 bg-white rounded-lg">
+                       <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
                      </div>
-                      <p className="font-mono text-sm">{upiId}</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
-                    <Input 
-                      id="upi-ref" 
-                      placeholder="Enter the 12-digit reference number"
-                      value={upiRef}
-                      onChange={(e) => setUpiRef(e.target.value)}
-                    />
+                      <p className="font-mono text-xs">{upiId}</p>
                   </div>
               </div>
               <DialogFooter>
