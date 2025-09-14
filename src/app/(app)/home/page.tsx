@@ -54,7 +54,7 @@ export default function HomePage() {
               </div>
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
-                <span>{format(tournament.matchTime, "PPp")}</span>
+                <span>{format(new Date(tournament.matchTime), "PPp")}</span>
               </div>
             </CardContent>
             <CardFooter>

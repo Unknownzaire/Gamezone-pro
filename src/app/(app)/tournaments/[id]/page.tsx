@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3 } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament } from '@/lib/types';
@@ -21,6 +21,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog"
 import Link from 'next/link';
 
 
@@ -40,6 +48,13 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     });
     router.push('/my-tournaments');
   };
+
+  const prizeDistribution = [
+    { rank: 1, prize: tournament.prizePool * 0.5 },
+    { rank: 2, prize: tournament.prizePool * 0.25 },
+    { rank: 3, prize: tournament.prizePool * 0.15 },
+    { rank: '4-10', prize: tournament.prizePool * 0.1 / 7 },
+  ];
 
   const terms = [
     {
@@ -153,6 +168,29 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                 <div className="flex items-center gap-2">
                     <Trophy className="h-4 w-4 text-primary" />
                     <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="link" size="sm" className="h-auto p-0 text-xs">
+                          View Prizes <ChevronRight className="h-3 w-3 ml-1" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Prize Distribution</DialogTitle>
+                          <DialogDescription>
+                            Prize pool of ₹{tournament.prizePool.toLocaleString()} will be distributed as follows:
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="space-y-2">
+                          {prizeDistribution.map((item) => (
+                            <div key={item.rank} className="flex justify-between items-center rounded-md bg-muted p-2">
+                              <p className="font-semibold">Rank #{item.rank}</p>
+                              <p className="text-primary font-bold">₹{item.prize.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                 </div>
                 <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
@@ -160,7 +198,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                 </div>
                 <div className="flex items-center gap-2 col-span-2">
                     <Clock className="h-4 w-4 text-primary" />
-                    <span>{format(tournament.matchTime, "PPp")}</span>
+                    <span>{format(new Date(tournament.matchTime), "PPp")}</span>
                 </div>
             </div>
             {tournament.status === 'Live' && tournament.roomId && (
