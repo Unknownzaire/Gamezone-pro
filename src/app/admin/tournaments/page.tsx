@@ -4,17 +4,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockTournaments } from "@/lib/mock-data";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 
 export default function AdminTournamentsPage() {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
-          <p className="text-muted-foreground">Manage all tournaments in the system.</p>
+      <div className="flex items-start justify-between">
+         <div className="flex items-center gap-4">
+          <Link href="/admin/dashboard" className="hidden md:block">
+              <Button variant="outline" size="icon" className="h-7 w-7">
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="sr-only">Back</span>
+              </Button>
+          </Link>
+          <div>
+            <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
+            <p className="text-muted-foreground">Manage all tournaments in the system.</p>
+          </div>
         </div>
         <Link href="/admin/tournaments/create">
           <Button>
