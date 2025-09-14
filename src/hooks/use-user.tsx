@@ -53,7 +53,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const newUser: User = {
         ...userDetails,
         id: `user-${Date.now()}`,
-        walletBalance: 100, // Initial balance
+        walletBalance: 0, // Initial balance
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
     };
     sessionStorage.setItem('currentUser', JSON.stringify(newUser));
