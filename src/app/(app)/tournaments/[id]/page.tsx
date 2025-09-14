@@ -57,6 +57,15 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         });
         return;
     }
+    
+    if (tournamentToJoin.participants.length >= 100) {
+      toast({
+        variant: 'destructive',
+        title: "Tournament Full",
+        description: "This tournament has reached its maximum capacity.",
+      });
+      return;
+    }
 
     if (currentUser.walletBalance < tournamentToJoin.entryFee) {
        toast({
@@ -180,6 +189,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   ];
 
   const isAlreadyJoined = currentUser ? tournament.participants.some(p => p.user.id === currentUser.id) : false;
+  const isFull = tournament.participants.length >= 100;
 
   return (
     <div className="space-y-6">
@@ -249,7 +259,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                 </div>
                  <div className="flex items-center gap-2 col-span-2">
                     <Users className="h-4 w-4 text-primary" />
-                    <span>Players: {tournament.participants.length} joined</span>
+                    <span>Players: {tournament.participants.length} / 100 joined</span>
                      <Dialog>
                       <DialogTrigger asChild>
                         <Button variant="link" size="sm" className="h-auto p-0 text-xs">
@@ -325,8 +335,8 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined}>
-              {isAlreadyJoined ? 'Already Joined' : tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined || isFull}>
+              {isAlreadyJoined ? 'Already Joined' : isFull ? 'Tournament Full' : tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
