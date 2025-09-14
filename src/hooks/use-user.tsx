@@ -103,6 +103,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = sessionStorage.getItem('currentUser');
     if (storedUser) {
         const loggedInUser: User = JSON.parse(storedUser);
+        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
 
         // Find the latest user data from allUsers, which may have been updated by an admin
         const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
@@ -115,7 +116,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 return;
             }
 
-            const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
 
             const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === liveUserData.id);
             const completedBalance = userTransactions.reduce((acc, tx) => {
@@ -123,17 +123,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 if (tx.type === 'credit') return acc + tx.amount;
                 if (tx.type === 'debit') return acc - tx.amount;
                 return acc;
-            }, isNewUser ? liveUserData.walletBalance : 0);
+            }, isNewUser ? 0 : 0);
 
             const pendingDebits = userTransactions
                 .filter(tx => tx.status === 'pending' && tx.type === 'debit')
                 .reduce((acc, tx) => acc + tx.amount, 0);
             
-            liveUserData.walletBalance = completedBalance - pendingDebits;
+            const finalBalance = completedBalance - pendingDebits;
 
-            setUser(liveUserData);
+            setUser({ ...liveUserData, walletBalance: finalBalance });
             setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-        } else {
+        } else if (isNewUser) {
+            // New user not yet in allUsers, use session data
+            setUser(loggedInUser);
+            setTransactions([]);
+        }
+        else {
             // User not found in allUsers, maybe deleted by admin, so log out
             sessionStorage.removeItem('currentUser');
             setUser(null);
