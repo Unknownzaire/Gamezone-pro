@@ -30,6 +30,7 @@ export type Transaction = {
   type: 'credit' | 'debit';
   description: string;
   createdAt: Date;
+  status: 'completed' | 'pending';
 };
 
 export type User = {

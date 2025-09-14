@@ -12,7 +12,7 @@ interface UserContextType {
   user: User | null;
   transactions: Transaction[];
   tournaments: Tournament[];
-  addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
+  addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId' | 'status'>) => void;
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
 }
@@ -32,8 +32,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
     const balance = userTransactions.reduce((acc, tx) => {
-        if (tx.type === 'credit') return acc + tx.amount;
-        if (tx.type === 'debit') return acc - tx.amount;
+        if (tx.status === 'completed') {
+            if (tx.type === 'credit') return acc + tx.amount;
+            if (tx.type === 'debit') return acc - tx.amount;
+        }
         return acc;
     }, 0);
 
@@ -42,13 +44,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
   }, []);
 
-  const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
+  const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'| 'status'>) => {
     if (!user) return;
     const newTx: Transaction = {
       ...tx,
       id: `tx-${Date.now()}`,
       userId: user.id,
       createdAt: new Date(),
+      status: 'completed',
     };
     setTransactions(prev => [newTx, ...prev]);
     if (user) {

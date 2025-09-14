@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -25,8 +25,9 @@ import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction } from "@/lib/types";
+import { Badge } from "@/components/ui/badge";
 
-function TransactionList({ transactions }: { transactions: Transaction[] }) {
+function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
         return <p className="text-muted-foreground text-center p-8">No transactions in this category.</p>;
     }
@@ -47,9 +48,17 @@ function TransactionList({ transactions }: { transactions: Transaction[] }) {
                             <p className="font-semibold">{tx.description}</p>
                             <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
                         </div>
-                        <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                        </p>
+                        <div className="flex flex-col items-end">
+                            <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                            </p>
+                            {showStatus && tx.status === 'pending' && (
+                                <Badge variant="outline" className="mt-1 flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Pending
+                                </Badge>
+                            )}
+                        </div>
                     </div>
                     {index < transactions.length - 1 && <Separator />}
                 </React.Fragment>
@@ -108,8 +117,11 @@ export default function WalletPage() {
     )
   }
   
-  const creditTransactions = transactions.filter(tx => tx.type === 'credit');
-  const debitTransactions = transactions.filter(tx => tx.type === 'debit');
+  const completedTransactions = transactions.filter(tx => tx.status === 'completed');
+  const creditTransactions = completedTransactions.filter(tx => tx.type === 'credit');
+  const debitTransactions = completedTransactions.filter(tx => tx.type === 'debit');
+  const pendingTransactions = transactions.filter(tx => tx.status === 'pending');
+
 
   return (
     <div className="space-y-6">
@@ -201,15 +213,16 @@ export default function WalletPage() {
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="credit">Credit</TabsTrigger>
                 <TabsTrigger value="debit">Debit</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
             </TabsList>
             <TabsContent value="all" className="mt-4">
                 <Card>
                     <CardContent className="p-0">
-                       <TransactionList transactions={transactions} />
+                       <TransactionList transactions={transactions} showStatus={true} />
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -224,6 +237,13 @@ export default function WalletPage() {
                 <Card>
                     <CardContent className="p-0">
                        <TransactionList transactions={debitTransactions} />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+            <TabsContent value="pending" className="mt-4">
+                <Card>
+                    <CardContent className="p-0">
+                       <TransactionList transactions={pendingTransactions} />
                     </CardContent>
                 </Card>
             </TabsContent>
