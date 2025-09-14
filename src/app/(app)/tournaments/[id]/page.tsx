@@ -268,11 +268,16 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                             <div className="space-y-3 pr-4">
                             {tournament.participants.map((p) => (
                                 <div key={p.id} className="flex items-center gap-3 rounded-md bg-muted p-2">
-                                <Avatar className="h-8 w-8">
+                                <Avatar className="h-10 w-10">
                                     <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
                                     <AvatarFallback>{p.user.username.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span className="font-semibold">{p.user.username}</span>
+                                <div>
+                                  <p className="font-semibold">{p.user.username}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {p.user.bgmiUsername} ({p.user.bgmiId})
+                                  </p>
+                                </div>
                                 </div>
                             ))}
                             </div>
