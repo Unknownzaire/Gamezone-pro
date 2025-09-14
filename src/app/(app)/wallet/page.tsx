@@ -23,6 +23,40 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Transaction } from "@/lib/types";
+
+function TransactionList({ transactions }: { transactions: Transaction[] }) {
+    if (transactions.length === 0) {
+        return <p className="text-muted-foreground text-center p-8">No transactions in this category.</p>;
+    }
+
+    return (
+        <div className="space-y-4">
+            {transactions.map((tx, index) => (
+                <React.Fragment key={tx.id}>
+                    <div className="flex items-center p-4">
+                        <div className="p-2 bg-muted rounded-full mr-4">
+                            {tx.type === 'credit' ? (
+                                <ArrowDownLeft className="h-5 w-5 text-green-500" />
+                            ) : (
+                                <ArrowUpRight className="h-5 w-5 text-red-500" />
+                            )}
+                        </div>
+                        <div className="flex-1">
+                            <p className="font-semibold">{tx.description}</p>
+                            <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
+                        </div>
+                        <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                        </p>
+                    </div>
+                    {index < transactions.length - 1 && <Separator />}
+                </React.Fragment>
+            ))}
+        </div>
+    );
+}
 
 export default function WalletPage() {
   const { user, transactions } = useUser();
@@ -73,6 +107,9 @@ export default function WalletPage() {
       </div>
     )
   }
+  
+  const creditTransactions = transactions.filter(tx => tx.type === 'credit');
+  const debitTransactions = transactions.filter(tx => tx.type === 'debit');
 
   return (
     <div className="space-y-6">
@@ -163,37 +200,34 @@ export default function WalletPage() {
       
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
-        <Card>
-          <CardContent className="p-0">
-            <div className="space-y-4">
-              {transactions.length > 0 ? (
-                transactions.map((tx, index) => (
-                  <React.Fragment key={tx.id}>
-                    <div className="flex items-center p-4">
-                      <div className="p-2 bg-muted rounded-full mr-4">
-                        {tx.type === 'credit' ? (
-                          <ArrowDownLeft className="h-5 w-5 text-green-500" />
-                        ) : (
-                          <ArrowUpRight className="h-5 w-5 text-red-500" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-semibold">{tx.description}</p>
-                        <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
-                      </div>
-                      <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                        {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                      </p>
-                    </div>
-                    {index < transactions.length - 1 && <Separator />}
-                  </React.Fragment>
-                ))
-              ) : (
-                <p className="text-muted-foreground text-center p-8">No transactions yet.</p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
+         <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="credit">Credit</TabsTrigger>
+                <TabsTrigger value="debit">Debit</TabsTrigger>
+            </TabsList>
+            <TabsContent value="all" className="mt-4">
+                <Card>
+                    <CardContent className="p-0">
+                       <TransactionList transactions={transactions} />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="credit" className="mt-4">
+                <Card>
+                    <CardContent className="p-0">
+                       <TransactionList transactions={creditTransactions} />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+             <TabsContent value="debit" className="mt-4">
+                <Card>
+                    <CardContent className="p-0">
+                       <TransactionList transactions={debitTransactions} />
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
