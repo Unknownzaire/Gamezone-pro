@@ -36,33 +36,107 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
     return (
         <div className="space-y-4">
             {transactions.map((tx, index) => (
-                <React.Fragment key={tx.id}>
-                    <div className="flex items-center p-4">
-                        <div className="p-2 bg-muted rounded-full mr-4">
-                            {tx.type === 'credit' ? (
-                                <ArrowDownLeft className="h-5 w-5 text-green-500" />
-                            ) : (
-                                <ArrowUpRight className="h-5 w-5 text-red-500" />
-                            )}
-                        </div>
-                        <div className="flex-1">
-                            <p className="font-semibold">{tx.description}</p>
-                            <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                            </p>
-                            {showStatus && tx.status && tx.status !== 'completed' && (
-                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="mt-1 flex items-center gap-1 capitalize">
-                                    {tx.status === 'pending' && <Clock className="h-3 w-3" />}
-                                    {tx.status}
-                                </Badge>
-                            )}
-                        </div>
+                <Dialog key={tx.id}>
+                  <DialogTrigger asChild>
+                    <div className="cursor-pointer hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center p-4">
+                          <div className="p-2 bg-muted rounded-full mr-4">
+                              {tx.type === 'credit' ? (
+                                  <ArrowDownLeft className="h-5 w-5 text-green-500" />
+                              ) : (
+                                  <ArrowUpRight className="h-5 w-5 text-red-500" />
+                              )}
+                          </div>
+                          <div className="flex-1">
+                              <p className="font-semibold">{tx.description}</p>
+                              <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
+                          </div>
+                          <div className="flex flex-col items-end">
+                              <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                  {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                              </p>
+                              {showStatus && tx.status && (
+                                  <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="mt-1 flex items-center gap-1 capitalize">
+                                      {tx.status === 'pending' && <Clock className="h-3 w-3" />}
+                                      {tx.status}
+                                  </Badge>
+                              )}
+                          </div>
+                      </div>
+                      {index < transactions.length - 1 && <Separator />}
                     </div>
-                    {index < transactions.length - 1 && <Separator />}
-                </React.Fragment>
+                  </DialogTrigger>
+                   <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Transaction Details</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Transaction ID:</span>
+                        <span className="font-mono text-xs">{tx.id}</span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-muted-foreground">Date:</span>
+                        <span className="font-medium">{format(new Date(tx.createdAt), 'PPp')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Description:</span>
+                        <span className="font-medium">{tx.description}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Amount:</span>
+                        <span className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                           {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                        </span>
+                      </div>
+                       <div className="flex justify-between">
+                        <span className="text-muted-foreground">Type:</span>
+                        <span className="font-medium capitalize">{tx.type}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Status:</span>
+                        <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">{tx.status}</Badge>
+                      </div>
+                      {tx.paymentDetails && (
+                        <>
+                          <Separator />
+                          <p className="font-semibold">Payment Details</p>
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Method:</span>
+                            <span className="font-medium uppercase">{tx.paymentDetails.method}</span>
+                          </div>
+                          {tx.paymentDetails.method === 'upi' && tx.paymentDetails.upiId && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">{tx.description.includes('Withdrawal') ? 'UPI ID:' : 'Reference No.:'}</span>
+                                <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
+                            </div>
+                          )}
+                          {tx.paymentDetails.method === 'bank' && (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Account Holder:</span>
+                                <span>{tx.paymentDetails.accountHolderName}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">Account Number:</span>
+                                <span>{tx.paymentDetails.accountNumber}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-muted-foreground">IFSC Code:</span>
+                                <span className="font-mono">{tx.paymentDetails.ifscCode}</span>
+                              </div>
+                            </>
+                          )}
+                        </>
+                      )}
+                    </div>
+                     <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="outline">Close</Button>
+                      </DialogClose>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
             ))}
         </div>
     );
@@ -220,8 +294,8 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex gap-6 rounded-lg bg-card p-4">
-                        <div className="w-1/2 space-y-4">
+                    <div className="flex flex-col-reverse sm:flex-row gap-6 rounded-lg bg-card p-4">
+                        <div className="w-full sm:w-1/2 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
                                 <Input 
@@ -257,7 +331,7 @@ export default function WalletPage() {
                                 />
                             </div>
                         </div>
-                        <div className="w-1/2 space-y-2 flex flex-col items-center justify-center">
+                        <div className="w-full sm:w-1/2 space-y-2 flex flex-col items-center justify-center">
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                             <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />

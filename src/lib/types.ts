@@ -1,3 +1,4 @@
+
 export type Tournament = {
   id: string;
   title: string;
@@ -30,7 +31,7 @@ export type Transaction = {
   type: 'credit' | 'debit';
   description: string;
   createdAt: Date;
-  status: 'completed' | 'pending';
+  status: 'completed' | 'pending' | 'declined';
   paymentDetails?: {
     method: 'upi' | 'bank';
     upiId?: string;

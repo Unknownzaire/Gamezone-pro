@@ -112,7 +112,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('currentUser');
     setUser(null);
     setTransactions([]);
-    if (pathname !== '/login' && pathname !== '/signup') {
+    if (pathname !== '/login' && pathname !== '/signup' && !pathname.startsWith('/admin')) {
         router.push('/login');
     }
   }
@@ -128,25 +128,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
         const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
         
-        const baseBalance = liveUserData.walletBalance || 0;
-
-        const completedCredits = userTransactions
-            .filter(tx => tx.status === 'completed' && tx.type === 'credit')
-            .reduce((acc, tx) => acc + tx.amount, 0);
-
-        const completedDebits = userTransactions
-            .filter(tx => tx.status === 'completed' && tx.type === 'debit')
-            .reduce((acc, tx) => acc + tx.amount, 0);
+        // Balance calculation should start from a base and apply transactions
+        // For this demo, let's assume the walletBalance on the user object is the "true" balance from a DB
+        // and we adjust it based on pending transactions for the UI.
         
         const pendingDebits = userTransactions
             .filter(tx => tx.status === 'pending' && tx.type === 'debit')
             .reduce((acc, tx) => acc + tx.amount, 0);
         
-        // Let's assume baseBalance is a snapshot from the db, and transactions add on top.
-        // A more robust system would calculate from a ledger. For now, let's derive from a base + tx log
-        let finalBalance = baseBalance + completedCredits - completedDebits - pendingDebits;
+        // The available balance is the stored balance minus any pending withdrawals.
+        const availableBalance = liveUserData.walletBalance - pendingDebits;
 
-        const currentUser = { ...liveUserData, walletBalance: finalBalance };
+        const currentUser = { ...liveUserData, walletBalance: availableBalance };
         setUser(currentUser);
         setTransactions(userTransactions);
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -164,7 +157,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const loggedInUser: User = JSON.parse(storedUser);
             loadUserContext(loggedInUser.id);
         } else {
-            if (pathname !== '/login' && !pathname.startsWith('/admin')) {
+            if (pathname !== '/login' && pathname !== '/signup' && !pathname.startsWith('/admin')) {
                 logout();
             }
         }
