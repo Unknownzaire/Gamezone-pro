@@ -76,12 +76,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-    // By default, log in as an existing user.
-    // A specific action (like completing signup) will call login(true)
-    if (!user) {
-        // login(); // We will not auto-login anymore to support signup flow
+    // This is a simple way to persist user state across reloads.
+    // In a real app, you'd use localStorage or a server-side session.
+    const storedUser = sessionStorage.getItem('currentUser');
+    if (storedUser) {
+        const loggedInUser = JSON.parse(storedUser);
+        const userTransactions = mockTransactions.filter(tx => tx.userId === loggedInUser.id);
+         const completedBalance = userTransactions.reduce((acc, tx) => {
+            if(tx.status !== 'completed') return acc;
+            if (tx.type === 'credit') return acc + tx.amount;
+            if (tx.type === 'debit') return acc - tx.amount;
+            return acc;
+        }, 0);
+        const pendingDebits = userTransactions
+            .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+            .reduce((acc, tx) => acc + tx.amount, 0);
+        
+        loggedInUser.walletBalance = completedBalance - pendingDebits;
+        setUser(loggedInUser);
+        setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      sessionStorage.setItem('currentUser', JSON.stringify(user));
+    } else {
+      sessionStorage.removeItem('currentUser');
     }
   }, [user]);
+
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
