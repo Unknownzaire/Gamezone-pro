@@ -32,6 +32,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!userToLogin) return;
 
     const currentUser = { ...userToLogin };
+    sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
+    sessionStorage.removeItem('isNewUser');
+    
     const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
 
     const completedBalance = userTransactions.reduce((acc, tx) => {
