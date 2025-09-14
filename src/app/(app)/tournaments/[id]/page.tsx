@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
-import { mockTournaments } from '@/lib/mock-data';
+import { mockTournaments, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -38,15 +38,28 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   const router = useRouter();
   const { toast } = useToast();
   const tournament = mockTournaments.find((t) => t.id === params.id);
+  const currentUser = mockUsers[0]; // Assuming user-1 is logged in
 
   if (!tournament) {
     notFound();
   }
   
   const handleJoin = (tournament: Tournament) => {
+    if (currentUser.walletBalance < tournament.entryFee) {
+       toast({
+        variant: 'destructive',
+        title: "Insufficient Balance",
+        description: `You need ₹${tournament.entryFee} to join. Please add funds to your wallet.`,
+      });
+      return;
+    }
+
+    // This would be a server action in a real app
+    currentUser.walletBalance -= tournament.entryFee;
+    
     toast({
       title: "Successfully Joined!",
-      description: `You have joined the "${tournament.title}" tournament.`,
+      description: `You have joined the "${tournament.title}" tournament. ₹${tournament.entryFee} has been deducted.`,
     });
     router.push('/my-tournaments');
   };
@@ -307,5 +320,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     </div>
   );
 }
+
+    
 
     
