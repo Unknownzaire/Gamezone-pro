@@ -1,19 +1,20 @@
+
 "use client";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { mockTournaments } from "@/lib/mock-data";
 import { Tournament } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Clock, Trophy, Users } from "lucide-react";
 import Link from "next/link";
+import { Progress } from "@/components/ui/progress";
+import { useUser } from "@/hooks/use-user.tsx";
 
 export default function HomePage() {
-  const { toast } = useToast();
-  const upcomingOrLiveTournaments = mockTournaments.filter(
+  const { tournaments } = useUser();
+  const upcomingOrLiveTournaments = tournaments.filter(
     (t) => t.status === "Upcoming" || t.status === "Live"
   );
 
@@ -55,6 +56,13 @@ export default function HomePage() {
               <div className="flex items-center gap-2">
                 <Clock className="h-4 w-4 text-primary" />
                 <span>{format(new Date(tournament.matchTime), "PPp")}</span>
+              </div>
+               <div className="space-y-2 pt-2">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Players Joined</span>
+                      <span>{tournament.participants.length} / 100</span>
+                  </div>
+                  <Progress value={tournament.participants.length} />
               </div>
             </CardContent>
             <CardFooter>
