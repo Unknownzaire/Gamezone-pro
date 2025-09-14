@@ -21,8 +21,9 @@ import { Tournament } from '@/lib/types';
 
 export default function ManageTournamentPage({ params }: { params: { id: string } }) {
   const { toast } = useToast();
+  const id = params.id;
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
-  const tournament = tournaments.find(t => t.id === params.id);
+  const tournament = tournaments.find(t => t.id === id);
 
   const [roomId, setRoomId] = useState(tournament?.roomId || '');
   const [roomPassword, setRoomPassword] = useState(tournament?.roomPassword || '');
