@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Edit } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 type UserMatchHistory = {
@@ -94,6 +94,7 @@ export default function UserMatchHistoryPage() {
                         <TableHead>Tournament</TableHead>
                         <TableHead>Result</TableHead>
                         <TableHead>Date</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -106,6 +107,14 @@ export default function UserMatchHistoryPage() {
                             </Badge>
                         </TableCell>
                         <TableCell>{format(new Date(tournament.matchTime), 'PP')}</TableCell>
+                         <TableCell className="text-right">
+                            <Link href={`/admin/tournaments/edit/${tournament.id}`}>
+                                <Button variant="ghost" size="icon">
+                                    <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit Tournament</span>
+                                </Button>
+                            </Link>
+                        </TableCell>
                         </TableRow>
                     ))}
                     </TableBody>
