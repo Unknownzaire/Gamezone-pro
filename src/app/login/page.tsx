@@ -58,7 +58,7 @@ export default function LoginPage() {
                     <Label htmlFor="login-password">Password</Label>
                     <Input id="login-password" type="password" required />
                   </div>
-                  <Button type="submit" className="w-full bg-accent hover:bg-accent/90">Login</Button>
+                  <Button type="submit" className="w-full">Login</Button>
                 </form>
               </CardContent>
             </Card>
