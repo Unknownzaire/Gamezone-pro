@@ -1,13 +1,29 @@
+'use client';
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers } from "@/lib/mock-data";
+import { mockUsers as initialUsers } from "@/lib/mock-data";
 import { MoreHorizontal } from "lucide-react";
+import { useEffect, useState } from "react";
+import { User } from "@/lib/types";
 
 export default function AdminUsersPage() {
+  const [users, setUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    // In a real app, you'd fetch this from your database.
+    // For now, we'll use localStorage as a simple mock database.
+    const storedUsers = localStorage.getItem('allUsers');
+    if (storedUsers) {
+      setUsers(JSON.parse(storedUsers));
+    } else {
+      setUsers(initialUsers);
+    }
+  }, []);
+
   return (
     <div className="space-y-6">
       <div>
@@ -28,7 +44,7 @@ export default function AdminUsersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockUsers.map((user) => (
+              {users.map((user) => (
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">

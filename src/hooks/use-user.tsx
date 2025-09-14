@@ -26,7 +26,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
-  const [allUsers, setAllUsers] = useState<User[]>(mockUsers);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  useEffect(() => {
+    const storedUsers = localStorage.getItem('allUsers');
+    if (storedUsers) {
+      setAllUsers(JSON.parse(storedUsers));
+    } else {
+      setAllUsers(mockUsers);
+      localStorage.setItem('allUsers', JSON.stringify(mockUsers));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (allUsers.length > 0) {
+      localStorage.setItem('allUsers', JSON.stringify(allUsers));
+    }
+  }, [allUsers]);
 
 
   const login = (email: string, password: string): boolean => {
@@ -106,7 +122,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setUser(loggedInUser);
         setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }
-  }, []);
+  }, [allUsers]);
 
   useEffect(() => {
     if (user) {
