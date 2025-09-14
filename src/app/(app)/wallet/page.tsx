@@ -26,6 +26,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
@@ -68,10 +69,14 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction } = useUser();
+  const { user, transactions, addTransaction, updateBalance } = useUser();
   const { toast } = useToast();
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('upi');
+
+  const [addAmount, setAddAmount] = useState('');
+  const [upiRef, setUpiRef] = useState('');
+  const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
 
   const handleWithdraw = () => {
     if (!user) return;
@@ -95,6 +100,38 @@ export default function WalletPage() {
     toast({ title: "Withdrawal Request Submitted", description: `Your request to withdraw ₹${amount.toLocaleString()} has been submitted.` });
     setWithdrawAmount('');
   };
+
+  const handleAddMoney = () => {
+    if(!user) return;
+    const amount = parseFloat(addAmount);
+     if (isNaN(amount) || amount <= 0) {
+      toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount to add." });
+      return;
+    }
+    if (!upiRef) {
+       toast({ variant: 'destructive', title: "Missing Reference Number", description: "Please enter the UPI transaction reference number." });
+      return;
+    }
+
+    addTransaction({
+        amount,
+        type: 'credit',
+        description: `Added to wallet via UPI (Ref: ${upiRef})`,
+        status: 'completed'
+    });
+
+    updateBalance(user.walletBalance + amount);
+
+    toast({ title: "Money Added!", description: `₹${amount.toLocaleString()} has been successfully added to your wallet.` });
+    setAddAmount('');
+    setUpiRef('');
+    setIsAddMoneyOpen(false);
+  }
+
+  const upiId = 'arenaace@upi';
+  const payeeName = 'Arena Ace';
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${upiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
+
 
   if (!user) {
     return (
@@ -142,7 +179,54 @@ export default function WalletPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
-          <Button className="w-full">Add Money</Button>
+           <Dialog open={isAddMoneyOpen} onOpenChange={setIsAddMoneyOpen}>
+            <DialogTrigger asChild>
+              <Button className="w-full">Add Money</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add Money to Wallet</DialogTitle>
+                <DialogDescription>
+                  Scan the QR code with your UPI app and enter the reference number to add funds.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                 <div className="space-y-2">
+                    <Label htmlFor="add-amount">Amount (₹)</Label>
+                    <Input 
+                      id="add-amount" 
+                      type="number" 
+                      placeholder="e.g., 500" 
+                      value={addAmount} 
+                      onChange={(e) => setAddAmount(e.target.value)} 
+                    />
+                  </div>
+                  <div className="flex flex-col items-center gap-4">
+                     <p className="text-sm text-muted-foreground">Scan and Pay</p>
+                     <div className="p-4 bg-white rounded-lg">
+                       <Image src={qrCodeUrl} alt="UPI QR Code" width={200} height={200} />
+                     </div>
+                      <p className="font-mono text-sm">{upiId}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
+                    <Input 
+                      id="upi-ref" 
+                      placeholder="Enter the 12-digit reference number"
+                      value={upiRef}
+                      onChange={(e) => setUpiRef(e.target.value)}
+                    />
+                  </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary">Cancel</Button>
+                </DialogClose>
+                <Button onClick={handleAddMoney}>Submit & Add Funds</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button variant="secondary" className="w-full">Withdraw</Button>
@@ -259,3 +343,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
