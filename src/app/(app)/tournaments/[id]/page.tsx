@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,8 +37,9 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
+export default function TournamentDetailsPage() {
   const router = useRouter();
+  const params = useParams();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
