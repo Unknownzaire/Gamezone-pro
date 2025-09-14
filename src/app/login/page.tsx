@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -10,15 +11,18 @@ import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { useState } from "react";
+import { UserProvider, useUser } from "@/hooks/use-user.tsx";
 
-export default function LoginPage() {
+function LoginFormComponent() {
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('login');
+  const { login } = useUser();
 
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = (e: React.FormEvent, isNewUser = false) => {
     e.preventDefault();
+    login(isNewUser);
     toast({
       title: 'Login Successful',
       description: 'Welcome back!',
@@ -32,6 +36,9 @@ export default function LoginPage() {
       title: 'Sign Up Successful',
       description: 'Your account has been created. Please log in.',
     });
+    // In a real app, we would get back a user object.
+    // For now, we'll just simulate the login for a new user.
+    // We could pass a flag to handleLogin, but for simplicity, we'll just switch tabs.
     setActiveTab('login');
   };
 
@@ -53,14 +60,14 @@ export default function LoginPage() {
                 <CardDescription>Enter your credentials to access your account.</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={(e) => handleLogin(e, false)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" type="email" placeholder="you@example.com" required />
+                    <Input id="login-email" type="email" placeholder="you@example.com" required defaultValue="player1@example.com" />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
-                    <Input id="login-password" type="password" required />
+                    <Input id="login-password" type="password" required defaultValue="password" />
                     <div className="flex items-center justify-end pt-1">
                        <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
                           Forgot Password?
@@ -68,6 +75,7 @@ export default function LoginPage() {
                     </div>
                   </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Login</Button>
+                   <Button type="button" variant="outline" onClick={(e) => handleLogin(e as any, true)} className="w-full">Login as New User (Demo)</Button>
                 </form>
               </CardContent>
             </Card>
@@ -112,5 +120,13 @@ export default function LoginPage() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <UserProvider>
+      <LoginFormComponent />
+    </UserProvider>
   );
 }

@@ -15,6 +15,7 @@ interface UserContextType {
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
+  login: (isNewUser?: boolean) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -25,24 +26,43 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
 
+  const login = (isNewUser = false) => {
+    if (isNewUser) {
+      // For a new user, create a fresh state
+      const newUser: User = {
+        ...mockUsers[0], // Use a base template, but customize
+        username: 'NewPlayer',
+        email: 'newplayer@example.com',
+        walletBalance: 100, // Start with a default balance
+        avatarUrl: 'https://picsum.photos/seed/newuser/100/100',
+      };
+      setUser(newUser);
+      setTransactions([]); // No initial transactions
+    } else {
+      // For an existing user, load their data
+      const currentUser = { ...mockUsers[0] };
+      const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
+
+      const balance = userTransactions.reduce((acc, tx) => {
+          if (tx.type === 'credit') return acc + tx.amount;
+          if (tx.type === 'debit') return acc - tx.amount;
+          return acc;
+      }, 0);
+
+
+      setUser({ ...currentUser, walletBalance: balance });
+      setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+    }
+  };
+
+
   useEffect(() => {
-    // In a real app, you'd fetch the current user from an API
-    // For now, we'll just use the first mock user
-    const currentUser = { ...mockUsers[0] };
-    const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
-
-    const balance = userTransactions.reduce((acc, tx) => {
-        if (tx.status === 'completed') {
-            if (tx.type === 'credit') return acc + tx.amount;
-            if (tx.type === 'debit') return acc - tx.amount;
-        }
-        return acc;
-    }, 0);
-
-
-    setUser({ ...currentUser, walletBalance: balance });
-    setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
-  }, []);
+    // By default, log in as an existing user.
+    // A specific action (like completing signup) will call login(true)
+    if (!user) {
+        login();
+    }
+  }, [user]);
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
     if (!user) return;
@@ -89,7 +109,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament }}>
+    <UserContext.Provider value={{ user, transactions, tournaments, addTransaction, updateBalance, joinTournament, login }}>
       {children}
     </UserContext.Provider>
   );
