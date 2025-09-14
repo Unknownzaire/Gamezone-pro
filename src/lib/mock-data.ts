@@ -27,6 +27,14 @@ export const mockParticipants: Participant[] = [
       result: index === 0 ? 'Winner' : 'Participated',
       joinedAt: new Date(new Date('2025-09-10T18:30:00Z').getTime() - (25-index) * 60000)
     })),
+     // Participants for t-1 - user-1 joins
+    {
+      id: 'p-t1-1',
+      user: mockUsers[0],
+      tournamentId: 't-1',
+      result: null,
+      joinedAt: new Date('2025-09-16T10:00:00Z')
+    }
 ];
 
 export const mockTournaments: Tournament[] = [
@@ -39,7 +47,7 @@ export const mockTournaments: Tournament[] = [
     matchTime: new Date('2025-09-17T19:30:00Z'),
     status: 'Upcoming',
     commissionPercentage: 10,
-    participants: [],
+    participants: mockParticipants.filter(p => p.tournamentId === 't-1'),
     imageUrl: 'https://picsum.photos/seed/1/600/400',
     imageHint: 'sunrise battleground'
   },
@@ -88,8 +96,11 @@ export const mockTournaments: Tournament[] = [
 ];
 
 export const mockTransactions: Transaction[] = [
-  { id: 'tx-1', userId: 'user-1', amount: 500, type: 'credit', description: 'Initial wallet load', createdAt: new Date('2024-07-28T09:00:00Z') },
-  { id: 'tx-2', userId: 'user-2', amount: 100, type: 'debit', description: 'Joined Midnight Mayhem', createdAt: new Date('2024-08-01T10:05:00Z') },
-  { id: 'tx-3', userId: 'user-51', amount: 6600, type: 'credit', description: 'Prize from Victory Valley', createdAt: new Date('2024-07-25T18:00:00Z') },
-  { id: 'tx-4', userId: 'user-51', amount: 75, type: 'debit', description: 'Joined Victory Valley', createdAt: new Date('2024-07-20T12:00:00Z') },
-];
+  { id: 'tx-1', userId: 'user-1', amount: 500, type: 'credit', description: 'Added to wallet', createdAt: new Date('2024-07-28T09:00:00Z') },
+  { id: 'tx-2', userId: 'user-1', amount: 100, type: 'debit', description: 'Joined "Midnight Mayhem"', createdAt: new Date('2025-09-15T10:05:00Z') },
+  { id: 'tx-3', userId: 'user-51', amount: 6600, type: 'credit', description: 'Prize from "Victory Valley"', createdAt: new Date('2025-09-10T20:00:00Z') },
+  { id: 'tx-4', userId: 'user-51', amount: 75, type: 'debit', description: 'Joined "Victory Valley"', createdAt: new Date('2025-09-09T12:00:00Z') },
+  { id: 'tx-5', userId: 'user-1', amount: 50, type: 'debit', description: 'Joined "Sunrise Skirmish"', createdAt: new Date('2025-09-16T10:00:00Z') },
+  { id: 'tx-6', userId: 'user-1', amount: 1000, type: 'credit', description: 'Prize from "Old Tournament"', createdAt: new Date('2024-07-20T18:00:00Z') },
+  { id: 'tx-7', userId: 'user-1', amount: 200, type: 'credit', description: 'Referral Bonus', createdAt: new Date('2024-07-22T11:30:00Z') },
+].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
