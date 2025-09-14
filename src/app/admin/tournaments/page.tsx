@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, PlusCircle, ArrowLeft } from "lucide-react";
@@ -62,7 +62,7 @@ export default function AdminTournamentsPage() {
                   </TableCell>
                   <TableCell>₹{t.prizePool.toLocaleString()}</TableCell>
                   <TableCell>₹{t.entryFee.toLocaleString()}</TableCell>
-                  <TableCell>{format(t.matchTime, "PPp")}</TableCell>
+                  <TableCell>{format(new Date(t.matchTime), "PPp")}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -74,6 +74,8 @@ export default function AdminTournamentsPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <Link href={`/admin/tournaments/${t.id}`}><DropdownMenuItem>Manage</DropdownMenuItem></Link>
+                        <Link href={`/admin/tournaments/edit/${t.id}`}><DropdownMenuItem>Edit</DropdownMenuItem></Link>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
