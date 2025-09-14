@@ -68,7 +68,7 @@ export default function HomePage() {
             <CardFooter>
                 <Link href={`/tournaments/${tournament.id}`} className="w-full">
                     <Button
-                        className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
+                        className="w-full"
                     >
                         View Details
                     </Button>
