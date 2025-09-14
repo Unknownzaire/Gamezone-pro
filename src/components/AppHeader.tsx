@@ -17,7 +17,7 @@ export default function AppHeader() {
         <Link href="/wallet" className="flex items-center gap-2 rounded-full bg-muted px-3 py-1.5 text-sm font-semibold text-primary transition-colors hover:bg-primary/10">
           <Wallet className="h-5 w-5" />
           {user ? (
-            <span>₹{user.walletBalance.toLocaleString('en-IN')}</span>
+            <span>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
           ) : (
             <Skeleton className="h-5 w-12" />
           )}
