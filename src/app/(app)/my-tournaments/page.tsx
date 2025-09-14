@@ -1,12 +1,16 @@
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockTournaments } from "@/lib/mock-data";
+import { mockParticipants, mockTournaments } from "@/lib/mock-data";
 import { Clock, Eye, Trophy } from "lucide-react";
 import { format } from "date-fns";
 
 export default function MyTournamentsPage() {
-  const joinedTournaments = mockTournaments.filter(t => t.id === 't-2' || t.id === 't-3');
+  // We look at the mockParticipants array to see which tournaments the user has joined.
+  const currentUser = 'user-1'; // Assuming current user is user-1
+  const joinedTournamentIds = [...new Set(mockParticipants.filter(p => p.user.id === currentUser).map(p => p.tournamentId))];
+  const joinedTournaments = mockTournaments.filter(t => joinedTournamentIds.includes(t.id));
+
   const upcomingLive = joinedTournaments.filter(t => t.status !== 'Completed');
   const completed = joinedTournaments.filter(t => t.status === 'Completed');
 
@@ -29,7 +33,7 @@ export default function MyTournamentsPage() {
                   </CardTitle>
                   <CardDescription className="flex items-center gap-2 pt-2">
                      <Clock className="h-4 w-4" />
-                     {format(t.matchTime, "PPp")}
+                     {format(new Date(t.matchTime), "PPp")}
                   </CardDescription>
                 </CardHeader>
                 {t.status === 'Live' && (
@@ -55,7 +59,7 @@ export default function MyTournamentsPage() {
                   <CardTitle className="font-headline">{t.title}</CardTitle>
                    <CardDescription className="flex items-center gap-2 pt-2">
                      <Clock className="h-4 w-4" />
-                     {format(t.matchTime, "PP")}
+                     {format(new Date(t.matchTime), "PP")}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex justify-between items-center">

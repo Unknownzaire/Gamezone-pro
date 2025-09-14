@@ -1,7 +1,7 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
-import { mockTournaments, mockUsers } from '@/lib/mock-data';
+import { mockTournaments, mockUsers, mockParticipants } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -32,36 +32,54 @@ import {
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import React from 'react';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
-  const tournament = mockTournaments.find((t) => t.id === params.id);
+  const [tournament, setTournament] = React.useState(() => mockTournaments.find((t) => t.id === params.id));
   const currentUser = mockUsers[0]; // Assuming user-1 is logged in
 
   if (!tournament) {
     notFound();
   }
   
-  const handleJoin = (tournament: Tournament) => {
-    if (currentUser.walletBalance < tournament.entryFee) {
+  const handleJoin = (tournamentToJoin: Tournament) => {
+    if (currentUser.walletBalance < tournamentToJoin.entryFee) {
        toast({
         variant: 'destructive',
         title: "Insufficient Balance",
-        description: `You need ₹${tournament.entryFee} to join. Please add funds to your wallet.`,
+        description: `You need ₹${tournamentToJoin.entryFee} to join. Please add funds to your wallet.`,
       });
       return;
     }
 
     // This would be a server action in a real app
-    currentUser.walletBalance -= tournament.entryFee;
+    currentUser.walletBalance -= tournamentToJoin.entryFee;
     
+    const newParticipant = {
+        id: `p-${tournamentToJoin.id}-${currentUser.id}`,
+        user: currentUser,
+        tournamentId: tournamentToJoin.id,
+        result: null,
+        joinedAt: new Date(),
+    };
+
+    // Update mock data for demonstration
+    mockParticipants.push(newParticipant);
+    const updatedTournament = mockTournaments.find(t => t.id === tournamentToJoin.id);
+    if(updatedTournament) {
+        updatedTournament.participants.push(newParticipant);
+        setTournament({...updatedTournament});
+    }
+
     toast({
       title: "Successfully Joined!",
-      description: `You have joined the "${tournament.title}" tournament. ₹${tournament.entryFee} has been deducted.`,
+      description: `You have joined the "${tournamentToJoin.title}" tournament. ₹${tournamentToJoin.entryFee} has been deducted.`,
     });
-    router.push('/my-tournaments');
+    // No longer redirecting immediately to see the change
+    // router.push('/my-tournaments');
   };
 
   const prizeDistribution = [
@@ -148,6 +166,8 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       ],
     },
   ];
+
+  const isAlreadyJoined = tournament.participants.some(p => p.user.id === currentUser.id);
 
   return (
     <div className="space-y-6">
@@ -293,8 +313,8 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={tournament.status !== 'Upcoming'}>
-              {tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={tournament.status !== 'Upcoming' || isAlreadyJoined}>
+              {isAlreadyJoined ? 'Already Joined' : tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
