@@ -13,7 +13,8 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
@@ -125,134 +126,155 @@ export default function AdminDashboardPage() {
         })}
       </div>
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline flex items-center gap-2">
-                    <ArrowDownLeft className="text-green-500" />
-                    Pending Deposits
+        <Dialog>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="font-headline text-lg flex items-center gap-2">
+                  <ArrowDownLeft className="text-green-500" />
+                  Pending Deposits
                 </CardTitle>
-                <CardDescription>Verify and approve user deposit requests.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {pendingDeposits.length > 0 ? (
-                     <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Amount</TableHead>
-                                <TableHead>Ref No.</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {pendingDeposits.map(tx => {
-                                const user = getUserById(tx.userId);
-                                return (
-                                    <TableRow key={tx.id}>
-                                        <TableCell>
-                                            {user ? (
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div className="font-medium">{user.username}</div>
-                                                </div>
-                                            ) : 'Unknown User'}
-                                        </TableCell>
-                                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
-                                        <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
-                                        <TableCell className="text-right">
-                                            <div className="flex gap-2 justify-end">
-                                                <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'credit')}>Decline</Button>
-                                                <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'credit')}>Approve</Button>
-                                            </div>
-                                        </TableCell>
-                                    </TableRow>
-                                );
-                            })}
-                        </TableBody>
-                    </Table>
-                ) : (
-                    <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
-                )}
-            </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <div className="space-y-2">
-              <CardTitle className="font-headline flex items-center gap-2">
-                <ArrowUpRight className="text-red-500" />
-                Pending Withdrawals
-              </CardTitle>
-              <CardDescription>Review and process user withdrawal requests.</CardDescription>
-            </div>
-            {pendingWithdrawals.length > 0 && (
-              <Table className="mt-4">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead>Payment Details</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-              </Table>
-            )}
-          </CardHeader>
-          <CardContent className="p-0">
-            {pendingWithdrawals.length > 0 ? (
-              <Table>
-                <TableBody>
-                  {pendingWithdrawals.map(tx => {
-                    const user = getUserById(tx.userId);
-                    return (
-                      <TableRow key={tx.id}>
-                        <TableCell>
-                          {user ? (
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="font-medium">{user.username}</div>
+                 <Badge variant="secondary">{pendingDeposits.length}</Badge>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground">Verify and approve user deposit requests.</p>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Pending Deposits</DialogTitle>
+              <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              {pendingDeposits.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Ref No.</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingDeposits.map(tx => {
+                      const user = getUserById(tx.userId);
+                      return (
+                        <TableRow key={tx.id}>
+                          <TableCell>
+                            {user ? (
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="font-medium">{user.username}</div>
+                              </div>
+                            ) : 'Unknown User'}
+                          </TableCell>
+                          <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'credit')}>Decline</Button>
+                              <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'credit')}>Approve</Button>
                             </div>
-                          ) : 'Unknown User'}
-                        </TableCell>
-                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
-                        <TableCell>
-                          {tx.paymentDetails ? (
-                            <div className="text-xs">
-                              <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
-                              {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
-                              {tx.paymentDetails.method === 'bank' && (
-                                <div>
-                                  <p>{tx.paymentDetails.accountHolderName}</p>
-                                  <p>A/C: {tx.paymentDetails.accountNumber}</p>
-                                  <p>IFSC: {tx.paymentDetails.ifscCode}</p>
-                                </div>
-                              )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="font-headline text-lg flex items-center gap-2">
+                        <ArrowUpRight className="text-red-500" />
+                        Pending Withdrawals
+                    </CardTitle>
+                    <Badge variant="destructive">{pendingWithdrawals.length}</Badge>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">Review and process user withdrawal requests.</p>
+                </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+             <DialogHeader>
+              <DialogTitle>Pending Withdrawals</DialogTitle>
+              <DialogDescription>Review and process withdrawal requests from users.</DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              {pendingWithdrawals.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Payment Details</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingWithdrawals.map(tx => {
+                      const user = getUserById(tx.userId);
+                      return (
+                        <TableRow key={tx.id}>
+                          <TableCell>
+                            {user ? (
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="font-medium">{user.username}</div>
+                              </div>
+                            ) : 'Unknown User'}
+                          </TableCell>
+                          <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {tx.paymentDetails ? (
+                              <div className="text-xs">
+                                <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
+                                {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
+                                {tx.paymentDetails.method === 'bank' && (
+                                  <div>
+                                    <p>{tx.paymentDetails.accountHolderName}</p>
+                                    <p>A/C: {tx.paymentDetails.accountNumber}</p>
+                                    <p>IFSC: {tx.paymentDetails.ifscCode}</p>
+                                  </div>
+                                )}
+                              </div>
+                            ) : (
+                              <p className="text-muted-foreground">N/A</p>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                              <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
+                              <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
                             </div>
-                          ) : (
-                            <p className="text-muted-foreground">N/A</p>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex gap-2 justify-end">
-                            <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
-                            <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  })}
-                </TableBody>
-              </Table>
-            ) : (
-              <p className="text-muted-foreground text-center py-8 px-6">No pending withdrawals.</p>
-            )}
-          </CardContent>
-        </Card>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No pending withdrawals.</p>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
