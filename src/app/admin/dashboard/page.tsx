@@ -245,9 +245,9 @@ export default function AdminDashboardPage() {
                             {tx.paymentDetails ? (
                               <div className="text-xs">
                                 <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
-                                {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
+                                {tx.paymentDetails.method === 'upi' && <p className="font-mono">{tx.paymentDetails.upiId}</p>}
                                 {tx.paymentDetails.method === 'bank' && (
-                                  <div>
+                                  <div className="font-mono">
                                     <p>{tx.paymentDetails.accountHolderName}</p>
                                     <p>A/C: {tx.paymentDetails.accountNumber}</p>
                                     <p>IFSC: {tx.paymentDetails.ifscCode}</p>
