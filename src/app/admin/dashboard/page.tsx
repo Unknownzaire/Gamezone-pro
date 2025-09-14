@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock } from "lucide-react";
+import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,25 +13,26 @@ import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
+  const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
-    // In a real app, this data would be fetched from a server.
-    // For now, we simulate this by using localStorage as a mock database.
     const storedUsers = localStorage.getItem('allUsers');
     const users: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
     setAllUsers(users);
     setTotalUsers(users.length);
 
-    // For simplicity, we'll manage transactions in local state for this component.
-    // A real app would use a centralized state management or server-side data fetching.
-    const withdrawals = initialTransactions.filter(tx => tx.status === 'pending' && tx.type === 'debit');
-    setPendingWithdrawals(withdrawals);
+    const storedTransactions = localStorage.getItem('allTransactions');
+    const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
+
+    setPendingDeposits(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
+    setPendingWithdrawals(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
 
   }, []);
 
@@ -50,30 +51,54 @@ export default function AdminDashboardPage() {
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: Trophy, href: null },
   ];
   
-  const handleRequest = (transactionId: string, status: 'approved' | 'declined') => {
-    // This is a mock implementation. A real app would update the database.
-    const transaction = pendingWithdrawals.find(tx => tx.id === transactionId);
+  const handleRequest = (transactionId: string, status: 'approved' | 'declined', type: 'credit' | 'debit') => {
+    const isDeposit = type === 'credit';
+    const transactionList = isDeposit ? pendingDeposits : pendingWithdrawals;
+    const setTransactionList = isDeposit ? setPendingDeposits : setPendingWithdrawals;
+    
+    const transaction = transactionList.find(tx => tx.id === transactionId);
     if(!transaction) return;
 
-    if (status === 'declined') {
-        // If declined, refund the amount to the user's balance
-        const userToRefund = allUsers.find(u => u.id === transaction.userId);
-        if (userToRefund) {
-            const updatedUsers = allUsers.map(u => 
-                u.id === userToRefund.id 
-                ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-                : u
-            );
-            setAllUsers(updatedUsers);
-            localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    let updatedUsers = [...allUsers];
+    const userToUpdate = allUsers.find(u => u.id === transaction.userId);
+
+    if (userToUpdate) {
+        if (status === 'approved') {
+            if (isDeposit) {
+                // Add to balance for approved deposit
+                updatedUsers = updatedUsers.map(u => 
+                    u.id === userToUpdate.id 
+                    ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+                    : u
+                );
+            }
+            // For approved withdrawal, balance is already deducted on request. No change needed here.
+        } else { // Declined
+            if (!isDeposit) {
+                // Refund to balance for declined withdrawal
+                updatedUsers = updatedUsers.map(u => 
+                    u.id === userToUpdate.id 
+                    ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+                    : u
+                );
+            }
+            // For declined deposit, no change to balance.
         }
     }
 
-    setPendingWithdrawals(prev => prev.filter(tx => tx.id !== transactionId));
+    setAllUsers(updatedUsers);
+    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    
+    const storedTransactions = localStorage.getItem('allTransactions');
+    let allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : initialTransactions;
+    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status === 'approved' ? 'completed' : 'declined' } : t);
+    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+
+    setTransactionList(prev => prev.filter(tx => tx.id !== transactionId));
     
     toast({
       title: `Request ${status}`,
-      description: `The withdrawal request for ₹${transaction.amount} has been ${status}.`,
+      description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status}.`,
     });
   };
   
@@ -99,74 +124,132 @@ export default function AdminDashboardPage() {
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
-       <Card>
-        <CardHeader>
-            <CardTitle className="font-headline">Pending Withdrawals</CardTitle>
-            <CardDescription>Review and process user withdrawal requests.</CardDescription>
-        </CardHeader>
-        <CardContent>
-            {pendingWithdrawals.length > 0 ? (
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>User</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Payment Details</TableHead>
-                            <TableHead>Date</TableHead>
-                             <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {pendingWithdrawals.map(tx => {
-                            const user = getUserById(tx.userId);
-                            return (
-                                <TableRow key={tx.id}>
-                                    <TableCell>
-                                        {user ? (
-                                            <div className="flex items-center gap-3">
-                                                <Avatar className="h-8 w-8">
-                                                    <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                                    <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="font-medium">{user.username}</div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <ArrowDownLeft className="text-green-500" />
+                    Pending Deposits
+                </CardTitle>
+                <CardDescription>Verify and approve user deposit requests.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {pendingDeposits.length > 0 ? (
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Ref No.</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {pendingDeposits.map(tx => {
+                                const user = getUserById(tx.userId);
+                                return (
+                                    <TableRow key={tx.id}>
+                                        <TableCell>
+                                            {user ? (
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="font-medium">{user.username}</div>
+                                                </div>
+                                            ) : 'Unknown User'}
+                                        </TableCell>
+                                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                                        <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex gap-2 justify-end">
+                                                <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'credit')}>Decline</Button>
+                                                <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'credit')}>Approve</Button>
                                             </div>
-                                        ) : 'Unknown User'}
-                                    </TableCell>
-                                    <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
-                                    <TableCell>
-                                        {tx.paymentDetails ? (
-                                            <div className="text-xs">
-                                                <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
-                                                {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
-                                                {tx.paymentDetails.method === 'bank' && (
-                                                    <div>
-                                                        <p>{tx.paymentDetails.accountHolderName}</p>
-                                                        <p>A/C: {tx.paymentDetails.accountNumber}</p>
-                                                        <p>IFSC: {tx.paymentDetails.ifscCode}</p>
-                                                    </div>
-                                                )}
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
+                )}
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline flex items-center gap-2">
+                    <ArrowUpRight className="text-red-500" />
+                    Pending Withdrawals
+                </CardTitle>
+                <CardDescription>Review and process user withdrawal requests.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                {pendingWithdrawals.length > 0 ? (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>User</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Payment Details</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {pendingWithdrawals.map(tx => {
+                                const user = getUserById(tx.userId);
+                                return (
+                                    <TableRow key={tx.id}>
+                                        <TableCell>
+                                            {user ? (
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div className="font-medium">{user.username}</div>
+                                                </div>
+                                            ) : 'Unknown User'}
+                                        </TableCell>
+                                        <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                                        <TableCell>
+                                            {tx.paymentDetails ? (
+                                                <div className="text-xs">
+                                                    <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
+                                                    {tx.paymentDetails.method === 'upi' && <p>{tx.paymentDetails.upiId}</p>}
+                                                    {tx.paymentDetails.method === 'bank' && (
+                                                        <div>
+                                                            <p>{tx.paymentDetails.accountHolderName}</p>
+                                                            <p>A/C: {tx.paymentDetails.accountNumber}</p>
+                                                            <p>IFSC: {tx.paymentDetails.ifscCode}</p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p className="text-muted-foreground">N/A</p>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex gap-2 justify-end">
+                                                <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'debit')}>Decline</Button>
+                                                <Button size="sm" onClick={() => handleRequest(tx.id, 'approved', 'debit')}>Approve</Button>
                                             </div>
-                                        ) : (
-                                            <p className="text-muted-foreground">N/A</p>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>{format(new Date(tx.createdAt), 'PP')}</TableCell>
-                                    <TableCell className="text-right">
-                                        <div className="flex gap-2 justify-end">
-                                            <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined')}>Decline</Button>
-                                            <Button size="sm" onClick={() => handleRequest(tx.id, 'approved')}>Approve</Button>
-                                        </div>
-                                    </TableCell>
-                                </TableRow>
-                            )
-                        })}
-                    </TableBody>
-                </Table>
-            ) : (
-                <p className="text-muted-foreground text-center py-8">No pending withdrawals.</p>
-            )}
-        </CardContent>
-       </Card>
+                                        </TableCell>
+                                    </TableRow>
+                                )
+                            })}
+                        </TableBody>
+                    </Table>
+                ) : (
+                    <p className="text-muted-foreground text-center py-8">No pending withdrawals.</p>
+                )}
+            </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
+
+    

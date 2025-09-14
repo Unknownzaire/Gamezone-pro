@@ -141,13 +141,15 @@ export default function WalletPage() {
     addTransaction({
         amount,
         type: 'credit',
-        description: `Added to wallet via UPI (Ref: ${upiRef})`,
-        status: 'completed'
+        description: `Deposit via UPI`,
+        status: 'pending',
+        paymentDetails: {
+          method: 'upi',
+          upiId: upiRef, // Store the reference number here
+        }
     });
 
-    updateBalance(user.walletBalance + amount);
-
-    toast({ title: "Money Added!", description: `₹${amount.toLocaleString()} has been successfully added to your wallet.` });
+    toast({ title: "Deposit Request Submitted", description: `Your request to add ₹${amount.toLocaleString()} is pending approval.` });
     setAddAmount('');
     setUpiRef('');
   }
@@ -247,7 +249,7 @@ export default function WalletPage() {
                   onChange={(e) => setUpiRef(e.target.value)}
                 />
               </div>
-              <Button onClick={handleAddMoney} className="w-full">Add Funds</Button>
+              <Button onClick={handleAddMoney} className="w-full">Submit Deposit Request</Button>
           </div>
 
           {/* Withdraw Column */}
@@ -299,7 +301,7 @@ export default function WalletPage() {
                    </div>
                 </div>
               )}
-               <Button variant="secondary" onClick={handleWithdraw} className="w-full">Submit Request</Button>
+               <Button variant="secondary" onClick={handleWithdraw} className="w-full">Submit Withdrawal Request</Button>
           </div>
         </CardContent>
       </Card>
@@ -346,3 +348,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    

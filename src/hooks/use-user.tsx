@@ -28,6 +28,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
 
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -37,6 +38,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setAllUsers(mockUsers);
       localStorage.setItem('allUsers', JSON.stringify(mockUsers));
     }
+    
+    const storedTransactions = localStorage.getItem('allTransactions');
+    if (storedTransactions) {
+      setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
+    } else {
+      setAllTransactions(mockTransactions);
+      localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
+    }
   }, []);
 
   useEffect(() => {
@@ -44,6 +53,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('allUsers', JSON.stringify(allUsers));
     }
   }, [allUsers]);
+
+  useEffect(() => {
+    if (allTransactions.length > 0) {
+      localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+    }
+  }, [allTransactions]);
 
 
   const login = (email: string, password: string): boolean | 'blocked' => {
@@ -63,7 +78,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     sessionStorage.removeItem('isNewUser');
     
-    const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
+    const userTransactions = allTransactions.filter(tx => tx.userId === currentUser.id);
 
     const completedBalance = userTransactions.reduce((acc, tx) => {
       if(tx.status !== 'completed') return acc;
@@ -117,7 +132,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             }
 
 
-            const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === liveUserData.id);
+            const userTransactions = isNewUser ? [] : allTransactions.filter(tx => tx.userId === liveUserData.id);
             const completedBalance = userTransactions.reduce((acc, tx) => {
                 if(tx.status !== 'completed') return acc;
                 if (tx.type === 'credit') return acc + tx.amount;
@@ -145,7 +160,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setTransactions([]);
         }
     }
-  }, [allUsers]);
+  }, [allUsers, allTransactions]);
 
   useEffect(() => {
     if (user) {
@@ -169,6 +184,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
     setTransactions(prev => [newTx, ...prev]);
+    setAllTransactions(prev => [newTx, ...prev]);
     
     // Only deduct from balance if it's a new pending withdrawal
     if (user && newTx.type === 'debit' && newTx.status === 'pending') {
