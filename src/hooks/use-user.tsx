@@ -28,9 +28,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
 
   const login = (isNewUser = false) => {
-    if (isNewUser) {
-      // For a new user, create a fresh state
-      const newUser: User = {
+    const userToLogin = isNewUser ? (sessionStorage.getItem('newUser') ? JSON.parse(sessionStorage.getItem('newUser')!) : null) : mockUsers[0];
+    if (!userToLogin && isNewUser) {
+      // fallback for new user if session storage is empty
+       const newUser: User = {
         ...mockUsers[0], // Use a base template, but customize
         id: `user-${Date.now()}`,
         username: 'NewPlayer',
@@ -41,28 +42,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         bgmiId: '5' + Math.floor(100000000 + Math.random() * 900000000),
       };
       setUser(newUser);
-      setTransactions([]); // No initial transactions
-    } else {
-      // For an existing user, load their data
-      const currentUser = { ...mockUsers[0] };
-      const userTransactions = mockTransactions.filter(tx => tx.userId === currentUser.id);
-
-      const completedBalance = userTransactions.reduce((acc, tx) => {
-        if(tx.status !== 'completed') return acc;
-          if (tx.type === 'credit') return acc + tx.amount;
-          if (tx.type === 'debit') return acc - tx.amount;
-          return acc;
-      }, 0);
-
-      const pendingDebits = mockTransactions
-        .filter(tx => tx.userId === currentUser.id && tx.status === 'pending' && tx.type === 'debit')
-        .reduce((acc, tx) => acc + tx.amount, 0);
-
-      setUser({ ...currentUser, walletBalance: completedBalance - pendingDebits });
-      setTransactions(mockTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setTransactions([]);
+      return;
     }
-  };
 
+    if (!userToLogin) return;
+
+    const currentUser = { ...userToLogin };
+    const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === currentUser.id);
+
+    const completedBalance = userTransactions.reduce((acc, tx) => {
+      if(tx.status !== 'completed') return acc;
+        if (tx.type === 'credit') return acc + tx.amount;
+        if (tx.type === 'debit') return acc - tx.amount;
+        return acc;
+    }, isNewUser ? currentUser.walletBalance : 0);
+
+    const pendingDebits = userTransactions
+      .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+      .reduce((acc, tx) => acc + tx.amount, 0);
+
+    setUser({ ...currentUser, walletBalance: completedBalance - pendingDebits });
+    setTransactions(isNewUser ? [] : userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+  };
+  
   const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl'>) => {
     const newUser: User = {
         ...userDetails,
@@ -70,6 +73,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         walletBalance: 100, // Initial balance
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
     };
+    sessionStorage.setItem('newUser', JSON.stringify(newUser));
     setUser(newUser);
     setTransactions([]);
   };
@@ -81,18 +85,23 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = sessionStorage.getItem('currentUser');
     if (storedUser) {
         const loggedInUser = JSON.parse(storedUser);
-        const userTransactions = mockTransactions.filter(tx => tx.userId === loggedInUser.id);
-         const completedBalance = userTransactions.reduce((acc, tx) => {
+        
+        const isNewUser = sessionStorage.getItem('isNewUser') === 'true';
+
+        const userTransactions = isNewUser ? [] : mockTransactions.filter(tx => tx.userId === loggedInUser.id);
+        const completedBalance = userTransactions.reduce((acc, tx) => {
             if(tx.status !== 'completed') return acc;
             if (tx.type === 'credit') return acc + tx.amount;
             if (tx.type === 'debit') return acc - tx.amount;
             return acc;
-        }, 0);
+        }, isNewUser ? loggedInUser.walletBalance : 0);
+
         const pendingDebits = userTransactions
             .filter(tx => tx.status === 'pending' && tx.type === 'debit')
             .reduce((acc, tx) => acc + tx.amount, 0);
         
         loggedInUser.walletBalance = completedBalance - pendingDebits;
+
         setUser(loggedInUser);
         setTransactions(userTransactions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
     }

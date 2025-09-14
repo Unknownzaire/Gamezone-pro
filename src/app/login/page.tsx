@@ -38,6 +38,7 @@ function LoginFormComponent() {
 
   const handleLogin = (e: React.FormEvent, isNewUser = false) => {
     e.preventDefault();
+    sessionStorage.setItem('isNewUser', String(isNewUser));
     login(isNewUser);
     toast({
       title: 'Login Successful',
@@ -61,10 +62,18 @@ function LoginFormComponent() {
 
     toast({
       title: 'Sign Up Successful',
-      description: 'Your account has been created. Welcome!',
+      description: 'Your account has been created. Please log in.',
     });
     
-    router.push('/home');
+    setSignupForm({
+        username: '',
+        bgmiUsername: '',
+        bgmiId: '',
+        mobile: '',
+        email: '',
+        password: ''
+    });
+    setActiveTab('login');
   };
 
   return (
