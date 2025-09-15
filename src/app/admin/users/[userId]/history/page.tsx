@@ -78,7 +78,17 @@ export default function UserHistoryPage() {
     return tx.type === transactionFilter && tx.status !== 'pending';
   });
 
-  const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => acc + tx.amount, 0);
+  const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => {
+      if (tx.type === 'credit') return acc + tx.amount;
+      // For pending debits, the amount is effectively "reserved"
+      return acc + tx.amount;
+  }, 0);
+  
+  const pendingDebits = transactions
+      .filter(tx => tx.status === 'pending' && tx.type === 'debit')
+      .reduce((acc, tx) => acc + tx.amount, 0);
+  
+  const availableBalance = user.walletBalance - pendingDebits;
 
   return (
     <div className="space-y-6">
@@ -159,7 +169,7 @@ export default function UserHistoryPage() {
                                         <Wallet className="h-4 w-4 text-muted-foreground" />
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-2xl font-bold">₹{user.walletBalance.toLocaleString()}</div>
+                                        <div className="text-2xl font-bold">₹{availableBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     </CardContent>
                                 </Card>
                                  <Card>
@@ -168,7 +178,7 @@ export default function UserHistoryPage() {
                                         <Hourglass className="h-4 w-4 text-muted-foreground" />
                                     </CardHeader>
                                     <CardContent>
-                                        <div className="text-2xl font-bold">₹{pendingAmount.toLocaleString()}</div>
+                                        <div className="text-2xl font-bold">₹{pendingAmount.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                                     </CardContent>
                                 </Card>
                             </div>

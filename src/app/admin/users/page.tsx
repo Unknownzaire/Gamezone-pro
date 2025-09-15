@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -5,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers as initialUsers } from "@/lib/mock-data";
+import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { MoreHorizontal, ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-import { User } from "@/lib/types";
+import { User, Transaction } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -36,6 +38,13 @@ export default function AdminUsersPage() {
     } else {
       setUsers(initialUsers);
       localStorage.setItem('allUsers', JSON.stringify(initialUsers));
+    }
+    
+    const storedTransactions = localStorage.getItem('allTransactions');
+    if (storedTransactions) {
+      setTransactions(JSON.parse(storedTransactions));
+    } else {
+      setTransactions(initialTransactions);
     }
   }, []);
 
@@ -68,6 +77,14 @@ export default function AdminUsersPage() {
     setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
+  
+  const getAvailableBalance = (user: User) => {
+    const pendingDebits = transactions
+      .filter(tx => tx.userId === user.id && tx.status === 'pending' && tx.type === 'debit')
+      .reduce((acc, tx) => acc + tx.amount, 0);
+    return user.walletBalance - pendingDebits;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -92,7 +109,7 @@ export default function AdminUsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead>Wallet Balance</TableHead>
+                <TableHead>Available Balance</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -114,7 +131,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>₹{user.walletBalance.toLocaleString()}</TableCell>
+                  <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
                       <Badge variant="destructive">Blocked</Badge>

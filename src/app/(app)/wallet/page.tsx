@@ -281,7 +281,7 @@ export default function WalletPage() {
         <CardHeader className="text-center">
           <CardDescription>Current Balance</CardDescription>
           <CardTitle className="font-headline text-5xl text-primary">
-            ₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            ₹{user.walletBalance.toFixed(2)}
           </CardTitle>
         </CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
