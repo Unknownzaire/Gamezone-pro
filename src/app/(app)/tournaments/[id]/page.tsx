@@ -94,6 +94,7 @@ export default function TournamentDetailsPage() {
         amount: tournamentToJoin.entryFee,
         type: 'debit',
         description: `Joined "${tournamentToJoin.title}"`,
+        status: 'completed'
     });
     
     joinTournament(tournamentToJoin.id, currentUser);

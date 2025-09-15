@@ -92,6 +92,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (userToLogin.isBlocked) {
+        router.push('/blocked');
         return 'blocked';
     }
     
@@ -194,7 +195,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateBalance = (newBalance: number) => {
     if(user) {
-        setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, walletBalance: newBalance} : u))
+        setAllUsers(prev => prev.map(u => {
+          if (u.id === user.id) {
+            const pendingDebits = allTransactions
+                .filter(tx => tx.userId === user.id && tx.status === 'pending' && tx.type === 'debit')
+                .reduce((acc, tx) => acc + tx.amount, 0);
+            const totalBalance = newBalance + pendingDebits;
+            return {...u, walletBalance: totalBalance};
+          }
+          return u;
+        }))
     }
   }
 
