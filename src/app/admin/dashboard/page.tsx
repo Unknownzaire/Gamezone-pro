@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw } from "lucide-react";
+import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -175,6 +175,7 @@ export default function AdminDashboardPage() {
                       <TableHead>User</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Ref No.</TableHead>
+                      <TableHead>History</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -196,6 +197,16 @@ export default function AdminDashboardPage() {
                           </TableCell>
                           <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
                           <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
+                           <TableCell>
+                            {user && (
+                              <Link href={`/admin/users/${user.id}/history`}>
+                                <Button variant="ghost" size="sm">
+                                  <History className="h-4 w-4 mr-2" />
+                                  View
+                                </Button>
+                              </Link>
+                            )}
+                          </TableCell>
                           <TableCell className="text-right">
                             <div className="flex gap-2 justify-end">
                               <Button variant="outline" size="sm" onClick={() => handleRequest(tx.id, 'declined', 'credit')}>Decline</Button>
@@ -252,6 +263,7 @@ export default function AdminDashboardPage() {
                       <TableHead>User</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Payment Details</TableHead>
+                      <TableHead>History</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -287,6 +299,16 @@ export default function AdminDashboardPage() {
                               </div>
                             ) : (
                               <p className="text-muted-foreground">N/A</p>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {user && (
+                              <Link href={`/admin/users/${user.id}/history`}>
+                                <Button variant="ghost" size="sm">
+                                  <History className="h-4 w-4 mr-2" />
+                                  View
+                                </Button>
+                              </Link>
                             )}
                           </TableCell>
                           <TableCell className="text-right">
