@@ -5,6 +5,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, Se
 import { mockUsers, mockTransactions, mockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
+import { useToast } from './use-toast';
 
 // Let's create a very simple global state for our user
 // In a real app, you'd use a more robust state management library or React Context with more features
@@ -20,6 +21,8 @@ interface UserContextType {
   login: (email: string, password: string) => boolean | 'blocked';
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => void;
   logout: () => void;
+  reload: () => void;
+  toast: ReturnType<typeof useToast>['toast'];
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -34,23 +37,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
-  useEffect(() => {
+  const loadInitialData = () => {
     try {
         const storedUsers = localStorage.getItem('allUsers');
         if (storedUsers) {
-        setAllUsers(JSON.parse(storedUsers));
+            setAllUsers(JSON.parse(storedUsers));
         } else {
-        setAllUsers(mockUsers);
-        localStorage.setItem('allUsers', JSON.stringify(mockUsers));
+            setAllUsers(mockUsers);
+            localStorage.setItem('allUsers', JSON.stringify(mockUsers));
         }
         
         const storedTransactions = localStorage.getItem('allTransactions');
         if (storedTransactions) {
-        setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
+            setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
         } else {
-        setAllTransactions(mockTransactions);
-        localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
+            setAllTransactions(mockTransactions);
+            localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
         }
     } catch(e) {
         console.error("Error loading data from localStorage", e);
@@ -58,6 +62,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setAllTransactions(mockTransactions);
     }
     setLoading(false);
+  }
+
+  useEffect(() => {
+    loadInitialData();
   }, []);
 
   useEffect(() => {
@@ -206,9 +214,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       })
     );
   };
+  
+  const reload = () => {
+    setLoading(true);
+    loadInitialData();
+  }
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup, logout }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup, logout, reload, toast }}>
       {!loading && children}
     </UserContext.Provider>
   );

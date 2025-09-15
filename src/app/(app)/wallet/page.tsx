@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight, Clock } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -143,8 +143,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction } = useUser();
-  const { toast } = useToast();
+  const { user, transactions, addTransaction, reload: reloadUser, toast } = useUser();
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank'>('upi');
   
@@ -232,6 +231,11 @@ export default function WalletPage() {
     setUpiRef('');
     setIsAddMoneyOpen(false);
   }
+  
+  const handleRefresh = () => {
+    reloadUser();
+    toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
+  };
 
   const upiId = 'arenaace@upi';
   const payeeName = 'Arena Ace';
@@ -275,7 +279,13 @@ export default function WalletPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-headline text-3xl font-bold">My Wallet</h1>
+      <div className="flex justify-between items-center">
+        <h1 className="font-headline text-3xl font-bold">My Wallet</h1>
+        <Button variant="ghost" size="icon" onClick={handleRefresh}>
+            <RefreshCw className="h-5 w-5" />
+            <span className="sr-only">Refresh Wallet</span>
+        </Button>
+      </div>
 
       <Card>
         <CardHeader className="text-center">
