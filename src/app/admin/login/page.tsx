@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -7,18 +8,29 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
+import { useState } from "react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: 'Admin Login Successful',
-      description: 'Welcome to the Admin Panel.',
-    });
-    router.push('/admin/dashboard');
+    if (username === 'unknownzaire94' && password === 'z@!re4515') {
+      toast({
+        title: 'Admin Login Successful',
+        description: 'Welcome to the Admin Panel.',
+      });
+      router.push('/admin/dashboard');
+    } else {
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'Invalid credentials. Please try again.',
+      });
+    }
   };
 
   return (
@@ -36,11 +48,23 @@ export default function AdminLoginPage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="username">Username</Label>
-                <Input id="username" placeholder="admin" required />
+                <Input 
+                  id="username" 
+                  placeholder="admin" 
+                  required 
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input id="password" type="password" required />
+                <Input 
+                  id="password" 
+                  type="password" 
+                  required 
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </div>
               <Button type="submit" className="w-full">Login</Button>
             </form>
