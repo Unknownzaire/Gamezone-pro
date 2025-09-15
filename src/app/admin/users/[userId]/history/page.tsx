@@ -30,6 +30,8 @@ export default function UserHistoryPage() {
   const [matchHistory, setMatchHistory] = useState<UserMatchHistory[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [transactionFilter, setTransactionFilter] = useState<'all' | 'credit' | 'debit' | 'pending'>('all');
+
 
   useEffect(() => {
     if (!userId) return;
@@ -69,7 +71,14 @@ export default function UserHistoryPage() {
   }
 
   const sortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => acc + (tx.type === 'debit' ? tx.amount : tx.amount), 0);
+  
+  const filteredTransactions = sortedTransactions.filter(tx => {
+    if (transactionFilter === 'all') return true;
+    if (transactionFilter === 'pending') return tx.status === 'pending';
+    return tx.type === transactionFilter && tx.status !== 'pending';
+  });
+
+  const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => acc + tx.amount, 0);
 
   return (
     <div className="space-y-6">
@@ -163,6 +172,12 @@ export default function UserHistoryPage() {
                                     </CardContent>
                                 </Card>
                             </div>
+                             <div className="flex items-center gap-2">
+                                <Button size="sm" variant={transactionFilter === 'all' ? 'default' : 'outline'} onClick={() => setTransactionFilter('all')}>All</Button>
+                                <Button size="sm" variant={transactionFilter === 'credit' ? 'default' : 'outline'} onClick={() => setTransactionFilter('credit')}>Credit</Button>
+                                <Button size="sm" variant={transactionFilter === 'debit' ? 'default' : 'outline'} onClick={() => setTransactionFilter('debit')}>Debit</Button>
+                                <Button size="sm" variant={transactionFilter === 'pending' ? 'default' : 'outline'} onClick={() => setTransactionFilter('pending')}>Pending</Button>
+                             </div>
                             <Table>
                                 <TableHeader>
                                     <TableRow>
@@ -175,7 +190,7 @@ export default function UserHistoryPage() {
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {sortedTransactions.map(tx => (
+                                    {filteredTransactions.map(tx => (
                                         <TableRow key={tx.id}>
                                             <TableCell className="font-medium">{tx.description}</TableCell>
                                             <TableCell>{format(new Date(tx.createdAt), 'PPp')}</TableCell>
