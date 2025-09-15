@@ -145,7 +145,12 @@ export default function AdminDashboardPage() {
                   <ArrowDownLeft className="text-green-500" />
                   Pending Deposits
                 </CardTitle>
-                 <Badge variant="secondary">{pendingDeposits.length}</Badge>
+                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); window.location.reload();}}>
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Badge variant="secondary">{pendingDeposits.length}</Badge>
+                 </div>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">Verify and approve user deposit requests.</p>
@@ -159,13 +164,7 @@ export default function AdminDashboardPage() {
                       <DialogTitle>Pending Deposits</DialogTitle>
                       <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
                   </div>
-                  <div className='flex items-center gap-2'>
-                    <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
-                        <RefreshCw className="h-4 w-4" />
-                        <span className="sr-only">Refresh</span>
-                    </Button>
-                    <DialogClose />
-                  </div>
+                  <DialogClose />
               </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
@@ -223,7 +222,12 @@ export default function AdminDashboardPage() {
                         <ArrowUpRight className="text-red-500" />
                         Pending Withdrawals
                     </CardTitle>
-                    <Badge variant="destructive">{pendingWithdrawals.length}</Badge>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); window.location.reload();}}>
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Badge variant="destructive">{pendingWithdrawals.length}</Badge>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <p className="text-sm text-muted-foreground">Review and process user withdrawal requests.</p>
@@ -237,13 +241,7 @@ export default function AdminDashboardPage() {
                         <DialogTitle>Pending Withdrawals</DialogTitle>
                         <DialogDescription>Review and process withdrawal requests from users.</DialogDescription>
                     </div>
-                    <div className='flex items-center gap-2'>
-                      <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
-                        <RefreshCw className="h-4 w-4" />
-                        <span className="sr-only">Refresh</span>
-                      </Button>
-                      <DialogClose />
-                    </div>
+                    <DialogClose />
                 </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
