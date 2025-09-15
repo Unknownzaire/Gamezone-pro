@@ -11,10 +11,10 @@ import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect } from "react";
-import { UserProvider, useUser } from "@/hooks/use-user.tsx";
+import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 
-function LoginFormComponent() {
+export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('login');
@@ -199,13 +199,5 @@ function LoginFormComponent() {
         </Tabs>
       </div>
     </div>
-  );
-}
-
-export default function LoginPage() {
-  return (
-    <UserProvider>
-      <LoginFormComponent />
-    </UserProvider>
   );
 }
