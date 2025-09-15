@@ -132,6 +132,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (liveUserData) {
         if (liveUserData.isBlocked) {
             logout();
+            toast({
+              variant: 'destructive',
+              title: "Account Blocked",
+              description: "Your account has been blocked by an administrator.",
+            });
             return;
         }
 
