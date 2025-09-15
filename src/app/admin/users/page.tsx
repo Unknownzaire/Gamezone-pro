@@ -87,6 +87,12 @@ export default function AdminUsersPage() {
     return user.walletBalance - pendingDebits;
   };
 
+  const getTotalDeposits = (user: User) => {
+    return transactions
+      .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.status === 'completed' && tx.description.toLowerCase().includes('deposit'))
+      .reduce((acc, tx) => acc + tx.amount, 0);
+  };
+
 
   return (
     <div className="space-y-6">
@@ -117,6 +123,7 @@ export default function AdminUsersPage() {
                 <TableHead>User</TableHead>
                 <TableHead>Available Balance</TableHead>
                 <TableHead>Total Balance</TableHead>
+                <TableHead>Total Deposits</TableHead>
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Registered</TableHead>
@@ -143,9 +150,10 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
-                  <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
+                  <TableCell>{format(user.createdAt ? new Date(user.createdAt) : new Date(), 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
                       <Badge variant="destructive">Blocked</Badge>
@@ -208,3 +216,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+    
