@@ -270,11 +270,12 @@ export default function WalletPage() {
     )
   }
   
-  const completedTransactions = transactions.filter(tx => tx.status === 'completed' || tx.status === 'declined');
-  const creditTransactions = completedTransactions.filter(tx => tx.type === 'credit');
-  const debitTransactions = completedTransactions.filter(tx => tx.type === 'debit');
-  const pendingTransactions = transactions.filter(tx => tx.status === 'pending');
-  const allSortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const sortTransactions = (txs: Transaction[]) => [...txs].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+  const allSortedTransactions = sortTransactions(transactions);
+  const creditTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'credit' && tx.status === 'completed'));
+  const debitTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'debit' && tx.status === 'completed'));
+  const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
 
 
   return (
