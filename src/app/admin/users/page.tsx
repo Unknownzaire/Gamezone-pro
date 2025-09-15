@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
-      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
+      setUsers(JSON.parse(storedUsers));
     } else {
       setUsers(initialUsers);
       localStorage.setItem('allUsers', JSON.stringify(initialUsers));
