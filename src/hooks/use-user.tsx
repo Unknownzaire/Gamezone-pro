@@ -121,7 +121,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('currentUser');
     setUser(null);
     setTransactions([]);
-    if (pathname !== '/login' && pathname !== '/signup' && !pathname.startsWith('/admin')) {
+    const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+    if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
         router.push('/login');
     }
   }
@@ -132,11 +133,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (liveUserData) {
         if (liveUserData.isBlocked) {
             logout();
-            toast({
-              variant: 'destructive',
-              title: "Account Blocked",
-              description: "Your account has been blocked by an administrator.",
-            });
+            router.push('/blocked');
             return;
         }
 
@@ -171,7 +168,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const loggedInUser: User = JSON.parse(storedUser);
             loadUserContext(loggedInUser.id);
         } else {
-            if (pathname !== '/login' && pathname !== '/signup' && !pathname.startsWith('/admin')) {
+            const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+             if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
                 logout();
             }
         }

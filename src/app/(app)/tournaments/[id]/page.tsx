@@ -58,6 +58,15 @@ export default function TournamentDetailsPage() {
         });
         return;
     }
+
+    if(currentUser.isBlocked) {
+       toast({
+            variant: 'destructive',
+            title: "Account Blocked",
+            description: `Your account is blocked. You cannot join tournaments.`,
+        });
+        return;
+    }
     
     if (tournamentToJoin.participants.length >= 100) {
       toast({
@@ -182,6 +191,14 @@ export default function TournamentDetailsPage() {
 
   const isAlreadyJoined = currentUser ? tournament.participants.some(p => p.user.id === currentUser.id) : false;
   const isFull = tournament.participants.length >= 100;
+  const isBlocked = currentUser?.isBlocked;
+  
+  let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
+  if (isAlreadyJoined) joinButtonText = 'Already Joined';
+  else if (isFull) joinButtonText = 'Tournament Full';
+  else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
+  else if(isBlocked) joinButtonText = 'Account Blocked';
+
 
   return (
     <div className="space-y-6">
@@ -332,8 +349,8 @@ export default function TournamentDetailsPage() {
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined || isFull}>
-              {isAlreadyJoined ? 'Already Joined' : isFull ? 'Tournament Full' : tournament.status === 'Upcoming' ? `Join Now for ₹${tournament.entryFee}` : `Joining Closed`}
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined || isFull || isBlocked}>
+              {joinButtonText}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
