@@ -11,10 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit } from 'lucide-react';
+import { ArrowLeft, Edit, Wallet, Hourglass } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ArrowDownLeft, ArrowUpRight } from 'lucide-react';
 
 type UserMatchHistory = {
   tournament: Tournament;
@@ -68,6 +67,9 @@ export default function UserHistoryPage() {
   if (!user) {
     notFound();
   }
+
+  const sortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => acc + (tx.type === 'debit' ? tx.amount : tx.amount), 0);
 
   return (
     <div className="space-y-6">
@@ -139,53 +141,70 @@ export default function UserHistoryPage() {
                         )}
                     </TabsContent>
                     <TabsContent value="transactions" className="mt-4">
-                       {transactions.length > 0 ? (
-                         <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Description</TableHead>
-                                    <TableHead>Date</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead className="text-right">Amount</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                             <TableBody>
-                                {transactions.map(tx => (
-                                    <TableRow key={tx.id}>
-                                        <TableCell>
-                                            <div className="flex items-center gap-3">
-                                                <div className="p-2 bg-muted rounded-full">
-                                                  {tx.type === 'credit' ? (
-                                                      <ArrowDownLeft className="h-4 w-4 text-green-500" />
-                                                  ) : (
-                                                      <ArrowUpRight className="h-4 w-4 text-red-500" />
-                                                  )}
-                                                </div>
-                                                <span className="font-medium">{tx.description}</span>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell>{format(new Date(tx.createdAt), 'PPp')}</TableCell>
-                                        <TableCell>
-                                            <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">
-                                                {tx.status}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className={`text-right font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                                            {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                        </TableCell>
+                       {sortedTransactions.length > 0 ? (
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Available Balance</CardTitle>
+                                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">₹{user.walletBalance.toLocaleString()}</div>
+                                    </CardContent>
+                                </Card>
+                                 <Card>
+                                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                        <CardTitle className="text-sm font-medium">Pending Amount</CardTitle>
+                                        <Hourglass className="h-4 w-4 text-muted-foreground" />
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-2xl font-bold">₹{pendingAmount.toLocaleString()}</div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Description</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Credit</TableHead>
+                                        <TableHead className="text-right">Debit</TableHead>
+                                        <TableHead className="text-right">Pending</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                         </Table>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedTransactions.map(tx => (
+                                        <TableRow key={tx.id}>
+                                            <TableCell className="font-medium">{tx.description}</TableCell>
+                                            <TableCell>{format(new Date(tx.createdAt), 'PPp')}</TableCell>
+                                            <TableCell>
+                                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">
+                                                    {tx.status}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium text-green-500">
+                                                {tx.type === 'credit' && tx.status === 'completed' ? `₹${tx.amount.toLocaleString()}` : '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium text-red-500">
+                                                {tx.type === 'debit' && tx.status === 'completed' ? `₹${tx.amount.toLocaleString()}` : '-'}
+                                            </TableCell>
+                                            <TableCell className="text-right font-medium text-yellow-500">
+                                                 {tx.status === 'pending' ? `₹${tx.amount.toLocaleString()}` : '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
                        ) : (
                          <p className="text-center text-muted-foreground p-4">This user has no transactions yet.</p>
                        )}
                     </TabsContent>
                 </Tabs>
-
             </CardContent>
         </Card>
-
     </div>
   );
 }
