@@ -153,15 +153,17 @@ export default function AdminDashboardPage() {
             </Card>
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
-            <DialogHeader className="flex-row items-center justify-between">
-                <div>
-                    <DialogTitle>Pending Deposits</DialogTitle>
-                    <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
-                </div>
-                <Button variant="outline" size="icon" onClick={loadData} className="relative -top-2 -right-2">
+            <DialogHeader>
+              <div className="flex-1">
+                  <DialogTitle>Pending Deposits</DialogTitle>
+                  <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
+              </div>
+              <div className='flex items-center gap-2'>
+                <Button variant="outline" size="icon" onClick={loadData}>
                     <RefreshCw className="h-4 w-4" />
                     <span className="sr-only">Refresh</span>
                 </Button>
+              </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {pendingDeposits.length > 0 ? (
@@ -228,15 +230,17 @@ export default function AdminDashboardPage() {
             </Card>
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
-             <DialogHeader className="flex-row items-center justify-between">
-                <div>
+             <DialogHeader>
+                <div className="flex-1">
                     <DialogTitle>Pending Withdrawals</DialogTitle>
                     <DialogDescription>Review and process withdrawal requests from users.</DialogDescription>
                 </div>
-                  <Button variant="outline" size="icon" onClick={loadData} className="relative -top-2 -right-2">
+                <div className='flex items-center gap-2'>
+                  <Button variant="outline" size="icon" onClick={loadData}>
                     <RefreshCw className="h-4 w-4" />
                     <span className="sr-only">Refresh</span>
-                </Button>
+                  </Button>
+                </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {pendingWithdrawals.length > 0 ? (
