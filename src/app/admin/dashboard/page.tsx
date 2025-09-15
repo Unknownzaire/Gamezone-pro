@@ -199,7 +199,7 @@ export default function AdminDashboardPage() {
                           <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
                            <TableCell>
                             {user && (
-                              <Link href={`/admin/users/${user.id}/history?tab=transactions`} target="_blank" rel="noopener noreferrer">
+                              <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                                   <History className="h-4 w-4" />
                                   Transaction History
@@ -303,7 +303,7 @@ export default function AdminDashboardPage() {
                           </TableCell>
                           <TableCell>
                             {user && (
-                              <Link href={`/admin/users/${user.id}/history?tab=transactions`} target="_blank" rel="noopener noreferrer">
+                              <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                                   <History className="h-4 w-4" />
                                   Transaction History
