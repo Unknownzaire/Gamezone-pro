@@ -54,7 +54,7 @@ export default function AdminDashboardPage() {
     .reduce((acc, t) => acc + t.prizePool * (t.commissionPercentage / 100), 0);
 
   const stats = [
-    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: null },
+    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, href: null },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: Trophy, href: null },
@@ -125,7 +125,7 @@ export default function AdminDashboardPage() {
             <Card key={index} className="hover:bg-muted/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
+                {stat.icon && <stat.icon className="h-4 w-4 text-muted-foreground" />}
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stat.value}</div>
@@ -200,9 +200,9 @@ export default function AdminDashboardPage() {
                            <TableCell>
                             {user && (
                               <Link href={`/admin/users/${user.id}/history`}>
-                                <Button variant="ghost" size="sm">
-                                  <History className="h-4 w-4 mr-2" />
-                                  View
+                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                                  <History className="h-4 w-4" />
+                                  Match History
                                 </Button>
                               </Link>
                             )}
@@ -304,9 +304,9 @@ export default function AdminDashboardPage() {
                           <TableCell>
                             {user && (
                               <Link href={`/admin/users/${user.id}/history`}>
-                                <Button variant="ghost" size="sm">
-                                  <History className="h-4 w-4 mr-2" />
-                                  View
+                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                                  <History className="h-4 w-4" />
+                                  Match History
                                 </Button>
                               </Link>
                             )}
