@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
+      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
     } else {
       setUsers(initialUsers);
       localStorage.setItem('allUsers', JSON.stringify(initialUsers));
@@ -168,6 +168,9 @@ export default function AdminUsersPage() {
                         </DropdownMenuItem>
                          <DropdownMenuItem asChild>
                           <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link href={`/admin/users/${user.id}/history?tab=transactions`}>View Transaction History</Link>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
