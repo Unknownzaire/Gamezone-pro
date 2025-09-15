@@ -19,7 +19,7 @@ interface UserContextType {
   updateBalance: (newBalance: number) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>) => void;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -43,7 +43,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
         const storedUsers = localStorage.getItem('allUsers');
         if (storedUsers) {
-            setAllUsers(JSON.parse(storedUsers));
+            setAllUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
         } else {
             setAllUsers(mockUsers);
             localStorage.setItem('allUsers', JSON.stringify(mockUsers));
@@ -101,13 +101,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'>) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>) => {
     const newUser: User = {
         ...userDetails,
         id: `user-${Date.now()}`,
         walletBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
+        createdAt: new Date(),
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);

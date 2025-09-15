@@ -23,6 +23,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -34,7 +35,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
-      setUsers(JSON.parse(storedUsers));
+      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
     } else {
       setUsers(initialUsers);
       localStorage.setItem('allUsers', JSON.stringify(initialUsers));
@@ -115,6 +116,10 @@ export default function AdminUsersPage() {
               <TableRow>
                 <TableHead>User</TableHead>
                 <TableHead>Available Balance</TableHead>
+                <TableHead>Total Balance</TableHead>
+                <TableHead>BGMI Username</TableHead>
+                <TableHead>Mobile</TableHead>
+                <TableHead>Registered</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -137,6 +142,10 @@ export default function AdminUsersPage() {
                     </div>
                   </TableCell>
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell>{user.bgmiUsername}</TableCell>
+                  <TableCell>{user.mobile}</TableCell>
+                  <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
                       <Badge variant="destructive">Blocked</Badge>

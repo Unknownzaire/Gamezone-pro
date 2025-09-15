@@ -9,6 +9,7 @@ export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
   bgmiUsername: `Player${i + 1}BGMI`,
   bgmiId: `5${Math.floor(100000000 + Math.random() * 900000000)}`,
+  createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
 }));
 
 

@@ -51,4 +51,5 @@ export type User = {
   bgmiUsername?: string;
   bgmiId?: string;
   isBlocked?: boolean;
+  createdAt: Date;
 };

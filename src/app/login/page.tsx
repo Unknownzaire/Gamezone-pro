@@ -102,7 +102,7 @@ function LoginFormComponent() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked'> = {
+    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,
@@ -209,5 +209,3 @@ export default function LoginPage() {
     </UserProvider>
   );
 }
-
-    
