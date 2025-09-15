@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
-import { MoreHorizontal, ArrowLeft } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, RefreshCw } from "lucide-react";
 import { useEffect, useState } from "react";
 import { User, Transaction } from "@/lib/types";
 import {
@@ -42,9 +42,10 @@ export default function AdminUsersPage() {
     
     const storedTransactions = localStorage.getItem('allTransactions');
     if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions));
+      setTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
     } else {
       setTransactions(initialTransactions);
+      localStorage.setItem('allTransactions', JSON.stringify(initialTransactions));
     }
   }, []);
 
@@ -101,6 +102,10 @@ export default function AdminUsersPage() {
             <p className="text-muted-foreground">Manage all registered users.</p>
           </div>
         </div>
+        <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only">Refresh users</span>
+        </Button>
       </div>
 
       <Card>
