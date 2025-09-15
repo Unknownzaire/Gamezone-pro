@@ -1,11 +1,11 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -26,7 +26,7 @@ export default function AdminDashboardPage() {
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
     const users: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
     setAllUsers(users);
@@ -37,8 +37,13 @@ export default function AdminDashboardPage() {
 
     setPendingDeposits(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
     setPendingWithdrawals(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
-
+    console.log("Data reloaded");
   }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
 
   const totalTournaments = mockTournaments.length;
   const totalPrizeDistributed = mockTournaments
@@ -105,8 +110,8 @@ export default function AdminDashboardPage() {
       description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
     });
     
-    if (isDeposit && pendingDeposits.length === 1) setIsDepositModalOpen(false);
-    if (!isDeposit && pendingWithdrawals.length === 1) setIsWithdrawalModalOpen(false);
+    if (isDeposit && pendingDeposits.length <= 1) setIsDepositModalOpen(false);
+    if (!isDeposit && pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
   };
   
   const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -149,8 +154,16 @@ export default function AdminDashboardPage() {
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
-              <DialogTitle>Pending Deposits</DialogTitle>
-              <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <DialogTitle>Pending Deposits</DialogTitle>
+                        <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
+                    </div>
+                    <Button variant="outline" size="icon" onClick={loadData}>
+                        <RefreshCw className="h-4 w-4" />
+                        <span className="sr-only">Refresh</span>
+                    </Button>
+                </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {pendingDeposits.length > 0 ? (
@@ -216,8 +229,16 @@ export default function AdminDashboardPage() {
           </DialogTrigger>
           <DialogContent className="max-w-3xl">
              <DialogHeader>
-              <DialogTitle>Pending Withdrawals</DialogTitle>
-              <DialogDescription>Review and process withdrawal requests from users.</DialogDescription>
+                <div className="flex items-center justify-between">
+                    <div>
+                        <DialogTitle>Pending Withdrawals</DialogTitle>
+                        <DialogDescription>Review and process withdrawal requests from users.</DialogDescription>
+                    </div>
+                     <Button variant="outline" size="icon" onClick={loadData}>
+                        <RefreshCw className="h-4 w-4" />
+                        <span className="sr-only">Refresh</span>
+                    </Button>
+                </div>
             </DialogHeader>
             <ScrollArea className="max-h-[60vh]">
               {pendingWithdrawals.length > 0 ? (
@@ -285,5 +306,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     
