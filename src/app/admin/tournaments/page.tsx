@@ -1,15 +1,41 @@
+
+'use client';
+
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockTournaments } from "@/lib/mock-data";
+import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import type { Tournament } from "@/lib/types";
 
 export default function AdminTournamentsPage() {
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
+
+   useEffect(() => {
+    const loadTournaments = () => {
+      const storedTournaments = localStorage.getItem('allTournaments');
+      if (storedTournaments) {
+        setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
+      } else {
+        setTournaments(initialMockTournaments);
+        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+      }
+    };
+
+    loadTournaments();
+    // Listen for storage changes to update the list in real-time
+    window.addEventListener('storage', loadTournaments);
+    return () => {
+      window.removeEventListener('storage', loadTournaments);
+    };
+  }, []);
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -50,7 +76,7 @@ export default function AdminTournamentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {mockTournaments.map((t) => (
+              {tournaments.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.title}</TableCell>
                   <TableCell>

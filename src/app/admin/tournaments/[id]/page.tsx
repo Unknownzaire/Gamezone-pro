@@ -1,7 +1,7 @@
 
 'use client';
 
-import { mockTournaments, mockUsers } from '@/lib/mock-data';
+import { mockUsers, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { notFound, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { WinnerSuggestion } from './components/WinnerSuggestion';
 import { Separator } from '@/components/ui/separator';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament } from '@/lib/types';
 
@@ -22,15 +22,30 @@ import { Tournament } from '@/lib/types';
 export default function ManageTournamentPage() {
   const { toast } = useToast();
   const { id } = useParams();
-  const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const tournament = tournaments.find(t => t.id === id);
 
   const [roomId, setRoomId] = useState(tournament?.roomId || '');
   const [roomPassword, setRoomPassword] = useState(tournament?.roomPassword || '');
+  
+  useEffect(() => {
+    const storedTournaments = localStorage.getItem('allTournaments');
+    if (storedTournaments) {
+        const allTournaments: Tournament[] = JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)}));
+        setTournaments(allTournaments);
+        const currentTournament = allTournaments.find(t => t.id === id);
+        if (currentTournament) {
+            setRoomId(currentTournament.roomId || '');
+            setRoomPassword(currentTournament.roomPassword || '');
+        }
+    } else {
+        setTournaments(initialMockTournaments);
+    }
+  }, [id]);
 
 
   if (!tournament) {
-    notFound();
+    return <div>Loading...</div>; // Or notFound() if you prefer
   }
   
   const handleUpdateAndGoLive = () => {
@@ -44,13 +59,14 @@ export default function ManageTournamentPage() {
     }
     
     // In a real app, this would be a server action to update the database
-    setTournaments(prev => 
-      prev.map(t => 
+    const updatedTournaments = tournaments.map(t => 
         t.id === tournament.id 
-          ? { ...t, status: 'Live', roomId, roomPassword } 
+          ? { ...t, status: 'Live' as const, roomId, roomPassword } 
           : t
-      )
-    );
+      );
+    
+    setTournaments(updatedTournaments);
+    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
 
     toast({
       title: 'Tournament is Live!',

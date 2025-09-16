@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
-import { mockUsers, mockTransactions, mockTournaments } from '@/lib/mock-data';
+import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
@@ -32,7 +32,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>(mockTournaments);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,16 +57,37 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setAllTransactions(mockTransactions);
             localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
         }
+
+        const storedTournaments = localStorage.getItem('allTournaments');
+        if (storedTournaments) {
+            setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
+        } else {
+            setTournaments(initialMockTournaments);
+            localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+        }
+
     } catch(e) {
         console.error("Error loading data from localStorage", e);
         setAllUsers(mockUsers);
         setAllTransactions(mockTransactions);
+        setTournaments(initialMockTournaments);
     }
     setLoading(false);
   }
 
   useEffect(() => {
     loadInitialData();
+
+     const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'allTournaments') {
+        loadInitialData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+
   }, []);
 
   useEffect(() => {
@@ -84,6 +105,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
     }
   }, [allTransactions, loading]);
+  
+  useEffect(() => {
+    if (!loading) {
+        localStorage.setItem('allTournaments', JSON.stringify(tournaments));
+    }
+  }, [tournaments, loading]);
 
   const login = (email: string, password: string): boolean | 'blocked' => {
     const userToLogin = allUsers.find(u => u.email === email);
@@ -243,6 +270,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-
-    

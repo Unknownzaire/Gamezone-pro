@@ -10,6 +10,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import React, { useState } from "react";
+import type { Tournament } from "@/lib/types";
+import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -18,9 +20,28 @@ export default function CreateTournamentPage() {
 
     const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
+        const formData = new FormData(e.currentTarget);
         
-        const processAndSubmit = (imageUrl?: string) => {
-            console.log("Image URL to save:", imageUrl);
+        const processAndSubmit = (imageUrl: string) => {
+            const newTournament: Tournament = {
+                id: `t-${Date.now()}`,
+                title: formData.get('title') as string,
+                gameName: formData.get('game') as string,
+                matchTime: new Date(formData.get('match-time') as string),
+                entryFee: Number(formData.get('entry-fee')),
+                prizePool: Number(formData.get('prize-pool')),
+                commissionPercentage: Number(formData.get('commission')),
+                imageUrl,
+                imageHint: formData.get('imageHint') as string,
+                status: 'Upcoming',
+                participants: [],
+            };
+
+            const storedTournaments = localStorage.getItem('allTournaments');
+            const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+            
+            localStorage.setItem('allTournaments', JSON.stringify([newTournament, ...allTournaments]));
+
             toast({
                 title: "Tournament Created",
                 description: "The new tournament has been successfully created."
@@ -36,8 +57,7 @@ export default function CreateTournamentPage() {
             };
             reader.readAsDataURL(imageFile);
         } else {
-             const formData = new FormData(e.currentTarget);
-             const imageUrl = formData.get('imageUrl') as string;
+             const imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
              processAndSubmit(imageUrl);
         }
     }
@@ -68,31 +88,31 @@ export default function CreateTournamentPage() {
                     <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
                         <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="title">Tournament Title</Label>
-                            <Input id="title" placeholder="e.g., Summer Showdown" required />
+                            <Input id="title" name="title" placeholder="e.g., Summer Showdown" required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="game">Game Name</Label>
-                            <Input id="game" placeholder="BGMI" defaultValue="BGMI" required />
+                            <Input id="game" name="game" placeholder="BGMI" defaultValue="BGMI" required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="match-time">Match Time</Label>
-                            <Input id="match-time" type="datetime-local" required />
+                            <Input id="match-time" name="match-time" type="datetime-local" required />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="entry-fee">Entry Fee (₹)</Label>
-                            <Input id="entry-fee" type="number" placeholder="50" required />
+                            <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
-                            <Input id="prize-pool" type="number" placeholder="5000" required />
+                            <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="commission">Commission (%)</Label>
-                            <Input id="commission" type="number" placeholder="10" required />
+                            <Input id="commission" name="commission" type="number" placeholder="10" required />
                         </div>
                          <div className="space-y-2">
                             <Label htmlFor="imageHint">Image Hint</Label>
-                            <Input id="imageHint" placeholder="e.g., epic battle" />
+                            <Input id="imageHint" name="imageHint" placeholder="e.g., epic battle" />
                         </div>
                          <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="imageFile">Tournament Image</Label>

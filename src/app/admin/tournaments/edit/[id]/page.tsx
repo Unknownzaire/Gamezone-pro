@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
 import { Tournament } from '@/lib/types';
-import { mockTournaments } from '@/lib/mock-data';
+import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -46,7 +46,10 @@ export default function EditTournamentPage() {
 
   useEffect(() => {
     if (!id) return;
-    const tournamentToEdit = mockTournaments.find(t => t.id === id);
+    const storedTournaments = localStorage.getItem('allTournaments');
+    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    
+    const tournamentToEdit = allTournaments.find(t => t.id === id);
     if (tournamentToEdit) {
       setTournament(tournamentToEdit);
       setFormData({
@@ -76,12 +79,19 @@ export default function EditTournamentPage() {
     e.preventDefault();
     
     const processAndSubmit = (imageUrl?: string) => {
-        const updatedData = {
+        const updatedData: Tournament = {
+            ...(tournament as Tournament),
             ...formData,
             matchTime: new Date(formData.matchTime),
-            imageUrl: imageUrl ?? formData.imageUrl
+            imageUrl: imageUrl ?? formData.imageUrl,
         };
-        console.log("Updated tournament data:", updatedData);
+
+        const storedTournaments = localStorage.getItem('allTournaments');
+        let allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+        
+        allTournaments = allTournaments.map(t => t.id === id ? updatedData : t);
+        localStorage.setItem('allTournaments', JSON.stringify(allTournaments));
+
         toast({
             title: "Tournament Updated",
             description: `Details for ${formData.title} have been updated.`,
