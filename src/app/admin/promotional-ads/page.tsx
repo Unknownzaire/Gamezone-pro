@@ -33,6 +33,21 @@ export default function AdminPromotionalAdsPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
 
+  useEffect(() => {
+    if (isFormVisible && tournaments.length > 0) {
+      // Pre-fill the form with the first tournament's data
+      const firstTournament = tournaments[0];
+      setTitle(firstTournament.title);
+      setLink(`/tournaments/${firstTournament.id}`);
+    } else {
+      // Reset form when it's hidden
+      setTitle('');
+      setLink('');
+      setImageFile(null);
+    }
+  }, [isFormVisible, tournaments]);
+
+
   const handleCreateAd = (e: React.FormEvent) => {
     e.preventDefault();
     if (!title || !link || !imageFile) {
