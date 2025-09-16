@@ -80,24 +80,29 @@ export default function AdminDashboardPage() {
     const userToUpdate = allUsers.find(u => u.id === transaction.userId);
 
     if (userToUpdate) {
-        if (status === 'completed') {
-            if (isDeposit) {
-                updatedUsers = updatedUsers.map(u => 
-                    u.id === userToUpdate.id 
-                    ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-                    : u
-                );
-            }
-        } else { // Declined
-            if (!isDeposit) {
-                updatedUsers = updatedUsers.map(u => 
-                    u.id === userToUpdate.id 
-                    ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-                    : u
-                );
-            }
+      if (status === 'completed') {
+        // If a deposit is approved, add the amount to the user's balance.
+        if (isDeposit) {
+          updatedUsers = updatedUsers.map(u => 
+            u.id === userToUpdate.id 
+            ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+            : u
+          );
         }
+        // If a withdrawal is approved, the balance was already reduced when the request was submitted, so no change is needed.
+      } else { // status === 'declined'
+        // If a withdrawal is declined, add the amount back to the user's balance.
+        if (!isDeposit) {
+          updatedUsers = updatedUsers.map(u => 
+            u.id === userToUpdate.id 
+            ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+            : u
+          );
+        }
+        // If a deposit is declined, no change to balance is needed.
+      }
     }
+
 
     setAllUsers(updatedUsers);
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
@@ -376,5 +381,7 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
 
     

@@ -140,18 +140,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
         const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
         
-        // Balance calculation should start from a base and apply transactions
-        // For this demo, let's assume the walletBalance on the user object is the "true" balance from a DB
-        // and we adjust it based on pending transactions for the UI.
-        
-        const pendingDebits = userTransactions
-            .filter(tx => tx.status === 'pending' && tx.type === 'debit')
-            .reduce((acc, tx) => acc + tx.amount, 0);
-        
-        // The available balance is the stored balance minus any pending withdrawals.
-        const availableBalance = liveUserData.walletBalance - pendingDebits;
-
-        const currentUser = { ...liveUserData, walletBalance: availableBalance };
+        // The available balance is the stored balance for the UI.
+        const currentUser = { ...liveUserData };
         setUser(currentUser);
         setTransactions(userTransactions);
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
@@ -190,21 +180,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       userId: user.id,
       createdAt: new Date(),
     };
+    
+    // For pending withdrawals, deduct from balance immediately.
+    if(newTx.type === 'debit' && newTx.status === 'pending') {
+      updateBalance(user.walletBalance - newTx.amount);
+    }
+    
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
   const updateBalance = (newBalance: number) => {
     if(user) {
-        setAllUsers(prev => prev.map(u => {
-          if (u.id === user.id) {
-            const pendingDebits = allTransactions
-                .filter(tx => tx.userId === user.id && tx.status === 'pending' && tx.type === 'debit')
-                .reduce((acc, tx) => acc + tx.amount, 0);
-            const totalBalance = newBalance + pendingDebits;
-            return {...u, walletBalance: totalBalance};
-          }
-          return u;
-        }))
+        setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, walletBalance: newBalance} : u))
     }
   }
 
@@ -249,3 +236,6 @@ export const useUser = () => {
   }
   return context;
 };
+
+
+    

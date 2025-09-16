@@ -390,10 +390,10 @@ export default function WalletPage() {
                                 value={upiRef}
                                 onChange={(e) => {
                                     const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                                    setUpiRef(numericValue);
+                                    if (numericValue.length <= 12) {
+                                      setUpiRef(numericValue);
+                                    }
                                 }}
-                                minLength={12}
-                                maxLength={12}
                                 />
                             </div>
                         </div>
@@ -538,6 +538,8 @@ export default function WalletPage() {
     
 
     
+    
+
     
 
     
