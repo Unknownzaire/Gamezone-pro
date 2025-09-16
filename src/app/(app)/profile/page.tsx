@@ -20,6 +20,7 @@ export default function ProfilePage() {
   const { user: currentUser, setUser, updateUser } = useUser();
 
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [bgmiUsername, setBgmiUsername] = useState('');
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
@@ -45,6 +46,7 @@ export default function ProfilePage() {
   useEffect(() => {
     if (currentUser) {
       setUsername(currentUser.username || '');
+      setEmail(currentUser.email || '');
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
@@ -73,13 +75,24 @@ export default function ProfilePage() {
         return;
     }
     if (currentUser) {
-      const updatedFields = {
+      const updatedFields: Partial<User> = {
         username,
         mobile
       };
+
+      if (email !== currentUser.email && !emailVerified) {
+        toast({ variant: 'destructive', title: "Email Not Verified", description: "Please verify your new email address before saving." });
+        return;
+      }
+      if (email !== currentUser.email) {
+        updatedFields.email = email;
+      }
+
       updateUser(updatedFields);
       toast({ title: "Profile Updated", description: "Your profile information has been saved." });
       setIsEditing(false);
+      setEmailVerified(false);
+      setMobileVerified(false);
     }
   };
 
@@ -140,7 +153,7 @@ export default function ProfilePage() {
     setEmailOtp(newOtp);
     setEmailOtpSent(true);
     setEmailCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${currentUser.email}. (OTP: ${newOtp})`});
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}. (OTP: ${newOtp})`});
   };
 
   const handleVerifyEmailOtp = () => {
@@ -285,8 +298,8 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
-                      <Input id="email" type="email" defaultValue={currentUser.email} disabled />
-                      {!emailVerified && (
+                      <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
+                      {isEditing && email !== currentUser.email && !emailVerified && (
                           <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
                               {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
                           </Button>
@@ -304,7 +317,7 @@ export default function ProfilePage() {
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="flex items-center gap-2">
                       <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
-                      {!mobileVerified && !isEditing && (
+                      {isEditing && mobile !== currentUser.mobile && !mobileVerified && (
                           <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
                             {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                           </Button>
