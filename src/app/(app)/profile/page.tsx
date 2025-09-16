@@ -13,6 +13,7 @@ import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
+import type { User } from '@/lib/types';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -77,7 +78,6 @@ export default function ProfilePage() {
     if (currentUser) {
       const updatedFields: Partial<User> = {
         username,
-        mobile
       };
 
       if (email !== currentUser.email && !emailVerified) {
@@ -87,12 +87,22 @@ export default function ProfilePage() {
       if (email !== currentUser.email) {
         updatedFields.email = email;
       }
+      
+      if (mobile !== currentUser.mobile && !mobileVerified) {
+        toast({ variant: 'destructive', title: "Mobile Not Verified", description: "Please verify your new mobile number before saving." });
+        return;
+      }
+      if (mobile !== currentUser.mobile) {
+        updatedFields.mobile = mobile;
+      }
 
       updateUser(updatedFields);
       toast({ title: "Profile Updated", description: "Your profile information has been saved." });
       setIsEditing(false);
       setEmailVerified(false);
       setMobileVerified(false);
+      setEmailOtpSent(false);
+      setMobileOtpSent(false);
     }
   };
 
@@ -306,7 +316,7 @@ export default function ProfilePage() {
                       )}
                       {emailVerified && <CheckCircle className="text-green-500" />}
                   </div>
-                  {emailOtpSent && !emailVerified && (
+                  {isEditing && emailOtpSent && !emailVerified && (
                       <div className="flex items-center gap-2 pt-2">
                           <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
                           <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
@@ -324,7 +334,7 @@ export default function ProfilePage() {
                       )}
                       {mobileVerified && <CheckCircle className="text-green-500" />}
                   </div>
-                  {mobileOtpSent && !mobileVerified && (
+                  {isEditing && mobileOtpSent && !mobileVerified && (
                       <div className="flex items-center gap-2 pt-2">
                           <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
                           <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
@@ -361,3 +371,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
