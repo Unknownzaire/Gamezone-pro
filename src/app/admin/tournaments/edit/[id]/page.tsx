@@ -72,39 +72,52 @@ export default function EditTournamentPage() {
     }
   };
 
-  const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
-    const newDistributions = [...prizeDistributions];
-    const dist = { ...newDistributions[index] };
-    const prizePool = formData.prizePool || 0;
-    
-    let currentTotal = prizeDistributions.reduce((sum, item, i) => i === index ? sum : sum + (item.percentage || 0), 0);
-    let newPercentage = dist.percentage;
+    const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
+        const newDistributions = [...prizeDistributions];
+        const dist = { ...newDistributions[index] };
+        const prizePool = formData.prizePool || 0;
+        
+        let currentTotal = prizeDistributions.reduce((sum, item, i) => i === index ? sum : sum + (item.percentage || 0), 0);
+        
+        if (field === 'rank') {
+            const isDuplicate = newDistributions.some((d, i) => i !== index && d.rank === value);
+            if (isDuplicate) {
+                toast({
+                    variant: 'destructive',
+                    title: "Duplicate Rank",
+                    description: `The rank "${value}" is already defined. Ranks must be unique.`
+                });
+                return;
+            }
+            dist.rank = value as string;
+        } else if (field === 'percentage') {
+            const newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
+            if (currentTotal + newPercentage > 100) {
+                toast({
+                    variant: 'destructive',
+                    title: "Exceeds 100%",
+                    description: `Cannot set percentage to ${newPercentage} as it would exceed the 100% total.`
+                });
+                return;
+            }
+            dist.percentage = newPercentage;
+        } else if (field === 'amount') {
+            const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
+            const newPercentage = prizePool > 0 ? parseFloat(((amount / prizePool) * 100).toPrecision(4)) : 0;
+             if (currentTotal + newPercentage > 100) {
+                toast({
+                    variant: 'destructive',
+                    title: "Exceeds 100%",
+                    description: `Amount translates to ${newPercentage.toFixed(2)}%, which would exceed the 100% total.`
+                });
+                return;
+            }
+            dist.percentage = newPercentage;
+        }
 
-    if (field === 'amount') {
-        const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
-        newPercentage = prizePool > 0 ? parseFloat(((amount / prizePool) * 100).toPrecision(4)) : 0;
-    } else if (field === 'percentage') {
-        newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
-    } else { // 'rank'
-        dist[field as 'rank'] = value as string;
         newDistributions[index] = dist;
         setPrizeDistributions(newDistributions);
-        return;
-    }
-
-    if (currentTotal + newPercentage > 100) {
-        toast({
-            variant: 'destructive',
-            title: "Exceeds 100%",
-            description: `Cannot set percentage to ${newPercentage} as it would exceed the 100% total.`
-        });
-        return; // Do not update state if it exceeds 100%
-    }
-    
-    dist.percentage = newPercentage;
-    newDistributions[index] = dist;
-    setPrizeDistributions(newDistributions);
-};
+    };
 
   const addPrizeRow = () => {
       if (totalPercentage >= 100) {
@@ -270,11 +283,12 @@ export default function EditTournamentPage() {
                                             onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
                                         />
                                     </div>
-                                        <div className="space-y-1">
+                                    <div className="space-y-1">
                                         <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
                                         <Input
                                             id={`amount-${index}`}
-                                            type="text"
+                                            type="number"
+                                            step="0.01"
                                             placeholder="e.g., 2500"
                                             value={getPrizeAmount(dist.percentage)} 
                                             onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
@@ -307,5 +321,3 @@ export default function EditTournamentPage() {
     </div>
   );
 }
-
-    
