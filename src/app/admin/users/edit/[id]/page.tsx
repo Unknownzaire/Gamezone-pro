@@ -105,7 +105,7 @@ export default function EditUserPage() {
             </div>
             <div className="space-y-2">
                 <Label htmlFor="totalDeposits">Total Deposits (₹)</Label>
-                <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} readOnly disabled />
+                <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} onChange={(e) => setTotalDeposits(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
