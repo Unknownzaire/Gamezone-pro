@@ -49,29 +49,28 @@ export default function AdminReferralsPage() {
     setTransactions(allTransactions);
     setTournaments(allTournaments);
 
-    // Calculate referrer stats
-    const stats: { [key: string]: { user: User, totalReferrals: number, totalEarnings: number } } = {};
-    const hasUserJoinedTournament = (userId: string): boolean => {
-        return allTournaments.some(t => t.participants.some(p => p.user.id === userId));
-    };
+    // Calculate referrer stats for all users
+    const stats: ReferrerStats[] = allUsers.map(user => {
+        let totalReferrals = 0;
+        let totalEarnings = 0;
 
-    allUsers.forEach(user => {
-      if (user.referredBy) {
-        const referrer = allUsers.find(u => u.bgmiId === user.referredBy || u.id === user.referredBy);
-        if (referrer) {
-          if (!stats[referrer.id]) {
-            stats[referrer.id] = { user: referrer, totalReferrals: 0, totalEarnings: 0 };
-          }
-          stats[referrer.id].totalReferrals++;
-          if (hasUserJoinedTournament(user.id)) {
-            // Assuming a fixed bonus of ₹25 for both referrer and referred user
-            stats[referrer.id].totalEarnings += 25;
-          }
-        }
-      }
+        const referredUsers = allUsers.filter(u => u.referredBy === user.id || u.referredBy === user.bgmiId);
+        totalReferrals = referredUsers.length;
+        
+        const hasUserJoinedTournament = (userId: string): boolean => {
+            return allTournaments.some(t => t.participants.some(p => p.user.id === userId));
+        };
+        
+        referredUsers.forEach(referredUser => {
+            if(hasUserJoinedTournament(referredUser.id)){
+                totalEarnings += 25;
+            }
+        });
+
+        return { user, totalReferrals, totalEarnings };
     });
 
-    const sortedStats = Object.values(stats).sort((a,b) => b.totalReferrals - a.totalReferrals);
+    const sortedStats = stats.sort((a,b) => b.totalReferrals - a.totalReferrals);
     setReferrerStats(sortedStats);
 
   }, []);
@@ -85,7 +84,9 @@ export default function AdminReferralsPage() {
   }, [loadData]);
   
   const filteredReferrerStats = referrerStats.filter(stat => 
-    stat.user.username.toLowerCase().includes(searchTerm.toLowerCase())
+    stat.user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    stat.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (stat.user.bgmiUsername && stat.user.bgmiUsername.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
@@ -116,7 +117,7 @@ export default function AdminReferralsPage() {
             <div className="relative w-full max-w-xs">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by username..."
+                placeholder="Search by username, email..."
                 className="pl-9"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -156,7 +157,7 @@ export default function AdminReferralsPage() {
           </Table>
           {filteredReferrerStats.length === 0 && (
             <p className="text-center text-muted-foreground py-16">
-              {searchTerm ? 'No referrers found for your search.' : 'No users have referred anyone yet.'}
+              {searchTerm ? 'No referrers found for your search.' : 'No referral data available.'}
             </p>
           )}
         </CardContent>
