@@ -11,7 +11,7 @@ import { Clock, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
 export default function HomePage() {
@@ -28,7 +28,7 @@ export default function HomePage() {
           <Carousel 
             plugins={[Autoplay({ delay: 5000 })]}
             opts={{ loop: true }}
-            className="w-full -mx-4"
+            className="w-full -mx-4 relative"
           >
             <CarouselContent>
               {activeAds.map((ad) => (
@@ -48,6 +48,8 @@ export default function HomePage() {
                 </CarouselItem>
               ))}
             </CarouselContent>
+             <CarouselPrevious className="absolute left-6 top-1/2 -translate-y-1/2 z-10 bg-black/50 border-none hover:bg-black/70 text-white" />
+             <CarouselNext className="absolute right-6 top-1/2 -translate-y-1/2 z-10 bg-black/50 border-none hover:bg-black/70 text-white" />
           </Carousel>
       )}
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
