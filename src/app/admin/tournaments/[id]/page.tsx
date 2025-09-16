@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament } from '@/lib/types';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 
 export default function ManageTournamentPage() {
@@ -149,6 +150,7 @@ export default function ManageTournamentPage() {
                  <CardDescription>List of all players who joined this tournament.</CardDescription>
             </CardHeader>
             <CardContent>
+              <ScrollArea className="h-72">
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -171,6 +173,7 @@ export default function ManageTournamentPage() {
                         ))}
                     </TableBody>
                 </Table>
+              </ScrollArea>
             </CardContent>
         </Card>
       </div>
