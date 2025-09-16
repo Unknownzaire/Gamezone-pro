@@ -34,7 +34,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     const initialRanks: { [participantId: string]: number | null } = {};
     tournament.participants.forEach(p => {
         if (p.result && p.result.startsWith('Rank')) {
-            initialRanks[p.id] = parseInt(p.result.replace('Rank ', ''), 10);
+            initialRanks[p.id] = parseInt(p.result.replace('Rank #', ''), 10);
         } else if (p.result === 'Winner') {
             initialRanks[p.id] = 1;
         } else {
@@ -157,6 +157,8 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     }
   };
 
+  const usedRanks = Object.values(ranks).filter(rank => rank !== null) as number[];
+
   return (
     <div className="grid gap-6 md:grid-cols-2">
       <Card>
@@ -243,7 +245,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
                                 <SelectContent>
                                      <SelectItem value="0">Unranked</SelectItem>
                                     {Array.from({length: 100}, (_, i) => i + 1).map(rank => (
-                                        <SelectItem key={rank} value={String(rank)}>Rank #{rank}</SelectItem>
+                                        <SelectItem key={rank} value={String(rank)} disabled={usedRanks.includes(rank) && ranks[p.id] !== rank}>Rank #{rank}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
