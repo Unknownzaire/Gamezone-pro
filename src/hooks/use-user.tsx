@@ -177,7 +177,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        const referrer = allUsers.find(u => u.referralCode === referralCode);
+        // A user can be referred by either BGMI ID (which is the referral code) or user ID
+        const referrer = allUsers.find(u => u.bgmiId === referralCode || u.id === referralCode);
         if (referrer) {
             referredBy = referrer.id;
         } else {

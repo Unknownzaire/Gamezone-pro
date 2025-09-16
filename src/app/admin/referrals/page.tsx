@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions, mockTournaments } from "@/lib/mock-data";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
 import Link from "next/link";
 import { format } from "date-fns";
+import { Input } from "@/components/ui/input";
 
 interface ReferrerStats {
   user: User;
@@ -23,6 +24,7 @@ export default function AdminReferralsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [referrerStats, setReferrerStats] = useState<ReferrerStats[]>([]);
+  const [searchTerm, setSearchTerm] = useState('');
   
   const loadData = useCallback(() => {
     let allUsers: User[] = [];
@@ -55,17 +57,15 @@ export default function AdminReferralsPage() {
 
     allUsers.forEach(user => {
       if (user.referredBy) {
-        if (!stats[user.referredBy]) {
-          const referrer = allUsers.find(u => u.id === user.referredBy);
-          if (referrer) {
-            stats[user.referredBy] = { user: referrer, totalReferrals: 0, totalEarnings: 0 };
+        const referrer = allUsers.find(u => u.bgmiId === user.referredBy || u.id === user.referredBy);
+        if (referrer) {
+          if (!stats[referrer.id]) {
+            stats[referrer.id] = { user: referrer, totalReferrals: 0, totalEarnings: 0 };
           }
-        }
-        if (stats[user.referredBy]) {
-          stats[user.referredBy].totalReferrals++;
+          stats[referrer.id].totalReferrals++;
           if (hasUserJoinedTournament(user.id)) {
             // Assuming a fixed bonus of ₹25 for both referrer and referred user
-            stats[user.referredBy].totalEarnings += 25;
+            stats[referrer.id].totalEarnings += 25;
           }
         }
       }
@@ -84,6 +84,10 @@ export default function AdminReferralsPage() {
     };
   }, [loadData]);
   
+  const filteredReferrerStats = referrerStats.filter(stat => 
+    stat.user.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -107,7 +111,18 @@ export default function AdminReferralsPage() {
 
       <Card>
         <CardHeader>
+          <div className="flex justify-between items-center">
             <CardTitle>Referrer Leaderboard</CardTitle>
+            <div className="relative w-full max-w-xs">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by username..."
+                className="pl-9"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </div>
         </CardHeader>
         <CardContent className="p-0">
           <Table>
@@ -119,7 +134,7 @@ export default function AdminReferralsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {referrerStats.map(({ user, totalReferrals, totalEarnings }) => (
+              {filteredReferrerStats.map(({ user, totalReferrals, totalEarnings }) => (
                 <TableRow key={user.id}>
                 <TableCell>
                     <div className="flex items-center gap-3">
@@ -139,8 +154,10 @@ export default function AdminReferralsPage() {
               ))}
             </TableBody>
           </Table>
-          {referrerStats.length === 0 && (
-            <p className="text-center text-muted-foreground py-16">No users have referred anyone yet.</p>
+          {filteredReferrerStats.length === 0 && (
+            <p className="text-center text-muted-foreground py-16">
+              {searchTerm ? 'No referrers found for your search.' : 'No users have referred anyone yet.'}
+            </p>
           )}
         </CardContent>
       </Card>
