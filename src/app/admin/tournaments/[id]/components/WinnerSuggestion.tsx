@@ -262,3 +262,5 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     </div>
   );
 }
+
+    
