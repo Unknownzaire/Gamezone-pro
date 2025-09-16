@@ -4,7 +4,7 @@
 import React, { useEffect } from 'react';
 import AppHeader from '@/components/AppHeader';
 import BottomNav from '@/components/BottomNav';
-import { UserProvider, useUser } from '@/hooks/use-user.tsx';
+import { useUser } from '@/hooks/use-user.tsx';
 import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -47,8 +47,6 @@ function AppContent({ children }: { children: React.ReactNode }) {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <UserProvider>
       <AppContent>{children}</AppContent>
-    </UserProvider>
   );
 }
