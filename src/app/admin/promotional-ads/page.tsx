@@ -37,8 +37,7 @@ export default function AdminPromotionalAdsPage() {
     if (isFormVisible && tournaments.length > 0) {
       // Pre-fill the form with the first tournament's data
       const firstTournament = tournaments[0];
-      setTitle(firstTournament.title);
-      setLink(`/tournaments/${firstTournament.id}`);
+      handleTournamentLinkSelect(firstTournament.id);
     } else {
       // Reset form when it's hidden
       setTitle('');
@@ -225,11 +224,9 @@ export default function AdminPromotionalAdsPage() {
                                         <Button variant="outline" size="sm" onClick={() => handleToggleStatus(ad)}>
                                             {ad.status === 'active' ? 'Deactivate' : 'Activate'}
                                         </Button>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
-                                        </AlertDialogTrigger>
+                                        <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
                                     </div>
                                 </TableCell>
                             </TableRow>
