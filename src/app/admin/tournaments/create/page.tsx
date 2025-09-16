@@ -12,12 +12,14 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
+import { DateTimePicker } from "@/components/ui/datetime-picker";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [prizePool, setPrizePool] = useState(0);
+    const [matchTime, setMatchTime] = useState<Date | undefined>(undefined);
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -76,6 +78,11 @@ export default function CreateTournamentPage() {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
+        if (!matchTime) {
+            toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
+            return;
+        }
+
         if (totalPercentage > 100) {
             toast({
                 variant: 'destructive',
@@ -90,7 +97,7 @@ export default function CreateTournamentPage() {
                 id: `t-${Date.now()}`,
                 title: formData.get('title') as string,
                 gameName: formData.get('game') as string,
-                matchTime: new Date(formData.get('match-time') as string),
+                matchTime: matchTime,
                 entryFee: Number(formData.get('entry-fee')),
                 prizePool: prizePool,
                 commissionPercentage: Number(formData.get('commission')),
@@ -171,7 +178,7 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="match-time">Match Time</Label>
-                                    <Input id="match-time" name="match-time" type="datetime-local" required />
+                                    <DateTimePicker date={matchTime} setDate={setMatchTime} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="entry-fee">Entry Fee (₹)</Label>
@@ -231,8 +238,7 @@ export default function CreateTournamentPage() {
                                                 <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
                                                 <Input
                                                     id={`amount-${index}`}
-                                                    type="number"
-                                                    step="0.01"
+                                                    type="text"
                                                     placeholder="e.g., 2500"
                                                     value={getPrizeAmount(dist.percentage)} 
                                                     onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}

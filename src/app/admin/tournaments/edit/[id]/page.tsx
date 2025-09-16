@@ -12,18 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-
-// Helper to format date for datetime-local input
-const toDateTimeLocal = (date: Date): string => {
-    if (!date) return '';
-    const ten = (i: number) => (i < 10 ? '0' : '') + i;
-    const YYYY = date.getFullYear();
-    const MM = ten(date.getMonth() + 1);
-    const DD = ten(date.getDate());
-    const HH = ten(date.getHours());
-    const mm = ten(date.getMinutes());
-    return `${YYYY}-${MM}-${DD}T${HH}:${mm}`;
-};
+import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 export default function EditTournamentPage() {
   const router = useRouter();
@@ -31,16 +20,16 @@ export default function EditTournamentPage() {
   const { toast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [formData, setFormData] = useState<Partial<Tournament> & { matchTime: string }>({
+  const [formData, setFormData] = useState<Partial<Omit<Tournament, 'matchTime'>>>({
     title: '',
     gameName: '',
-    matchTime: '',
     entryFee: 0,
     prizePool: 0,
     commissionPercentage: 0,
     imageUrl: '',
     imageHint: '',
   });
+  const [matchTime, setMatchTime] = useState<Date | undefined>(undefined);
    const [imageFile, setImageFile] = useState<File | null>(null);
    const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
    
@@ -54,10 +43,9 @@ export default function EditTournamentPage() {
     const tournamentToEdit = allTournaments.find(t => t.id === id);
     if (tournamentToEdit) {
       setTournament(tournamentToEdit);
-      setFormData({
-        ...tournamentToEdit,
-        matchTime: toDateTimeLocal(new Date(tournamentToEdit.matchTime)),
-      });
+      const { matchTime, ...rest } = tournamentToEdit;
+      setFormData(rest);
+      setMatchTime(new Date(matchTime));
       setPrizeDistributions(tournamentToEdit.prizeDistribution || [
           { rank: '1', percentage: 50 },
           { rank: '2', percentage: 25 },
@@ -133,6 +121,11 @@ export default function EditTournamentPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!matchTime) {
+      toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
+      return;
+    }
+
     if (totalPercentage > 100) {
         toast({
             variant: 'destructive',
@@ -146,7 +139,7 @@ export default function EditTournamentPage() {
         const updatedData: Tournament = {
             ...(tournament as Tournament),
             ...formData,
-            matchTime: new Date(formData.matchTime),
+            matchTime: matchTime,
             imageUrl: imageUrl ?? formData.imageUrl,
             prizeDistribution: prizeDistributions,
         };
@@ -219,7 +212,7 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="matchTime">Match Time</Label>
-                        <Input id="matchTime" name="matchTime" type="datetime-local" value={formData.matchTime} onChange={handleChange} required />
+                        <DateTimePicker date={matchTime} setDate={setMatchTime} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="entryFee">Entry Fee (₹)</Label>
@@ -279,8 +272,7 @@ export default function EditTournamentPage() {
                                        <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
                                        <Input
                                            id={`amount-${index}`}
-                                           type="number"
-                                           step="0.01"
+                                           type="text"
                                            placeholder="e.g., 2500"
                                            value={getPrizeAmount(dist.percentage)} 
                                            onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
