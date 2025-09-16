@@ -170,7 +170,7 @@ export default function WalletPage() {
 
   const [addAmount, setAddAmount] = useState('');
   const [upiRef, setUpiRef] = useState('');
-  const quickAmounts = [50, 100, 200, 500, 1000];
+  const quickAmounts = [1000, 500, 200, 100, 50];
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -551,6 +551,8 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
 
     
 
