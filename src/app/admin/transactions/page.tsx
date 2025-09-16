@@ -10,7 +10,7 @@ import { Transaction, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock, Edit } from 'lucide-react';
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock, Edit, Trash2 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +25,16 @@ import {
   DialogFooter,
   DialogClose
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from '@/components/ui/separator';
 
 export default function AdminTransactionsPage() {
@@ -33,6 +43,7 @@ export default function AdminTransactionsPage() {
   const searchParams = useSearchParams();
   const initialTab = searchParams.get('tab') || 'all';
   const { toast } = useToast();
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 
   const loadData = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -58,6 +69,18 @@ export default function AdminTransactionsPage() {
     toast({ title: 'Transactions Reloaded', description: 'The transaction list has been updated.' });
   }
 
+  const handleDeleteTransaction = () => {
+    if (!transactionToDelete) return;
+    const updatedTransactions = transactions.filter(tx => tx.id !== transactionToDelete.id);
+    setTransactions(updatedTransactions);
+    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+    toast({
+      title: "Transaction Deleted",
+      description: `The transaction has been successfully deleted.`,
+    });
+    setTransactionToDelete(null);
+  };
+  
   const TransactionTable = ({ txs }: { txs: Transaction[] }) => {
     if (txs.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No transactions in this category.</p>;
@@ -72,6 +95,7 @@ export default function AdminTransactionsPage() {
                     <TableHead>Date</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -79,9 +103,9 @@ export default function AdminTransactionsPage() {
                     const user = getUserForTx(tx.userId);
                     return (
                        <Dialog key={tx.id}>
-                        <DialogTrigger asChild>
-                         <TableRow className="cursor-pointer">
-                            <TableCell>
+                        <TableRow>
+                           <DialogTrigger asChild>
+                            <TableCell className="cursor-pointer">
                                 {user ? (
                                     <div className="flex items-center gap-3">
                                         <Avatar className="h-8 w-8">
@@ -94,20 +118,30 @@ export default function AdminTransactionsPage() {
                                     <span>Unknown User</span>
                                 )}
                             </TableCell>
-                            <TableCell>{tx.description}</TableCell>
-                            <TableCell>{format(new Date(tx.createdAt), 'PPp')}</TableCell>
-                            <TableCell>
-                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize flex items-center gap-1">
-                                    {tx.status === 'pending' && <Clock className="h-3 w-3" />}
-                                    {tx.status === 'declined' && <XCircle className="h-3 w-3" />}
-                                    {tx.status}
-                                </Badge>
-                            </TableCell>
-                            <TableCell className={`text-right font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                            </TableCell>
+                           </DialogTrigger>
+                            <DialogTrigger asChild><TableCell className="cursor-pointer">{tx.description}</TableCell></DialogTrigger>
+                            <DialogTrigger asChild><TableCell className="cursor-pointer">{format(new Date(tx.createdAt), 'PPp')}</TableCell></DialogTrigger>
+                            <DialogTrigger asChild>
+                              <TableCell className="cursor-pointer">
+                                  <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize flex items-center gap-1">
+                                      {tx.status === 'pending' && <Clock className="h-3 w-3" />}
+                                      {tx.status === 'declined' && <XCircle className="h-3 w-3" />}
+                                      {tx.status}
+                                  </Badge>
+                              </TableCell>
+                            </DialogTrigger>
+                            <DialogTrigger asChild>
+                              <TableCell className={`text-right font-bold cursor-pointer ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                  {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                              </TableCell>
+                            </DialogTrigger>
+                             <TableCell className="text-right">
+                                <Button variant="ghost" size="icon" onClick={() => setTransactionToDelete(tx)}>
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                  <span className="sr-only">Delete</span>
+                                </Button>
+                              </TableCell>
                          </TableRow>
-                        </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
                             <DialogTitle>Transaction Details</DialogTitle>
@@ -265,6 +299,20 @@ export default function AdminTransactionsPage() {
             </Card>
         </TabsContent>
       </Tabs>
+      <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the transaction record.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTransactionToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTransaction}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
