@@ -4,8 +4,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
-import { User, Transaction, Tournament } from '@/lib/types';
-import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift } from "lucide-react";
+import { User, Transaction, Tournament, PromotionalAd } from '@/lib/types';
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -25,6 +25,8 @@ export default function AdminDashboardPage() {
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [activeAdsCount, setActiveAdsCount] = useState(0);
+
   const { toast } = useToast();
   
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -56,6 +58,11 @@ export default function AdminDashboardPage() {
         localStorage.setItem('allTournaments', JSON.stringify(mockTournaments));
     }
     setCompletedTournaments(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
+
+    const storedAds = localStorage.getItem('promotionalAds');
+    const ads: PromotionalAd[] = storedAds ? JSON.parse(storedAds) : [];
+    setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
+
 
     console.log("Data reloaded");
   }, []);
@@ -187,7 +194,7 @@ export default function AdminDashboardPage() {
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Link href="/admin/transactions?tab=deposits">
             <Card className="hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -218,6 +225,17 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">₹{totalPromotions.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+        </Link>
+        <Link href="/admin/promotional-ads">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Active Ads</CardTitle>
+                    <Megaphone className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{activeAdsCount}</div>
                 </CardContent>
             </Card>
         </Link>
@@ -448,3 +466,6 @@ export default function AdminDashboardPage() {
   );
 
     
+
+
+      
