@@ -1,8 +1,17 @@
 
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
+};
+
+export type PromotionalAd = {
+  id: string;
+  title: string;
+  imageUrl: string;
+  link: string; // URL to a tournament or external page
+  status: 'active' | 'inactive';
 };
 
 

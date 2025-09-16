@@ -11,16 +11,46 @@ import { Clock, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 export default function HomePage() {
-  const { tournaments } = useUser();
+  const { tournaments, promotionalAds } = useUser();
   const upcomingOrLiveTournaments = tournaments.filter(
     (t) => t.status === "Upcoming" || t.status === "Live"
   );
+  
+  const activeAds = promotionalAds.filter(ad => ad.status === 'active');
 
   return (
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
+
+      {activeAds.length > 0 && (
+          <Carousel 
+            plugins={[Autoplay({ delay: 5000 })]}
+            opts={{ loop: true }}
+            className="w-full"
+          >
+            <CarouselContent>
+              {activeAds.map((ad) => (
+                <CarouselItem key={ad.id}>
+                    <Link href={ad.link}>
+                        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                            <Image
+                                src={ad.imageUrl}
+                                alt={ad.title}
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                   </Link>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+          </Carousel>
+      )}
+
       <div className="grid grid-cols-1 gap-4">
         {upcomingOrLiveTournaments.map((tournament) => (
           <Card key={tournament.id} className="overflow-hidden">

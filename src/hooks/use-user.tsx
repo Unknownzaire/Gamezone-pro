@@ -3,7 +3,7 @@
 
 import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 
@@ -15,6 +15,8 @@ interface UserContextType {
   setUser: Dispatch<SetStateAction<User | null>>;
   transactions: Transaction[];
   tournaments: Tournament[];
+  promotionalAds: PromotionalAd[];
+  setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   updateUser: (updatedFields: Partial<User>) => void;
@@ -35,6 +37,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [promotionalAds, setPromotionalAds] = useState<PromotionalAd[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -66,11 +69,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
         }
 
+        const storedAds = localStorage.getItem('promotionalAds');
+        if (storedAds) {
+            setPromotionalAds(JSON.parse(storedAds));
+        } else {
+            localStorage.setItem('promotionalAds', JSON.stringify([]));
+        }
+
     } catch(e) {
         console.error("Error loading data from localStorage", e);
         setAllUsers(mockUsers);
         setAllTransactions(mockTransactions);
         setTournaments(initialMockTournaments);
+        setPromotionalAds([]);
     }
     setLoading(false);
   }
@@ -79,7 +90,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData();
 
      const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allTournaments') {
+      if (event.key === 'allTournaments' || event.key === 'promotionalAds') {
         loadInitialData();
       }
     };
@@ -111,6 +122,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('allTournaments', JSON.stringify(tournaments));
     }
   }, [tournaments, loading]);
+
+  useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
+    }
+  }, [promotionalAds, loading]);
 
   const login = (email: string, password: string): boolean | 'blocked' => {
     const userToLogin = allUsers.find(u => u.email === email);
@@ -256,7 +273,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast }}>
       {!loading && children}
     </UserContext.Provider>
   );
