@@ -37,8 +37,15 @@ export default function EditTournamentPage() {
 
   useEffect(() => {
     if (!id) return;
-    const storedTournaments = localStorage.getItem('allTournaments');
-    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    let allTournaments: Tournament[];
+    try {
+        const storedTournaments = localStorage.getItem('allTournaments');
+        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    } catch (error) {
+        console.error("Failed to parse tournaments from localStorage", error);
+        allTournaments = initialMockTournaments;
+        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+    }
     
     const tournamentToEdit = allTournaments.find(t => t.id === id);
     if (tournamentToEdit) {
@@ -159,8 +166,14 @@ export default function EditTournamentPage() {
             prizeDistribution: prizeDistributions,
         };
 
-        const storedTournaments = localStorage.getItem('allTournaments');
-        let allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+        let allTournaments: Tournament[];
+        try {
+            const storedTournaments = localStorage.getItem('allTournaments');
+            allTournaments = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+        } catch (error) {
+            console.error("Failed to parse tournaments from localStorage", error);
+            allTournaments = initialMockTournaments;
+        }
         
         allTournaments = allTournaments.map(t => t.id === id ? updatedData : t);
         localStorage.setItem('allTournaments', JSON.stringify(allTournaments));

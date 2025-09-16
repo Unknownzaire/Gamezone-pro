@@ -19,10 +19,16 @@ export default function AdminTournamentsPage() {
 
    useEffect(() => {
     const loadTournaments = () => {
-      const storedTournaments = localStorage.getItem('allTournaments');
-      if (storedTournaments) {
-        setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
-      } else {
+      try {
+        const storedTournaments = localStorage.getItem('allTournaments');
+        if (storedTournaments) {
+          setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
+        } else {
+          setTournaments(initialMockTournaments);
+          localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+        }
+      } catch (error) {
+        console.error("Failed to parse tournaments from localStorage", error);
         setTournaments(initialMockTournaments);
         localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
       }

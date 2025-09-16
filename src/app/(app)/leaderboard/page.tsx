@@ -46,7 +46,16 @@ export default function LeaderboardPage() {
   }).sort((a,b) => b.points - a.points);
 
 
-  const allTournaments = JSON.parse(localStorage.getItem('allTournaments') || '[]').map((t: any) => ({...t, matchTime: new Date(t.matchTime)}));
+  let allTournaments = [];
+  try {
+    const storedTournaments = localStorage.getItem('allTournaments');
+    allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+  } catch (error) {
+    console.error("Failed to parse tournaments from localStorage", error);
+    allTournaments = mockTournaments;
+    localStorage.setItem('allTournaments', JSON.stringify(mockTournaments));
+  }
+
   const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
   const tournamentParticipants = currentTournament ? currentTournament.participants : [];
   const rankedParticipants = tournamentParticipants.filter((p: Participant) => getRank(p) !== null);

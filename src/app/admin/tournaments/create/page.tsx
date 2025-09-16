@@ -123,8 +123,14 @@ export default function CreateTournamentPage() {
                 prizeDistribution: prizeDistributions,
             };
 
-            const storedTournaments = localStorage.getItem('allTournaments');
-            const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+            let allTournaments: Tournament[];
+            try {
+                const storedTournaments = localStorage.getItem('allTournaments');
+                allTournaments = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+            } catch (error) {
+                console.error("Failed to parse tournaments from localStorage", error);
+                allTournaments = initialMockTournaments;
+            }
             
             localStorage.setItem('allTournaments', JSON.stringify([newTournament, ...allTournaments]));
 

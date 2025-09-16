@@ -30,8 +30,15 @@ export default function ManageTournamentPage() {
   const [roomPassword, setRoomPassword] = useState('');
   
   useEffect(() => {
-    const storedTournaments = localStorage.getItem('allTournaments');
-    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    let allTournaments: Tournament[];
+    try {
+        const storedTournaments = localStorage.getItem('allTournaments');
+        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    } catch (error) {
+        console.error("Failed to parse tournaments from localStorage", error);
+        allTournaments = initialMockTournaments;
+        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+    }
     setTournaments(allTournaments);
     
     const currentTournament = allTournaments.find(t => t.id === id);
