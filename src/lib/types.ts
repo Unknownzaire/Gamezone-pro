@@ -1,5 +1,11 @@
 
 
+export type PrizeDistribution = {
+  rank: string; // e.g., "1", "2", "3", "4-10"
+  percentage: number; // e.g., 50 for 50%
+};
+
+
 export type Tournament = {
   id: string;
   title: string;
@@ -15,13 +21,14 @@ export type Tournament = {
   winner?: User;
   imageUrl: string;
   imageHint: string;
+  prizeDistribution?: PrizeDistribution[];
 };
 
 export type Participant = {
   id: string;
   user: User;
   tournamentId: string;
-  result: 'Winner' | 'Participated' | null;
+  result: 'Winner' | `Rank #${number}` | 'Participated' | null;
   joinedAt: Date;
 };
 

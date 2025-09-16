@@ -3,14 +3,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams, notFound } from 'next/navigation';
-import { Tournament } from '@/lib/types';
+import { Tournament, PrizeDistribution } from '@/lib/types';
 import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { format } from 'date-fns';
 
@@ -43,6 +43,7 @@ export default function EditTournamentPage() {
     imageHint: '',
   });
    const [imageFile, setImageFile] = useState<File | null>(null);
+   const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
 
   useEffect(() => {
     if (!id) return;
@@ -56,6 +57,12 @@ export default function EditTournamentPage() {
         ...tournamentToEdit,
         matchTime: toDateTimeLocal(new Date(tournamentToEdit.matchTime)),
       });
+      setPrizeDistributions(tournamentToEdit.prizeDistribution || [
+          { rank: '1', percentage: 50 },
+          { rank: '2', percentage: 25 },
+          { rank: '3', percentage: 15 },
+          { rank: '4-10', percentage: 10 },
+      ]);
     } else {
       notFound();
     }
@@ -75,8 +82,37 @@ export default function EditTournamentPage() {
     }
   };
 
+  const handlePrizeChange = (index: number, field: keyof PrizeDistribution, value: string | number) => {
+    const newDistributions = [...prizeDistributions];
+    if (field === 'percentage' && typeof value === 'string') {
+         newDistributions[index][field] = parseFloat(value);
+    } else {
+        newDistributions[index][field] = value as never;
+    }
+    setPrizeDistributions(newDistributions);
+  };
+
+  const addPrizeRow = () => {
+      setPrizeDistributions([...prizeDistributions, { rank: '', percentage: 0 }]);
+  };
+
+  const removePrizeRow = (index: number) => {
+      const newDistributions = prizeDistributions.filter((_, i) => i !== index);
+      setPrizeDistributions(newDistributions);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
+    if (totalPercentage > 100) {
+        toast({
+            variant: 'destructive',
+            title: "Invalid Prize Distribution",
+            description: `Total prize percentage cannot exceed 100%. Current total: ${totalPercentage}%`
+        });
+        return;
+    }
     
     const processAndSubmit = (imageUrl?: string) => {
         const updatedData: Tournament = {
@@ -84,6 +120,7 @@ export default function EditTournamentPage() {
             ...formData,
             matchTime: new Date(formData.matchTime),
             imageUrl: imageUrl ?? formData.imageUrl,
+            prizeDistribution: prizeDistributions,
         };
 
         const storedTournaments = localStorage.getItem('allTournaments');
@@ -129,48 +166,101 @@ export default function EditTournamentPage() {
         </div>
       </div>
 
-      <Card>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="title">Tournament Title</Label>
-              <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+      <form onSubmit={handleSubmit}>
+        <div className="grid gap-6 lg:grid-cols-5">
+           <div className="lg:col-span-3 space-y-6">
+                <Card>
+                     <CardHeader>
+                        <CardTitle>Tournament Details</CardTitle>
+                     </CardHeader>
+                    <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2 md:col-span-2">
+                        <Label htmlFor="title">Tournament Title</Label>
+                        <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="gameName">Game Name</Label>
+                        <Input id="gameName" name="gameName" value={formData.gameName} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="matchTime">Match Time</Label>
+                        <Input id="matchTime" name="matchTime" type="datetime-local" value={formData.matchTime} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="entryFee">Entry Fee (₹)</Label>
+                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="prizePool">Prize Pool (₹)</Label>
+                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="commissionPercentage">Commission (%)</Label>
+                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="imageHint">Image Hint</Label>
+                          <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} />
+                      </div>
+                      <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="imageFile">Tournament Image</Label>
+                          <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+                          {formData.imageUrl && !imageFile && <p className="text-xs text-muted-foreground pt-1">Current image is set. Upload a new file to replace it.</p>}
+                      </div>
+                    </CardContent>
+                </Card>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="gameName">Game Name</Label>
-              <Input id="gameName" name="gameName" value={formData.gameName} onChange={handleChange} required />
+            <div className="lg:col-span-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Prize Distribution</CardTitle>
+                        <CardDescription>Define how the prize pool is distributed.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {prizeDistributions.map((dist, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                                <div className="flex-1 space-y-1">
+                                    <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
+                                    <Input 
+                                        id={`rank-${index}`}
+                                        placeholder="e.g., 1 or 4-10" 
+                                        value={dist.rank}
+                                        onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex-1 space-y-1">
+                                    <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage (%)</Label>
+                                    <Input 
+                                        id={`percentage-${index}`}
+                                        type="number" 
+                                        placeholder="e.g., 50"
+                                        value={dist.percentage}
+                                        onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                    />
+                                </div>
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="self-end"
+                                    onClick={() => removePrizeRow(index)}
+                                    type="button"
+                                >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+                        ))}
+                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button">Add Prize Tier</Button>
+                        <p className="text-xs text-muted-foreground pt-2">
+                            Total percentage distributed: {prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0)}%
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="matchTime">Match Time</Label>
-              <Input id="matchTime" name="matchTime" type="datetime-local" value={formData.matchTime} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="entryFee">Entry Fee (₹)</Label>
-              <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="prizePool">Prize Pool (₹)</Label>
-              <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="commissionPercentage">Commission (%)</Label>
-              <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="imageHint">Image Hint</Label>
-                <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="imageFile">Tournament Image</Label>
-                <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
-                {formData.imageUrl && !imageFile && <p className="text-xs text-muted-foreground pt-1">Current image is set. Upload a new file to replace it.</p>}
-            </div>
-            <div className="md:col-span-2 flex justify-end">
-              <Button type="submit">Save Changes</Button>
-            </div>
-          </CardContent>
-        </form>
-      </Card>
+        </div>
+        <div className="mt-6 flex justify-end">
+            <Button type="submit" size="lg">Save Changes</Button>
+        </div>
+      </form>
     </div>
   );
 }

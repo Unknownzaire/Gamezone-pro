@@ -8,7 +8,7 @@ import { Clock, Eye, Trophy, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { useEffect, useState } from "react";
-import { Tournament } from "@/lib/types";
+import { Tournament, PrizeDistribution } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
@@ -36,21 +36,40 @@ export default function MyTournamentsPage() {
 
     const participant = tournament.participants.find(p => p.user.id === currentUser.id);
     if (!participant || !participant.result) return 0;
-
+    
     const rankMatch = participant.result.match(/#(\d+)/);
     const rank = participant.result === 'Winner' ? 1 : rankMatch ? parseInt(rankMatch[1]) : null;
 
     if (rank === null) return 0;
-
-    const prizeDistribution = [
-        { rank: 1, prize: tournament.prizePool * 0.5 },
-        { rank: 2, prize: tournament.prizePool * 0.25 },
-        { rank: 3, prize: tournament.prizePool * 0.15 },
-        ...Array.from({length: 7}, (_, i) => ({ rank: 4 + i, prize: (tournament.prizePool * 0.1) / 7 })),
+    
+    const prizeDistribution = tournament.prizeDistribution || [
+        { rank: '1', percentage: 50 },
+        { rank: '2', percentage: 25 },
+        { rank: '3', percentage: 15 },
+        { rank: '4-10', percentage: 10 },
     ];
 
-    const prizeInfo = prizeDistribution.find(p => p.rank === rank);
-    return prizeInfo ? prizeInfo.prize : 0;
+    for (const dist of prizeDistribution) {
+        if (dist.rank.includes('-')) {
+            const [start, end] = dist.rank.split('-').map(Number);
+            if (rank >= start && rank <= end) {
+                // To calculate individual prize, we'd need to know how many winners are in the range.
+                // This is a simplification and might not be perfectly accurate if not all ranks in the range are filled.
+                 const winnerCountInRange = tournament.participants.filter(p => {
+                    const pRankMatch = p.result?.match(/#(\d+)/);
+                    const pRank = p.result === 'Winner' ? 1 : pRankMatch ? parseInt(pRankMatch[1]) : null;
+                    return pRank && pRank >= start && pRank <= end;
+                }).length;
+                
+                const totalPrizeForRange = tournament.prizePool * (dist.percentage / 100);
+                return winnerCountInRange > 0 ? totalPrizeForRange / winnerCountInRange : 0;
+            }
+        } else if (rank === parseInt(dist.rank, 10)) {
+            return tournament.prizePool * (dist.percentage / 100);
+        }
+    }
+    
+    return 0;
   }
 
   return (

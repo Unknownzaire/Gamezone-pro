@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament } from '@/lib/types';
+import { Tournament, PrizeDistribution } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -105,12 +105,27 @@ export default function TournamentDetailsPage() {
     });
   };
 
-  const prizeDistribution = [
-    { rank: 1, prize: tournament.prizePool * 0.5 },
-    { rank: 2, prize: tournament.prizePool * 0.25 },
-    { rank: 3, prize: tournament.prizePool * 0.15 },
-    { rank: '4-10', prize: tournament.prizePool * 0.1 / 7 },
-  ];
+  const getPrizeForRankString = (rankString: string, prizePool: number, distribution: PrizeDistribution[]): string => {
+        const prize = distribution.find(d => d.rank === rankString);
+        if (prize) {
+            if (rankString.includes('-')) {
+                const [start, end] = rankString.split('-').map(Number);
+                const count = end - start + 1;
+                const individualPrize = (prizePool * (prize.percentage / 100)) / count;
+                return `₹${individualPrize.toLocaleString('en-IN', { maximumFractionDigits: 0 })} (each)`;
+            }
+            const prizeAmount = prizePool * (prize.percentage / 100);
+            return `₹${prizeAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })}`;
+        }
+        return '₹0';
+    };
+
+    const prizeDistribution = tournament.prizeDistribution || [
+        { rank: '1', percentage: 50 },
+        { rank: '2', percentage: 25 },
+        { rank: '3', percentage: 15 },
+        { rank: '4-10', percentage: 10 },
+    ];
 
   const terms = [
     {
@@ -252,7 +267,7 @@ export default function TournamentDetailsPage() {
                           {prizeDistribution.map((item) => (
                             <div key={item.rank} className="flex justify-between items-center rounded-md bg-muted p-2">
                               <p className="font-semibold">Rank #{item.rank}</p>
-                              <p className="text-primary font-bold">₹{item.prize.toLocaleString('en-IN', { maximumFractionDigits: 0 })}</p>
+                              <p className="text-primary font-bold">{getPrizeForRankString(item.rank, tournament.prizePool, prizeDistribution)}</p>
                             </div>
                           ))}
                         </div>

@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getWinnerSuggestion } from '../actions';
 import { Loader2, Sparkles, Trophy } from 'lucide-react';
-import { Tournament, User, Participant } from '@/lib/types';
+import { Tournament, User, Participant, PrizeDistribution } from '@/lib/types';
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -40,7 +40,7 @@ const ParticipantRankItem = memo(({
 
   return (
     <div className="flex items-center justify-between gap-4">
-      <div className="flex-1 truncate">
+       <div className="flex-1 truncate">
         <p className="font-semibold">{participant.user.username}</p>
         <p className="text-xs text-muted-foreground">
           {participant.user.bgmiUsername} ({participant.user.bgmiId})
@@ -94,7 +94,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     // Pre-fill ranks if they already exist on the tournament participants
     const initialRanks: { [participantId: string]: number | null } = {};
     tournament.participants.forEach(p => {
-        if (p.result && p.result.startsWith('Rank')) {
+        if (p.result && p.result.startsWith('Rank #')) {
             initialRanks[p.id] = parseInt(p.result.replace('Rank #', ''), 10);
         } else if (p.result === 'Winner') {
             initialRanks[p.id] = 1;
@@ -143,6 +143,23 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
   const handleRankChange = useCallback((participantId: string, rank: string) => {
     setRanks(prev => ({...prev, [participantId]: rank === "0" || rank === "" ? null : parseInt(rank, 10)}));
   }, []);
+
+  const getPrizeForRank = (rank: number, prizePool: number, prizeDistribution: PrizeDistribution[]): number => {
+    for (const dist of prizeDistribution) {
+        if (dist.rank.includes('-')) {
+            const [start, end] = dist.rank.split('-').map(Number);
+            if (rank >= start && rank <= end) {
+                // If the prize is for a range, we need to know how many people are in that range
+                const winnerCountInRange = Object.values(ranks).filter(r => r && r >= start && r <= end).length;
+                const totalPrizeForRange = prizePool * (dist.percentage / 100);
+                return winnerCountInRange > 0 ? totalPrizeForRange / winnerCountInRange : 0;
+            }
+        } else if (rank === parseInt(dist.rank, 10)) {
+            return prizePool * (dist.percentage / 100);
+        }
+    }
+    return 0;
+  };
   
   const handleDeclareWinner = () => {
     const winnerRanks = Object.entries(ranks).filter(([, rank]) => rank !== null && rank > 0);
@@ -154,36 +171,38 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
     let allTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]');
 
-    const prizeDistribution = [
-        { rank: 1, prize: tournament.prizePool * 0.5 },
-        { rank: 2, prize: tournament.prizePool * 0.25 },
-        { rank: 3, prize: tournament.prizePool * 0.15 },
-        ...Array.from({length: 7}, (_, i) => ({ rank: 4 + i, prize: (tournament.prizePool * 0.1) / 7 })),
+    const prizeDistribution = tournament.prizeDistribution || [
+        { rank: '1', percentage: 50 },
+        { rank: '2', percentage: 25 },
+        { rank: '3', percentage: 15 },
+        { rank: '4-10', percentage: 10 },
     ];
     
     const updatedParticipants = tournament.participants.map(p => {
         const rank = ranks[p.id] ?? null;
-        const prizeInfo = prizeDistribution.find(prize => prize.rank === rank);
         
-        if (prizeInfo) {
-            const userIndex = allUsers.findIndex(u => u.id === p.user.id);
-            if(userIndex !== -1){
-                allUsers[userIndex].walletBalance += prizeInfo.prize;
-                allTransactions.push({
-                    id: `tx-${Date.now()}-${p.user.id}`,
-                    userId: p.user.id,
-                    amount: prizeInfo.prize,
-                    type: 'credit',
-                    description: `Prize for Rank #${rank} in "${tournament.title}"`,
-                    createdAt: new Date(),
-                    status: 'completed'
-                });
+        if (rank) {
+            const prizeAmount = getPrizeForRank(rank, tournament.prizePool, prizeDistribution);
+            if (prizeAmount > 0) {
+                 const userIndex = allUsers.findIndex(u => u.id === p.user.id);
+                if(userIndex !== -1){
+                    allUsers[userIndex].walletBalance += prizeAmount;
+                    allTransactions.push({
+                        id: `tx-${Date.now()}-${p.user.id}`,
+                        userId: p.user.id,
+                        amount: prizeAmount,
+                        type: 'credit',
+                        description: `Prize for Rank #${rank} in "${tournament.title}"`,
+                        createdAt: new Date(),
+                        status: 'completed'
+                    });
+                }
             }
         }
         
         return {
             ...p,
-            result: rank ? (rank === 1 ? 'Winner' : `Rank #${rank}`) : 'Participated'
+            result: rank ? (rank === 1 ? 'Winner' : `Rank #${rank}` as `Rank #${number}`) : 'Participated'
         };
     });
 
