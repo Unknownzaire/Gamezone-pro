@@ -10,7 +10,7 @@ import { Transaction, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock } from 'lucide-react';
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock, Edit } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -183,9 +183,17 @@ export default function AdminTransactionsPage() {
                             )}
                             </div>
                             <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">Close</Button>
-                            </DialogClose>
+                              {user && (
+                                <Link href={`/admin/users/edit/${user.id}`}>
+                                  <Button variant="secondary">
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Edit User
+                                  </Button>
+                                </Link>
+                              )}
+                              <DialogClose asChild>
+                                  <Button variant="outline">Close</Button>
+                              </DialogClose>
                             </DialogFooter>
                         </DialogContent>
                        </Dialog>
