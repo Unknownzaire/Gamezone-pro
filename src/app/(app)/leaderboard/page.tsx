@@ -97,39 +97,41 @@ export default function LeaderboardPage() {
         )}
       </Card>
       
-       <Card>
-        <CardHeader>
-          <CardTitle>Overall Rankings</CardTitle>
-        </CardHeader>
-        <CardContent>
-           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Rank</TableHead>
-                <TableHead>Player</TableHead>
-                <TableHead className="text-right">Points</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {usersWithPoints.map((user, index) => (
-                <TableRow key={user.id}>
-                  <TableCell className="font-bold">{index+1}</TableCell>
-                  <TableCell>
-                     <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={user.avatarUrl} alt={user.username} />
-                          <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>{user.username}</span>
-                      </div>
-                  </TableCell>
-                  <TableCell className="text-right font-bold text-primary">{user.points}</TableCell>
+      {!tournamentId && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Overall Rankings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Rank</TableHead>
+                  <TableHead>Player</TableHead>
+                  <TableHead className="text-right">Points</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              </TableHeader>
+              <TableBody>
+                {usersWithPoints.map((user, index) => (
+                  <TableRow key={user.id}>
+                    <TableCell className="font-bold">{index+1}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={user.avatarUrl} alt={user.username} />
+                            <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span>{user.username}</span>
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-right font-bold text-primary">{user.points}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
