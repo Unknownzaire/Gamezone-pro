@@ -26,7 +26,6 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestWinnerFromMatchDataOutput | null>(null);
   const [ranks, setRanks] = useState<{[participantId: string]: number | null}>({});
-  const [selectedParticipants, setSelectedParticipants] = useState<string[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -141,22 +140,6 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     toast({ title: 'Winners Declared!', description: 'Ranks assigned and prizes have been distributed.' });
   }
 
-  const handleSelectAll = (checked: boolean | 'indeterminate') => {
-    if (checked === true) {
-      setSelectedParticipants(tournament.participants.map(p => p.id));
-    } else {
-      setSelectedParticipants([]);
-    }
-  };
-
-  const handleSelectParticipant = (participantId: string, checked: boolean) => {
-    if (checked) {
-      setSelectedParticipants(prev => [...prev, participantId]);
-    } else {
-      setSelectedParticipants(prev => prev.filter(id => id !== participantId));
-    }
-  };
-
   const usedRanks = Object.values(ranks).filter(rank => rank !== null) as number[];
 
   return (
@@ -213,28 +196,11 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
           <CardDescription>Manually assign ranks to participants. This will distribute prizes and complete the tournament.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="flex items-center space-x-2 border-b pb-2">
-                <Checkbox 
-                    id="select-all" 
-                    onCheckedChange={handleSelectAll}
-                    checked={selectedParticipants.length > 0 && selectedParticipants.length === tournament.participants.length ? true : (selectedParticipants.length > 0 ? 'indeterminate' : false)}
-                />
-                <Label htmlFor="select-all" className="font-semibold">
-                    {selectedParticipants.length > 0 ? `${selectedParticipants.length} selected` : `Select All Participants`}
-                </Label>
-            </div>
             <ScrollArea className="h-72">
                 <div className="space-y-3 pr-4">
                     {tournament.participants.map(p => (
                         <div key={p.id} className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3 flex-1 truncate">
-                                <Checkbox 
-                                    id={`select-${p.id}`} 
-                                    checked={selectedParticipants.includes(p.id)}
-                                    onCheckedChange={(checked) => handleSelectParticipant(p.id, !!checked)}
-                                />
-                                <Label htmlFor={`select-${p.id}`} className="flex-1 truncate">{p.user.username}</Label>
-                            </div>
+                            <Label htmlFor={`rank-${p.id}`} className="flex-1 truncate">{p.user.username}</Label>
                              <Select 
                                 onValueChange={(value) => handleRankChange(p.id, value)}
                                 value={ranks[p.id]?.toString() ?? "0"}
