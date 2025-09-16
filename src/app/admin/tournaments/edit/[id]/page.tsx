@@ -238,8 +238,7 @@ export default function EditTournamentPage() {
                                    </div>
                                    <div className="space-y-1">
                                        <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
-                                       <Input 
-                                           id={`percentage-${index}`}
+                                       <Input _id={`percentage-${index}`}
                                            type="number" 
                                            placeholder="e.g., 50"
                                            value={dist.percentage}
