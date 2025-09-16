@@ -105,6 +105,10 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
               <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} />
             </div>
             <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input id="password" name="password" value={formData.password || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
               <Label htmlFor="mobile">Mobile</Label>
               <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
             </div>
