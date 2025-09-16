@@ -29,11 +29,16 @@ interface DateTimePickerProps {
 export function DateTimePicker({ date, setDate }: DateTimePickerProps) {
   const handleDateSelect = (selectedDay: Date | undefined) => {
     if (!selectedDay) {
-        setDate(undefined);
-        return;
+      setDate(undefined);
+      return;
     }
-    const newDate = date ? new Date(date) : new Date();
-    newDate.setFullYear(selectedDay.getFullYear(), selectedDay.getMonth(), selectedDay.getDate());
+    const newDate = new Date(selectedDay);
+    if (date) {
+      newDate.setHours(date.getHours());
+      newDate.setMinutes(date.getMinutes());
+      newDate.setSeconds(date.getSeconds());
+      newDate.setMilliseconds(date.getMilliseconds());
+    }
     setDate(newDate);
   };
 
