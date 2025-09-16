@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -74,9 +75,13 @@ export default function AdminSettingsPage() {
                                 <Label htmlFor="max-withdrawal">Maximum Withdrawal (₹)</Label>
                                 <Input id="max-withdrawal" type="number" defaultValue="5000" required />
                             </div>
-                            <div className="space-y-2">
+                             <div className="space-y-2">
                                 <Label htmlFor="upi-id">Deposit UPI ID</Label>
                                 <Input id="upi-id" defaultValue="arenaace@upi" required />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="qr-code">QR Code Image URL</Label>
+                                <Input id="qr-code" placeholder="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=..." />
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit">Save Wallet Settings</Button>
