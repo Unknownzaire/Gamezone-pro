@@ -174,7 +174,7 @@ export default function ProfilePage() {
   if (!currentUser) {
     return (
       <div className="space-y-6">
-        <h1 className="font-headline text-3xl font-bold">My Profile</h1>
+        <h1 className="font-headline text-3xl font-bold px-4">My Profile</h1>
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center space-y-4">
@@ -193,158 +193,160 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-headline text-3xl font-bold">My Profile</h1>
+      <h1 className="font-headline text-3xl font-bold px-4">My Profile</h1>
 
-      <Card className="overflow-hidden">
-        <div className="relative h-32 bg-muted">
-            {currentUser.coverImageUrl && (
-                <Image src={currentUser.coverImageUrl} alt="Cover image" layout="fill" objectFit="cover" />
-            )}
-             <Dialog>
-              <DialogTrigger asChild>
-                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-black/50 hover:bg-black/70">
-                    <Edit2 className="h-4 w-4 text-white" />
-                 </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Change Cover Image</DialogTitle>
-                  <DialogDescription>Upload a new background image for your profile.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2">
-                  <Label htmlFor="coverImageFile">Image</Label>
-                  <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                  <DialogClose asChild><Button onClick={handleCoverImageUpdate}>Save</Button></DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-        </div>
-        <CardContent className="pt-0 -mt-12">
-          <div className="flex flex-col items-center space-y-2">
-             <Dialog>
-              <DialogTrigger asChild>
-                <div className="relative group cursor-pointer">
-                  <Avatar className="h-24 w-24 border-4 border-background">
-                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.username} />
-                    <AvatarFallback>{currentUser.username.charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Edit2 className="text-white h-8 w-8" />
+      <div className="-mx-4">
+        <Card className="overflow-hidden rounded-none border-x-0">
+          <div className="relative h-32 bg-muted">
+              {currentUser.coverImageUrl && (
+                  <Image src={currentUser.coverImageUrl} alt="Cover image" layout="fill" objectFit="cover" />
+              )}
+              <Dialog>
+                <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-black/50 hover:bg-black/70">
+                      <Edit2 className="h-4 w-4 text-white" />
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Change Cover Image</DialogTitle>
+                    <DialogDescription>Upload a new background image for your profile.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="coverImageFile">Image</Label>
+                    <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} />
                   </div>
-                </div>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Change Profile Picture</DialogTitle>
-                  <DialogDescription>Upload an image file to update your avatar.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2">
-                  <Label htmlFor="avatarFile">Image</Label>
-                  <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} />
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                  </DialogClose>
-                  <DialogClose asChild>
-                    <Button onClick={handleAvatarUpdate}>Save</Button>
-                  </DialogClose>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-            <div className="text-center">
-              <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
-              <p className="text-muted-foreground">{currentUser.email}</p>
-            </div>
+                  <DialogFooter>
+                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                    <DialogClose asChild><Button onClick={handleCoverImageUpdate}>Save</Button></DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
           </div>
-        </CardContent>
-      </Card>
+          <CardContent className="pt-0 -mt-12">
+            <div className="flex flex-col items-center space-y-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="relative group cursor-pointer">
+                    <Avatar className="h-24 w-24 border-4 border-background">
+                      <AvatarImage src={currentUser.avatarUrl} alt={currentUser.username} />
+                      <AvatarFallback>{currentUser.username.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Edit2 className="text-white h-8 w-8" />
+                    </div>
+                  </div>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Change Profile Picture</DialogTitle>
+                    <DialogDescription>Upload an image file to update your avatar.</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2">
+                    <Label htmlFor="avatarFile">Image</Label>
+                    <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} />
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="outline">Cancel</Button>
+                    </DialogClose>
+                    <DialogClose asChild>
+                      <Button onClick={handleAvatarUpdate}>Save</Button>
+                    </DialogClose>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+              <div className="text-center">
+                <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
+                <p className="text-muted-foreground">{currentUser.email}</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      <Card>
-        <CardContent className="pt-6 space-y-4">
-            <h2 className="font-headline text-xl font-semibold">Edit Profile</h2>
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={!isEditing} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bgmiUsername">BGMI Username</Label>
-              <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" disabled />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="bgmiId">BGMI User ID</Label>
-              <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" disabled />
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+
+      <div className="px-4 space-y-6">
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+              <h2 className="font-headline text-xl font-semibold">Edit Profile</h2>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={!isEditing} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bgmiUsername">BGMI Username</Label>
+                <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" disabled />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bgmiId">BGMI User ID</Label>
+                <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" disabled />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                  <div className="flex items-center gap-2">
+                      <Input id="email" type="email" defaultValue={currentUser.email} disabled />
+                      {!emailVerified && (
+                          <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
+                              {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
+                          </Button>
+                      )}
+                      {emailVerified && <CheckCircle className="text-green-500" />}
+                  </div>
+                  {emailOtpSent && !emailVerified && (
+                      <div className="flex items-center gap-2 pt-2">
+                          <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
+                          <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
+                      </div>
+                  )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="flex items-center gap-2">
-                    <Input id="email" type="email" defaultValue={currentUser.email} disabled />
-                    {!emailVerified && (
-                        <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
-                            {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
-                        </Button>
-                    )}
-                    {emailVerified && <CheckCircle className="text-green-500" />}
-                </div>
-                {emailOtpSent && !emailVerified && (
-                    <div className="flex items-center gap-2 pt-2">
-                        <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
-                        <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
-                    </div>
-                )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile Number</Label>
-               <div className="flex items-center gap-2">
-                    <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
-                     {!mobileVerified && (
-                        <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || isEditing}>
-                           {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
-                        </Button>
-                    )}
-                    {mobileVerified && <CheckCircle className="text-green-500" />}
-                </div>
-                 {mobileOtpSent && !mobileVerified && (
-                    <div className="flex items-center gap-2 pt-2">
-                        <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
-                        <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
-                    </div>
-                )}
-            </div>
-            <Button onClick={handleUpdateProfile} className="w-full">
-              {isEditing ? 'Save Profile' : 'Edit Profile'}
-            </Button>
-        </CardContent>
-      </Card>
+                      <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
+                      {!mobileVerified && (
+                          <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || isEditing}>
+                            {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
+                          </Button>
+                      )}
+                      {mobileVerified && <CheckCircle className="text-green-500" />}
+                  </div>
+                  {mobileOtpSent && !mobileVerified && (
+                      <div className="flex items-center gap-2 pt-2">
+                          <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
+                          <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
+                      </div>
+                  )}
+              </div>
+              <Button onClick={handleUpdateProfile} className="w-full">
+                {isEditing ? 'Save Profile' : 'Edit Profile'}
+              </Button>
+          </CardContent>
+        </Card>
 
-       <Card>
-        <CardContent className="pt-6 space-y-4">
-             <h2 className="font-headline text-xl font-semibold">Change Password</h2>
-            <div className="space-y-2">
-              <Label htmlFor="current-password">Current Password</Label>
-              <Input id="current-password" type="password" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="new-password">New Password</Label>
-              <Input id="new-password" type="password" />
-            </div>
-            <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
-        </CardContent>
-      </Card>
-      
-      <div className="pt-4">
-        <Button variant="destructive" className="w-full" onClick={handleLogout}>
-          Logout
-        </Button>
+        <Card>
+          <CardContent className="pt-6 space-y-4">
+              <h2 className="font-headline text-xl font-semibold">Change Password</h2>
+              <div className="space-y-2">
+                <Label htmlFor="current-password">Current Password</Label>
+                <Input id="current-password" type="password" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="new-password">New Password</Label>
+                <Input id="new-password" type="password" />
+              </div>
+              <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
+          </CardContent>
+        </Card>
+        
+        <div className="pt-4">
+          <Button variant="destructive" className="w-full" onClick={handleLogout}>
+            Logout
+          </Button>
+        </div>
       </div>
     </div>
   );
 }
 
     
-
-    
-
