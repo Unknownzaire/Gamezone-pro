@@ -6,6 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { ArrowLeft } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export interface WalletSettings {
@@ -55,7 +57,9 @@ export default function AdminSettingsPage() {
             const reader = new FileReader();
             reader.onload = (event) => {
                 const imageUrl = event.target?.result as string;
-                saveSettings({ ...walletSettings, qrCodeImageUrl: imageUrl });
+                const newSettings = { ...walletSettings, qrCodeImageUrl: imageUrl };
+                setWalletSettings(newSettings);
+                saveSettings(newSettings);
             };
             reader.readAsDataURL(qrCodeFile);
         } else {
@@ -80,9 +84,17 @@ export default function AdminSettingsPage() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="font-headline text-3xl font-bold">Settings</h1>
-                <p className="text-muted-foreground">Update your admin and application settings.</p>
+            <div className="flex items-center gap-4">
+                 <Link href="/admin/dashboard">
+                    <Button variant="outline" size="icon" className="h-7 w-7">
+                        <ArrowLeft className="h-4 w-4" />
+                        <span className="sr-only">Back</span>
+                    </Button>
+                </Link>
+                <div>
+                    <h1 className="font-headline text-3xl font-bold">Settings</h1>
+                    <p className="text-muted-foreground">Update your admin and application settings.</p>
+                </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
@@ -134,6 +146,7 @@ export default function AdminSettingsPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="qr-code">QR Code Image</Label>
                                 <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} />
+                                {walletSettings.qrCodeImageUrl && !qrCodeFile && <p className="text-xs text-muted-foreground pt-1">Current QR code is set. Upload a new file to replace it.</p>}
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit">Save Wallet Settings</Button>
@@ -145,5 +158,3 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
-
-    
