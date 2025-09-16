@@ -304,8 +304,8 @@ export default function ProfilePage() {
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="flex items-center gap-2">
                       <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
-                      {!mobileVerified && (
-                          <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || isEditing}>
+                      {!mobileVerified && !isEditing && (
+                          <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
                             {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                           </Button>
                       )}
