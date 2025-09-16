@@ -31,7 +31,8 @@ export default function LoginPage() {
       bgmiId: '',
       mobile: '',
       email: '',
-      password: ''
+      password: '',
+      referralCode: '',
   });
 
   const usernameRef = useRef<HTMLInputElement>(null);
@@ -40,6 +41,7 @@ export default function LoginPage() {
   const mobileRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const referralCodeRef = useRef<HTMLInputElement>(null);
   const signupButtonRef = useRef<HTMLButtonElement>(null);
   
   useEffect(() => {
@@ -109,6 +111,12 @@ export default function LoginPage() {
         bgmiUsername: signupForm.bgmiUsername,
         bgmiId: signupForm.bgmiId,
     };
+    
+    // Here you would also handle the referral code logic, e.g., apply bonus
+    if (signupForm.referralCode) {
+      console.log(`User signed up with referral code: ${signupForm.referralCode}`);
+      // Add logic to find referrer and apply bonuses
+    }
 
     signup(newUser);
     
@@ -189,7 +197,11 @@ export default function LoginPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
-                        <Input id="signup-password" name="password" type="password" required onChange={handleSignupChange} value={signupForm.password} ref={passwordRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
+                        <Input id="signup-password" name="password" type="password" required onChange={handleSignupChange} value={signupForm.password} ref={passwordRef} onKeyDown={(e) => handleKeyDown(e, referralCodeRef)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-referralCode">Referral Code (Optional)</Label>
+                        <Input id="signup-referralCode" name="referralCode" placeholder="Enter referral code" onChange={handleSignupChange} value={signupForm.referralCode} ref={referralCodeRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
                     <Button type="submit" className="w-full" ref={signupButtonRef}>Sign Up</Button>
                 </form>
