@@ -8,7 +8,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { User, Transaction } from "@/lib/types";
 import {
   AlertDialog,
@@ -39,7 +39,7 @@ export default function AdminUsersPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
+  const loadData = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
       setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
@@ -56,6 +56,14 @@ export default function AdminUsersPage() {
       localStorage.setItem('allTransactions', JSON.stringify(initialTransactions));
     }
   }, []);
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('focus', loadData);
+    return () => {
+      window.removeEventListener('focus', loadData);
+    };
+  }, [loadData]);
 
   const saveUsers = (updatedUsers: User[]) => {
     setUsers(updatedUsers);
@@ -300,7 +308,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-
-    
-
-    
