@@ -119,8 +119,6 @@ export default function LoginPage() {
     
     signup(newUser, signupForm.referralCode);
     
-    setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
-
     toast({
       title: 'Sign Up Successful',
       description: 'Welcome to Arena Ace!',
