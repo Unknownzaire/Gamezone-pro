@@ -1,14 +1,14 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Trophy, User, Wallet, BarChart3 } from "lucide-react";
+import { Home, Trophy, User, Wallet } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/my-tournaments", label: "Tournaments", icon: Trophy },
-  { href: "/leaderboard", label: "Leaderboard", icon: BarChart3 },
   { href: "/wallet", label: "Wallet", icon: Wallet },
   { href: "/profile", label: "Profile", icon: User },
 ];
@@ -18,7 +18,7 @@ export default function BottomNav() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm">
-      <div className="container mx-auto grid h-16 max-w-lg grid-cols-5 items-center px-4">
+      <div className="container mx-auto grid h-16 max-w-lg grid-cols-4 items-center px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
           return (
