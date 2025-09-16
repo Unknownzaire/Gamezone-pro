@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
   const totalRevenue = completedTournaments.reduce((acc, t) => acc + t.prizePool * (t.commissionPercentage / 100), 0);
 
   const stats = [
-    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/reports' },
+    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },

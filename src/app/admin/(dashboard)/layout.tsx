@@ -15,18 +15,20 @@ import {
   SidebarFooter,
   SidebarTrigger,
   SidebarInset,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import Logo from '@/components/Logo';
-import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign, ArrowDown, ChevronDown } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/tournaments', label: 'Tournaments', icon: Swords },
   { href: '/admin/users', label: 'Users', icon: Users },
-  { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -52,6 +54,54 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </Link>
               </SidebarMenuItem>
             ))}
+             <Collapsible asChild>
+                <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                    <SidebarMenuButton
+                        className="w-full justify-between"
+                        isActive={pathname.startsWith('/admin/reports') || pathname.startsWith('/admin/revenue-report')}
+                        tooltip={{children: 'Reports'}}
+                    >
+                        <div className="flex items-center gap-2">
+                        <BarChart3 />
+                        <span>Reports</span>
+                        </div>
+                        <ChevronDown />
+                    </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent asChild>
+                    <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                        <Link href="/admin/reports" legacyBehavior passHref>
+                            <SidebarMenuSubButton isActive={pathname === '/admin/reports'}>
+                            <BarChart3 />
+                            Prize Report
+                            </SidebarMenuSubButton>
+                        </Link>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                        <Link href="/admin/revenue-report" legacyBehavior passHref>
+                            <SidebarMenuSubButton isActive={pathname === '/admin/revenue-report'}>
+                            <DollarSign />
+                            Revenue Report
+                            </SidebarMenuSubButton>
+                        </Link>
+                        </SidebarMenuSubItem>
+                    </SidebarMenuSub>
+                    </CollapsibleContent>
+                </SidebarMenuItem>
+            </Collapsible>
+             <SidebarMenuItem>
+                <Link href="/admin/settings" legacyBehavior passHref>
+                  <SidebarMenuButton
+                    isActive={pathname.startsWith('/admin/settings')}
+                    tooltip={{ children: 'Settings' }}
+                  >
+                    <Settings />
+                    <span>Settings</span>
+                  </SidebarMenuButton>
+                </Link>
+              </SidebarMenuItem>
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter className="items-center gap-4">
