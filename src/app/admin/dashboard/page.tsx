@@ -47,8 +47,15 @@ export default function AdminDashboardPage() {
     setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
     setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
 
-    const storedTournaments = localStorage.getItem('allTournaments');
-    const allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+    let allTournaments: Tournament[] = [];
+    try {
+        const storedTournaments = localStorage.getItem('allTournaments');
+        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+    } catch(e) {
+        console.error("Failed to parse tournaments from localStorage", e);
+        allTournaments = mockTournaments;
+        localStorage.setItem('allTournaments', JSON.stringify(mockTournaments));
+    }
     setCompletedTournaments(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
 
     console.log("Data reloaded");
@@ -180,24 +187,28 @@ export default function AdminDashboardPage() {
         })}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">₹{totalDeposits.toLocaleString()}</div>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">₹{totalWithdrawals.toLocaleString()}</div>
-            </CardContent>
-        </Card>
+        <Link href="/admin/users" target="_blank">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">₹{totalDeposits.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+        </Link>
+         <Link href="/admin/users" target="_blank">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">₹{totalWithdrawals.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+        </Link>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Dialog open={isDepositModalOpen} onOpenChange={setIsDepositModalOpen}>
@@ -423,6 +434,8 @@ export default function AdminDashboardPage() {
 
     </div>
   );
+
+    
 
     
 
