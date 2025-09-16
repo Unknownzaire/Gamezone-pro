@@ -12,6 +12,7 @@ export interface WalletSettings {
     minWithdrawal: number;
     maxWithdrawal: number;
     depositUpiId: string;
+    qrCodeImageUrl?: string;
 }
 
 export default function AdminSettingsPage() {
@@ -20,7 +21,9 @@ export default function AdminSettingsPage() {
         minWithdrawal: 100,
         maxWithdrawal: 5000,
         depositUpiId: 'arenaace@upi',
+        qrCodeImageUrl: '',
     });
+    const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
 
     useEffect(() => {
         const storedSettings = localStorage.getItem('walletSettings');
@@ -39,11 +42,25 @@ export default function AdminSettingsPage() {
     
     const handleWalletUpdate = (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('walletSettings', JSON.stringify(walletSettings));
-        toast({
-            title: "Wallet Settings Updated",
-            description: "The global wallet settings have been saved."
-        });
+
+        const saveSettings = (settings: WalletSettings) => {
+            localStorage.setItem('walletSettings', JSON.stringify(settings));
+            toast({
+                title: "Wallet Settings Updated",
+                description: "The global wallet settings have been saved."
+            });
+        };
+
+        if (qrCodeFile) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageUrl = event.target?.result as string;
+                saveSettings({ ...walletSettings, qrCodeImageUrl: imageUrl });
+            };
+            reader.readAsDataURL(qrCodeFile);
+        } else {
+            saveSettings(walletSettings);
+        }
     }
 
     const handleWalletInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -53,6 +70,13 @@ export default function AdminSettingsPage() {
             [id]: type === 'number' ? Number(value) : value,
         }));
     }
+
+     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setQrCodeFile(e.target.files[0]);
+        }
+    };
+
 
     return (
         <div className="space-y-6">
@@ -109,7 +133,7 @@ export default function AdminSettingsPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="qr-code">QR Code Image</Label>
-                                <Input id="qr-code" type="file" accept="image/*" />
+                                <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} />
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit">Save Wallet Settings</Button>

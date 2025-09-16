@@ -33,10 +33,12 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
     if (transactions.length === 0) {
         return <p className="text-muted-foreground text-center p-8">No transactions in this category.</p>;
     }
+    
+    const sortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     return (
         <div className="space-y-4">
-            {transactions.map((tx, index) => (
+            {sortedTransactions.map((tx, index) => (
                 <Dialog key={tx.id}>
                   <DialogTrigger asChild>
                     <div className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -64,7 +66,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                               )}
                           </div>
                       </div>
-                      {index < transactions.length - 1 && <Separator />}
+                      {index < sortedTransactions.length - 1 && <Separator />}
                     </div>
                   </DialogTrigger>
                    <DialogContent>
@@ -259,7 +261,9 @@ export default function WalletPage() {
   };
 
   const payeeName = 'Arena Ace';
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
+  const qrCodeUrl = walletSettings.qrCodeImageUrl 
+    ? walletSettings.qrCodeImageUrl
+    : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
 
 
   if (!user) {
