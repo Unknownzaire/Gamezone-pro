@@ -261,9 +261,9 @@ export default function WalletPage() {
   };
 
   const payeeName = 'Arena Ace';
-  const qrCodeUrl = walletSettings.qrCodeImageUrl 
+  const qrCodeUrl = walletSettings.qrCodeImageUrl
     ? walletSettings.qrCodeImageUrl
-    : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
+    : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${encodeURIComponent(payeeName)}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
 
 
   if (!user) {
@@ -369,7 +369,7 @@ export default function WalletPage() {
                         <div className="w-full sm:w-1/2 space-y-2 flex flex-col items-center justify-center">
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
-                            <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
+                            <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} unoptimized/>
                             <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
                             </div>
                         </div>
