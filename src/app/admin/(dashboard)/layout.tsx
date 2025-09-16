@@ -20,7 +20,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import Logo from '@/components/Logo';
-import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign, ArrowDown, ChevronDown, Banknote } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign, ChevronDown, Banknote, Gift } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -30,6 +30,7 @@ const menuItems = [
   { href: '/admin/tournaments', label: 'Tournaments', icon: Swords },
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/transactions', label: 'Transactions', icon: Banknote },
+  { href: '/admin/promotions', label: 'Promotions', icon: Gift },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

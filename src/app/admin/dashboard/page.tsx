@@ -5,15 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History, Settings, BarChart3, Banknote } from "lucide-react";
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
@@ -24,7 +23,7 @@ export default function AdminDashboardPage() {
   const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
   const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
-  const [allUsers, setAllUsers]       = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
   
@@ -65,7 +64,6 @@ export default function AdminDashboardPage() {
     loadData();
   }, [loadData]);
 
-
   const totalTournaments = completedTournaments.length;
   const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
   const totalRevenue = completedTournaments.reduce((acc, t) => acc + (t.participants.length * t.entryFee) - t.prizePool, 0);
@@ -76,6 +74,10 @@ export default function AdminDashboardPage() {
 
   const totalWithdrawals = allTransactions
     .filter(tx => tx.type === 'debit' && tx.status === 'completed' && tx.description.toLowerCase().includes('withdrawal'))
+    .reduce((acc, tx) => acc + tx.amount, 0);
+    
+  const totalPromotions = allTransactions
+    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('promotion') || tx.description.toLowerCase().includes('bonus') || tx.description.toLowerCase() === 'admin deposit'))
     .reduce((acc, tx) => acc + tx.amount, 0);
 
   const stats = [
@@ -157,7 +159,6 @@ export default function AdminDashboardPage() {
       .reduce((acc, tx) => acc + tx.amount, 0);
   };
 
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -186,7 +187,7 @@ export default function AdminDashboardPage() {
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-3">
         <Link href="/admin/transactions?tab=deposits">
             <Card className="hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -206,6 +207,17 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">₹{totalWithdrawals.toLocaleString()}</div>
+                </CardContent>
+            </Card>
+        </Link>
+        <Link href="/admin/promotions">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Promotional Credit</CardTitle>
+                    <Gift className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">₹{totalPromotions.toLocaleString()}</div>
                 </CardContent>
             </Card>
         </Link>
