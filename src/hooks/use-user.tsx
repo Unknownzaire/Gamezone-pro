@@ -17,6 +17,7 @@ interface UserContextType {
   tournaments: Tournament[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
+  updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>) => void;
@@ -195,6 +196,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
+  const updateUser = (updatedFields: Partial<User>) => {
+    if (user) {
+      setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, ...updatedFields} : u));
+    }
+  };
+
   const joinTournament = (tournamentId: string, userToJoin: User) => {
     setTournaments(prevTournaments => 
       prevTournaments.map(t => {
@@ -222,7 +229,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, joinTournament, login, signup, logout, reload, toast }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast }}>
       {!loading && children}
     </UserContext.Provider>
   );

@@ -8,19 +8,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle } from 'lucide-react';
+import { CheckCircle, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, setUser } = useUser();
+  const { user: currentUser, setUser, updateUser } = useUser();
 
   const [username, setUsername] = useState('');
   const [bgmiUsername, setBgmiUsername] = useState('');
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
+  const [avatarUrl, setAvatarUrl] = useState('');
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -41,6 +43,7 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
+      setAvatarUrl(currentUser.avatarUrl || '');
     }
   }, [currentUser]);
   
@@ -62,14 +65,19 @@ export default function ProfilePage() {
 
   const handleUpdateProfile = () => {
     if (currentUser) {
-      setUser({
-        ...currentUser,
+      const updatedFields = {
         username,
-        bgmiUsername,
-        bgmiId,
         mobile
-      });
+      };
+      updateUser(updatedFields);
       toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+    }
+  };
+
+  const handleAvatarUpdate = () => {
+    if (currentUser) {
+      updateUser({ avatarUrl });
+      toast({ title: "Avatar Updated", description: "Your profile picture has been changed." });
     }
   };
 
@@ -148,10 +156,37 @@ export default function ProfilePage() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col items-center space-y-4">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={currentUser.avatarUrl} alt={currentUser.username} />
-              <AvatarFallback>{currentUser.username.charAt(0)}</AvatarFallback>
-            </Avatar>
+             <Dialog>
+              <DialogTrigger asChild>
+                <div className="relative group cursor-pointer">
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={currentUser.avatarUrl} alt={currentUser.username} />
+                    <AvatarFallback>{currentUser.username.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div className="absolute inset-0 bg-black/50 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit2 className="text-white h-8 w-8" />
+                  </div>
+                </div>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Change Profile Picture</DialogTitle>
+                  <DialogDescription>Enter a new image URL to update your avatar.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <Label htmlFor="avatarUrl">Image URL</Label>
+                  <Input id="avatarUrl" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://example.com/image.png" />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <DialogClose asChild>
+                    <Button onClick={handleAvatarUpdate}>Save</Button>
+                  </DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
             <div className="text-center">
               <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
               <p className="text-muted-foreground">{currentUser.email}</p>
