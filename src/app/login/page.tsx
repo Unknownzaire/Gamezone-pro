@@ -110,12 +110,13 @@ export default function LoginPage() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'> = {
+    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'| 'password'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,
         bgmiUsername: signupForm.bgmiUsername,
         bgmiId: signupForm.bgmiId,
+        referralCode: signupForm.referralCode,
     };
     
     signup(newUser, signupForm.password, signupForm.referralCode);
@@ -124,7 +125,6 @@ export default function LoginPage() {
       title: 'Sign Up Successful',
       description: 'Welcome to Arena Ace!',
     });
-    
     router.push('/home');
   };
 
