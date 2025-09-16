@@ -12,6 +12,7 @@ import { CheckCircle, Edit2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import Image from 'next/image';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -23,6 +24,8 @@ export default function ProfilePage() {
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -93,10 +96,30 @@ export default function ProfilePage() {
         toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your avatar."});
     }
   };
+  
+  const handleCoverImageUpdate = () => {
+    if (currentUser && coverImageFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const coverImageUrl = event.target?.result as string;
+            updateUser({ coverImageUrl });
+            toast({ title: "Cover Image Updated", description: "Your profile background has been changed." });
+        };
+        reader.readAsDataURL(coverImageFile);
+    } else {
+        toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your cover image."});
+    }
+  };
 
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         setAvatarFile(e.target.files[0]);
+    }
+  };
+
+  const handleCoverImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        setCoverImageFile(e.target.files[0]);
     }
   };
 
@@ -172,13 +195,39 @@ export default function ProfilePage() {
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">My Profile</h1>
 
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex flex-col items-center space-y-4">
+      <Card className="overflow-hidden">
+        <div className="relative h-32 bg-muted">
+            {currentUser.coverImageUrl && (
+                <Image src={currentUser.coverImageUrl} alt="Cover image" layout="fill" objectFit="cover" />
+            )}
+             <Dialog>
+              <DialogTrigger asChild>
+                 <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-black/50 hover:bg-black/70">
+                    <Edit2 className="h-4 w-4 text-white" />
+                 </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Change Cover Image</DialogTitle>
+                  <DialogDescription>Upload a new background image for your profile.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                  <Label htmlFor="coverImageFile">Image</Label>
+                  <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} />
+                </div>
+                <DialogFooter>
+                  <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                  <DialogClose asChild><Button onClick={handleCoverImageUpdate}>Save</Button></DialogClose>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+        </div>
+        <CardContent className="pt-0 -mt-12">
+          <div className="flex flex-col items-center space-y-2">
              <Dialog>
               <DialogTrigger asChild>
                 <div className="relative group cursor-pointer">
-                  <Avatar className="h-24 w-24">
+                  <Avatar className="h-24 w-24 border-4 border-background">
                     <AvatarImage src={currentUser.avatarUrl} alt={currentUser.username} />
                     <AvatarFallback>{currentUser.username.charAt(0)}</AvatarFallback>
                   </Avatar>
@@ -298,3 +347,4 @@ export default function ProfilePage() {
     
 
     
+

@@ -3,6 +3,7 @@
 
 
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
@@ -67,6 +68,7 @@ export type User = {
   email: string;
   walletBalance: number;
   avatarUrl: string;
+  coverImageUrl?: string;
   mobile?: string;
   bgmiUsername?: string;
   bgmiId?: string;
