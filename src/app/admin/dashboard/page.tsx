@@ -63,7 +63,7 @@ export default function AdminDashboardPage() {
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, href: null },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
-    { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: Trophy, href: null },
+    { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: Trophy, href: '/admin/tournaments' },
   ];
   
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
