@@ -43,10 +43,10 @@ export default function EditTournamentPage() {
     const tournamentToEdit = allTournaments.find(t => t.id === id);
     if (tournamentToEdit) {
       setTournament(tournamentToEdit);
-      const { matchTime, ...rest } = tournamentToEdit;
+      const { matchTime, prizeDistribution, ...rest } = tournamentToEdit;
       setFormData(rest);
       setMatchTime(new Date(matchTime));
-      setPrizeDistributions(tournamentToEdit.prizeDistribution || [
+      setPrizeDistributions(prizeDistribution || [
           { rank: '1', percentage: 50 },
           { rank: '2', percentage: 25 },
           { rank: '3', percentage: 15 },
@@ -56,6 +56,17 @@ export default function EditTournamentPage() {
       notFound();
     }
   }, [id]);
+
+  useEffect(() => {
+    const remainingPercentage = 100 - prizeDistributions.slice(0, -1).reduce((acc, dist) => acc + (dist.percentage || 0), 0);
+    if (prizeDistributions.length > 0) {
+        const lastDist = prizeDistributions[prizeDistributions.length - 1];
+        if (lastDist.percentage !== remainingPercentage) {
+            handlePrizeChange(prizeDistributions.length - 1, 'percentage', remainingPercentage, true);
+        }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [formData.prizePool, prizeDistributions.length]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
@@ -72,36 +83,38 @@ export default function EditTournamentPage() {
     }
   };
 
-  const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
+  const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number, isAutoUpdate = false) => {
     const newDistributions = [...prizeDistributions];
     const dist = { ...newDistributions[index] };
     const prizePool = formData.prizePool || 0;
-    const currentTotal = totalPercentage - (dist.percentage || 0);
+    
+    let newPercentage = dist.percentage;
 
     if (field === 'amount') {
         const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
-        if (prizePool > 0) {
-            const newPercentage = parseFloat(((amount / prizePool) * 100).toPrecision(4));
-            if (currentTotal + newPercentage > 100) {
-                toast({ variant: 'destructive', title: "Over 100%", description: "Total prize distribution cannot exceed 100%." });
-                return;
-            }
-            dist.percentage = newPercentage;
-        } else {
-            dist.percentage = 0;
-        }
+        newPercentage = prizePool > 0 ? parseFloat(((amount / prizePool) * 100).toPrecision(4)) : 0;
     } else if (field === 'percentage') {
-        const newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
-        if (currentTotal + newPercentage > 100) {
-            toast({ variant: 'destructive', title: "Over 100%", description: "Total prize distribution cannot exceed 100%." });
-            return;
-        }
-        dist.percentage = newPercentage;
-    } else {
+        newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
+    } else { // 'rank'
         dist[field as 'rank'] = value as string;
+    }
+
+    if (field !== 'rank') {
+        dist.percentage = newPercentage;
     }
     
     newDistributions[index] = dist;
+
+    const sumOfOthers = newDistributions.slice(0, -1).reduce((acc, d) => acc + (d.percentage || 0), 0);
+    const lastIndex = newDistributions.length - 1;
+
+    if (newDistributions.length > 1 && !isAutoUpdate) {
+        if (index < lastIndex) {
+            const remaining = 100 - sumOfOthers;
+            newDistributions[lastIndex] = {...newDistributions[lastIndex], percentage: Math.max(0, parseFloat(remaining.toPrecision(4)))};
+        }
+    }
+
     setPrizeDistributions(newDistributions);
 };
 
@@ -126,11 +139,12 @@ export default function EditTournamentPage() {
       return;
     }
 
-    if (totalPercentage !== 100) {
+    const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
+    if (Math.abs(finalTotalPercentage - 100) > 0.01) { // Allow for small floating point inaccuracies
         toast({
             variant: 'destructive',
             title: "Invalid Prize Distribution",
-            description: `Total prize percentage must be exactly 100%. Current total: ${totalPercentage.toFixed(2)}%`
+            description: `Total prize percentage must be exactly 100%. Current total: ${finalTotalPercentage.toFixed(2)}%`
         });
         return;
     }
@@ -245,51 +259,57 @@ export default function EditTournamentPage() {
                         <CardDescription>Define how the prize pool is distributed.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {prizeDistributions.map((dist, index) => (
-                           <div key={index} className="flex items-end gap-2">
-                               <div className="grid w-full grid-cols-3 gap-2">
-                                   <div className="space-y-1">
-                                       <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
-                                       <Input 
-                                           id={`rank-${index}`}
-                                           placeholder="e.g., 1 or 4-10" 
-                                           value={dist.rank}
-                                           onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
-                                       />
+                        {prizeDistributions.map((dist, index) => {
+                            const isLast = index === prizeDistributions.length - 1;
+                            return (
+                               <div key={index} className="flex items-end gap-2">
+                                   <div className="grid w-full grid-cols-3 gap-2">
+                                       <div className="space-y-1">
+                                           <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
+                                           <Input 
+                                               id={`rank-${index}`}
+                                               placeholder="e.g., 1 or 4-10" 
+                                               value={dist.rank}
+                                               onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                           />
+                                       </div>
+                                       <div className="space-y-1">
+                                           <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
+                                           <Input
+                                                id={`percentage-${index}`}
+                                               type="number"
+                                               step="0.01"
+                                               placeholder="e.g., 50"
+                                               value={dist.percentage}
+                                               onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                               readOnly={isLast && prizeDistributions.length > 1}
+                                               className={isLast && prizeDistributions.length > 1 ? "bg-muted text-muted-foreground" : ""}
+                                           />
+                                       </div>
+                                        <div className="space-y-1">
+                                           <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
+                                           <Input
+                                               id={`amount-${index}`}
+                                               type="text"
+                                               placeholder="e.g., 2500"
+                                               value={getPrizeAmount(dist.percentage)} 
+                                               onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
+                                           />
+                                       </div>
                                    </div>
-                                   <div className="space-y-1">
-                                       <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
-                                       <Input
-                                            id={`percentage-${index}`}
-                                           type="number"
-                                           step="0.01"
-                                           placeholder="e.g., 50"
-                                           value={dist.percentage}
-                                           onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
-                                       />
-                                   </div>
-                                    <div className="space-y-1">
-                                       <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
-                                       <Input
-                                           id={`amount-${index}`}
-                                           type="text"
-                                           placeholder="e.g., 2500"
-                                           value={getPrizeAmount(dist.percentage)} 
-                                           onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
-                                       />
-                                   </div>
+                                   <Button 
+                                       variant="ghost" 
+                                       size="icon"
+                                       onClick={() => removePrizeRow(index)}
+                                       type="button"
+                                       disabled={prizeDistributions.length <= 1}
+                                   >
+                                       <Trash2 className="h-4 w-4 text-destructive" />
+                                   </Button>
                                </div>
-                               <Button 
-                                   variant="ghost" 
-                                   size="icon"
-                                   onClick={() => removePrizeRow(index)}
-                                   type="button"
-                               >
-                                   <Trash2 className="h-4 w-4 text-destructive" />
-                               </Button>
-                           </div>
-                        ))}
-                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100}>Add Prize Tier</Button>
+                            )
+                        })}
+                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button">Add Prize Tier</Button>
                         <p className="text-xs text-muted-foreground pt-2">
                             Total percentage distributed: {totalPercentage.toFixed(2)}%
                         </p>
