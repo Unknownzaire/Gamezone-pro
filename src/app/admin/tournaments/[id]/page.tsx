@@ -80,6 +80,22 @@ export default function ManageTournamentPage() {
       description: 'Room details have been updated and status is set to Live.',
     });
   };
+
+  const handleCompleteTournament = () => {
+     const updatedTournaments = tournaments.map(t => 
+        t.id === tournament.id 
+          ? { ...t, status: 'Completed' as const } 
+          : t
+      );
+    
+    updateAndSaveTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === id));
+
+    toast({
+      title: 'Tournament Completed',
+      description: 'The tournament status has been manually set to Completed.',
+    });
+  };
   
   const handleWinnerDeclaration = (updatedTournament: Tournament) => {
     const updatedTournaments = tournaments.map(t => t.id === updatedTournament.id ? updatedTournament : t);
@@ -126,8 +142,8 @@ export default function ManageTournamentPage() {
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
             <CardHeader>
-                <CardTitle className="font-headline">Room Details</CardTitle>
-                <CardDescription>Update match room info. This will set the tournament status to 'Live'.</CardDescription>
+                <CardTitle className="font-headline">Match Controls</CardTitle>
+                <CardDescription>Update room info or manually complete the tournament.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
@@ -138,9 +154,14 @@ export default function ManageTournamentPage() {
                     <Label htmlFor="room-password">Room Password</Label>
                     <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} disabled={tournament.status !== 'Upcoming'}/>
                 </div>
-                <Button onClick={handleUpdateAndGoLive} disabled={tournament.status !== 'Upcoming'}>
-                    {tournament.status === 'Upcoming' ? 'Update & Go Live' : `Already ${tournament.status}`}
-                </Button>
+                <div className="flex gap-2">
+                    <Button onClick={handleUpdateAndGoLive} disabled={tournament.status !== 'Upcoming'} className="w-full">
+                        {tournament.status === 'Upcoming' ? 'Update & Go Live' : `Already ${tournament.status}`}
+                    </Button>
+                    <Button onClick={handleCompleteTournament} variant="destructive" disabled={tournament.status !== 'Live'} className="w-full">
+                        Complete Tournament
+                    </Button>
+                </div>
             </CardContent>
         </Card>
 
