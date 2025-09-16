@@ -135,7 +135,7 @@ export default function EditUserPage() {
             </div>
             <div className="space-y-2">
                 <Label htmlFor="referralCode">Referral Code</Label>
-                <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} disabled />
+                <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} />
             </div>
              <div className="space-y-2">
                 <Label htmlFor="totalReferrals">Total Referrals</Label>
