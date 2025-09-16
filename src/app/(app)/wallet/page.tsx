@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -27,6 +27,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Transaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import type { WalletSettings } from "@/app/admin/settings/page";
 
 function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
@@ -144,6 +145,11 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 
 export default function WalletPage() {
   const { user, transactions, addTransaction, reload: reloadUser, toast } = useUser();
+  const [walletSettings, setWalletSettings] = useState<WalletSettings>({
+    minWithdrawal: 100,
+    maxWithdrawal: 5000,
+    depositUpiId: 'arenaace@upi',
+  });
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank'>('upi');
   
@@ -159,11 +165,26 @@ export default function WalletPage() {
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
+  useEffect(() => {
+    const storedSettings = localStorage.getItem('walletSettings');
+    if (storedSettings) {
+        setWalletSettings(JSON.parse(storedSettings));
+    }
+  }, []);
+
   const handleWithdraw = () => {
     if (!user) return;
     const amount = parseFloat(withdrawAmount);
     if (isNaN(amount) || amount <= 0) {
       toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount to withdraw." });
+      return;
+    }
+     if (amount < walletSettings.minWithdrawal) {
+      toast({ variant: 'destructive', title: "Amount Too Low", description: `Minimum withdrawal amount is ₹${walletSettings.minWithdrawal}.` });
+      return;
+    }
+    if (amount > walletSettings.maxWithdrawal) {
+      toast({ variant: 'destructive', title: "Amount Too High", description: `Maximum withdrawal amount is ₹${walletSettings.maxWithdrawal}.` });
       return;
     }
     if (amount > user.walletBalance) {
@@ -237,9 +258,8 @@ export default function WalletPage() {
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
 
-  const upiId = 'arenaace@upi';
   const payeeName = 'Arena Ace';
-  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${upiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
+  const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${payeeName}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
 
 
   if (!user) {
@@ -346,7 +366,7 @@ export default function WalletPage() {
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                             <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} />
-                            <p className="font-mono text-xs text-black">{upiId}</p>
+                            <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
                             </div>
                         </div>
                     </div>
@@ -377,6 +397,7 @@ export default function WalletPage() {
                             value={withdrawAmount} 
                             onChange={(e) => setWithdrawAmount(e.target.value)} 
                             />
+                             <p className="text-xs text-muted-foreground">Min: ₹{walletSettings.minWithdrawal}, Max: ₹{walletSettings.maxWithdrawal}</p>
                         </div>
                         <div className="space-y-2">
                             <Label>Withdrawal Method</Label>

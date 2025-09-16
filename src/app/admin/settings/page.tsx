@@ -6,9 +6,28 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useEffect, useState } from "react";
+
+export interface WalletSettings {
+    minWithdrawal: number;
+    maxWithdrawal: number;
+    depositUpiId: string;
+}
 
 export default function AdminSettingsPage() {
     const { toast } = useToast();
+    const [walletSettings, setWalletSettings] = useState<WalletSettings>({
+        minWithdrawal: 100,
+        maxWithdrawal: 5000,
+        depositUpiId: 'arenaace@upi',
+    });
+
+    useEffect(() => {
+        const storedSettings = localStorage.getItem('walletSettings');
+        if (storedSettings) {
+            setWalletSettings(JSON.parse(storedSettings));
+        }
+    }, []);
 
     const handleSecurityUpdate = (e: React.FormEvent) => {
         e.preventDefault();
@@ -20,10 +39,19 @@ export default function AdminSettingsPage() {
     
     const handleWalletUpdate = (e: React.FormEvent) => {
         e.preventDefault();
+        localStorage.setItem('walletSettings', JSON.stringify(walletSettings));
         toast({
             title: "Wallet Settings Updated",
             description: "The global wallet settings have been saved."
         });
+    }
+
+    const handleWalletInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value, type } = e.target;
+        setWalletSettings(prev => ({
+            ...prev,
+            [id]: type === 'number' ? Number(value) : value,
+        }));
     }
 
     return (
@@ -68,16 +96,16 @@ export default function AdminSettingsPage() {
                     <form onSubmit={handleWalletUpdate}>
                         <CardContent className="space-y-4">
                             <div className="space-y-2">
-                                <Label htmlFor="min-withdrawal">Minimum Withdrawal (₹)</Label>
-                                <Input id="min-withdrawal" type="number" defaultValue="100" required />
+                                <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
+                                <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="max-withdrawal">Maximum Withdrawal (₹)</Label>
-                                <Input id="max-withdrawal" type="number" defaultValue="5000" required />
+                                <Label htmlFor="maxWithdrawal">Maximum Withdrawal (₹)</Label>
+                                <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required />
                             </div>
                              <div className="space-y-2">
-                                <Label htmlFor="upi-id">Deposit UPI ID</Label>
-                                <Input id="upi-id" defaultValue="arenaace@upi" required />
+                                <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
+                                <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="qr-code">QR Code Image</Label>
