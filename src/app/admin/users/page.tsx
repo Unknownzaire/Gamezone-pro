@@ -156,6 +156,10 @@ export default function AdminUsersPage() {
       .reduce((acc, tx) => acc + tx.amount, 0);
   };
 
+  const getTotalReferrals = (userId: string) => {
+    return users.filter(u => u.referredBy === userId).length;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -191,6 +195,7 @@ export default function AdminUsersPage() {
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Referred By</TableHead>
+                <TableHead>Total Referrals</TableHead>
                 <TableHead>Registered</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -222,6 +227,7 @@ export default function AdminUsersPage() {
                   <TableCell>
                     {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
                   </TableCell>
+                  <TableCell className="font-bold text-center">{getTotalReferrals(user.id)}</TableCell>
                    <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
