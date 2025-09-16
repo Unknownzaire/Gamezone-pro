@@ -1,13 +1,16 @@
+
 'use client';
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Clock, Eye, Trophy } from "lucide-react";
+import { Clock, Eye, Trophy, BarChart3 } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { useEffect, useState } from "react";
 import { Tournament } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default function MyTournamentsPage() {
   const { user: currentUser, tournaments } = useUser();
@@ -27,6 +30,28 @@ export default function MyTournamentsPage() {
   const upcoming = joinedTournaments.filter(t => t.status === 'Upcoming');
   const live = joinedTournaments.filter(t => t.status === 'Live');
   const completed = joinedTournaments.filter(t => t.status === 'Completed');
+
+  const getPrizeForUser = (tournament: Tournament) => {
+    if (!currentUser) return 0;
+
+    const participant = tournament.participants.find(p => p.user.id === currentUser.id);
+    if (!participant || !participant.result) return 0;
+
+    const rankMatch = participant.result.match(/#(\d+)/);
+    const rank = participant.result === 'Winner' ? 1 : rankMatch ? parseInt(rankMatch[1]) : null;
+
+    if (rank === null) return 0;
+
+    const prizeDistribution = [
+        { rank: 1, prize: tournament.prizePool * 0.5 },
+        { rank: 2, prize: tournament.prizePool * 0.25 },
+        { rank: 3, prize: tournament.prizePool * 0.15 },
+        ...Array.from({length: 7}, (_, i) => ({ rank: 4 + i, prize: (tournament.prizePool * 0.1) / 7 })),
+    ];
+
+    const prizeInfo = prizeDistribution.find(p => p.rank === rank);
+    return prizeInfo ? prizeInfo.prize : 0;
+  }
 
   return (
     <div className="space-y-6">
@@ -98,13 +123,21 @@ export default function MyTournamentsPage() {
                 <CardContent className="flex justify-between items-center">
                    <div className="flex items-center gap-2">
                     <Trophy className="h-5 w-5 text-yellow-400" />
-                    <p>Result: <span className="font-semibold text-primary">{t.participants.find(p => p.user.id === currentUser?.id)?.result}</span></p>
+                    <p>Result: <span className="font-semibold text-primary">{t.participants.find(p => p.user.id === currentUser?.id)?.result || 'N/A'}</span></p>
                    </div>
                    <div className="flex items-center gap-2">
                     <Eye className="h-4 w-4" />
-                    <p>Prize: ₹{t.prizePool * (1 - t.commissionPercentage/100)}</p>
+                     <p>Prize: ₹{getPrizeForUser(t).toLocaleString()}</p>
                    </div>
                 </CardContent>
+                <CardFooter>
+                  <Link href={`/leaderboard?tournamentId=${t.id}`} className="w-full">
+                    <Button variant="secondary" className="w-full">
+                      <BarChart3 className="mr-2 h-4 w-4" />
+                      View Results
+                    </Button>
+                  </Link>
+                </CardFooter>
               </Card>
              ))
           ) : (
