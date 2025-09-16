@@ -196,8 +196,8 @@ export default function AdminTransactionsPage() {
     )
   }
 
-  const deposits = transactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit'));
-  const withdrawals = transactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal'));
+  const deposits = transactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit') && tx.status === 'completed');
+  const withdrawals = transactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal') && tx.status === 'completed');
   const declined = transactions.filter(tx => tx.status === 'declined');
 
   return (
@@ -260,5 +260,3 @@ export default function AdminTransactionsPage() {
     </div>
   );
 }
-
-    
