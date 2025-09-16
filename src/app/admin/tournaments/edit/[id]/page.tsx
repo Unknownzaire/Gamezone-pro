@@ -12,7 +12,6 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
-import { format } from 'date-fns';
 
 // Helper to format date for datetime-local input
 const toDateTimeLocal = (date: Date): string => {
@@ -70,9 +69,10 @@ export default function EditTournamentPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
+    const val = type === 'number' ? parseFloat(value) : value;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) : value
+      [name]: val
     }));
   };
   
@@ -85,7 +85,7 @@ export default function EditTournamentPage() {
   const handlePrizeChange = (index: number, field: keyof PrizeDistribution, value: string | number) => {
     const newDistributions = [...prizeDistributions];
     if (field === 'percentage' && typeof value === 'string') {
-         newDistributions[index][field] = parseFloat(value);
+         newDistributions[index][field] = parseFloat(value) || 0;
     } else {
         newDistributions[index][field] = value as never;
     }
@@ -146,6 +146,13 @@ export default function EditTournamentPage() {
     } else {
         processAndSubmit();
     }
+  };
+
+  const getPrizeAmount = (percentage: number) => {
+      const prizePool = formData.prizePool || 0;
+      if (!prizePool || !percentage) return "₹0";
+      const amount = (prizePool * percentage) / 100;
+      return `₹${amount.toLocaleString()}`;
   };
 
   if (!tournament) {
@@ -218,36 +225,45 @@ export default function EditTournamentPage() {
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {prizeDistributions.map((dist, index) => (
-                            <div key={index} className="flex items-center gap-2">
-                                <div className="flex-1 space-y-1">
-                                    <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
-                                    <Input 
-                                        id={`rank-${index}`}
-                                        placeholder="e.g., 1 or 4-10" 
-                                        value={dist.rank}
-                                        onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
-                                    />
-                                </div>
-                                <div className="flex-1 space-y-1">
-                                    <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage (%)</Label>
-                                    <Input 
-                                        id={`percentage-${index}`}
-                                        type="number" 
-                                        placeholder="e.g., 50"
-                                        value={dist.percentage}
-                                        onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
-                                    />
-                                </div>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="self-end"
-                                    onClick={() => removePrizeRow(index)}
-                                    type="button"
-                                >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
-                            </div>
+                           <div key={index} className="flex items-end gap-2">
+                               <div className="grid w-full grid-cols-3 gap-2">
+                                   <div className="space-y-1">
+                                       <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
+                                       <Input 
+                                           id={`rank-${index}`}
+                                           placeholder="e.g., 1 or 4-10" 
+                                           value={dist.rank}
+                                           onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                       />
+                                   </div>
+                                   <div className="space-y-1">
+                                       <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
+                                       <Input 
+                                           id={`percentage-${index}`}
+                                           type="number" 
+                                           placeholder="e.g., 50"
+                                           value={dist.percentage}
+                                           onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                       />
+                                   </div>
+                                    <div className="space-y-1">
+                                       <Label className="text-xs">Amount</Label>
+                                       <Input 
+                                           readOnly 
+                                           value={getPrizeAmount(dist.percentage)} 
+                                           className="bg-muted text-muted-foreground"
+                                       />
+                                   </div>
+                               </div>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon"
+                                   onClick={() => removePrizeRow(index)}
+                                   type="button"
+                               >
+                                   <Trash2 className="h-4 w-4 text-destructive" />
+                               </Button>
+                           </div>
                         ))}
                         <Button variant="outline" size="sm" onClick={addPrizeRow} type="button">Add Prize Tier</Button>
                         <p className="text-xs text-muted-foreground pt-2">

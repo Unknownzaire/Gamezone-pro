@@ -12,12 +12,12 @@ import { ArrowLeft, Trash2 } from "lucide-react";
 import React, { useState } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
-import { Separator } from "@/components/ui/separator";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [imageFile, setImageFile] = useState<File | null>(null);
+    const [prizePool, setPrizePool] = useState(0);
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -28,7 +28,7 @@ export default function CreateTournamentPage() {
     const handlePrizeChange = (index: number, field: keyof PrizeDistribution, value: string | number) => {
         const newDistributions = [...prizeDistributions];
         if (field === 'percentage' && typeof value === 'string') {
-             newDistributions[index][field] = parseFloat(value);
+             newDistributions[index][field] = parseFloat(value) || 0;
         } else {
             newDistributions[index][field] = value as never;
         }
@@ -104,6 +104,12 @@ export default function CreateTournamentPage() {
             setImageFile(e.target.files[0]);
         }
     };
+    
+    const getPrizeAmount = (percentage: number) => {
+        if(!prizePool || !percentage) return "₹0";
+        const amount = (prizePool * percentage) / 100;
+        return `₹${amount.toLocaleString()}`;
+    }
 
 
     return (
@@ -146,7 +152,7 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
-                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required />
+                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required onChange={(e) => setPrizePool(Number(e.target.value))} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>
@@ -172,30 +178,39 @@ export default function CreateTournamentPage() {
                             </CardHeader>
                             <CardContent className="space-y-4">
                                 {prizeDistributions.map((dist, index) => (
-                                    <div key={index} className="flex items-center gap-2">
-                                        <div className="flex-1 space-y-1">
-                                            <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
-                                            <Input 
-                                                id={`rank-${index}`}
-                                                placeholder="e.g., 1 or 4-10" 
-                                                value={dist.rank}
-                                                onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
-                                            />
-                                        </div>
-                                        <div className="flex-1 space-y-1">
-                                            <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage (%)</Label>
-                                            <Input 
-                                                id={`percentage-${index}`}
-                                                type="number" 
-                                                placeholder="e.g., 50"
-                                                value={dist.percentage}
-                                                onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
-                                            />
+                                    <div key={index} className="flex items-end gap-2">
+                                        <div className="grid w-full grid-cols-3 gap-2">
+                                            <div className="space-y-1">
+                                                <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
+                                                <Input 
+                                                    id={`rank-${index}`}
+                                                    placeholder="e.g., 1 or 4-10" 
+                                                    value={dist.rank}
+                                                    onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
+                                                <Input 
+                                                    id={`percentage-${index}`}
+                                                    type="number" 
+                                                    placeholder="e.g., 50"
+                                                    value={dist.percentage}
+                                                    onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                                />
+                                            </div>
+                                             <div className="space-y-1">
+                                                <Label className="text-xs">Amount</Label>
+                                                <Input 
+                                                    readOnly 
+                                                    value={getPrizeAmount(dist.percentage)} 
+                                                    className="bg-muted text-muted-foreground"
+                                                />
+                                            </div>
                                         </div>
                                         <Button 
                                             variant="ghost" 
-                                            size="icon" 
-                                            className="self-end"
+                                            size="icon"
                                             onClick={() => removePrizeRow(index)}
                                             type="button"
                                         >
