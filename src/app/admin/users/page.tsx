@@ -35,7 +35,7 @@ export default function AdminUsersPage() {
   useEffect(() => {
     const storedUsers = localStorage.getItem('allUsers');
     if (storedUsers) {
-      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
+      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
     } else {
       setUsers(initialUsers);
       localStorage.setItem('allUsers', JSON.stringify(initialUsers));
@@ -66,7 +66,7 @@ export default function AdminUsersPage() {
 
   const handleBlockUser = (userId: string) => {
     const updatedUsers = users.map(user => 
-        user.id === userId ? { ...user, isBlocked: user.isBlocked ? !user.isBlocked : true } : user
+        user.id === userId ? { ...user, isBlocked: !user.isBlocked } : user
     );
     saveUsers(updatedUsers);
     const user = users.find(u => u.id === userId);
@@ -89,7 +89,7 @@ export default function AdminUsersPage() {
 
   const getTotalDeposits = (user: User) => {
     return transactions
-      .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.status === 'completed' && tx.description.toLowerCase().includes('deposit'))
+      .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')))
       .reduce((acc, tx) => acc + tx.amount, 0);
   };
 
@@ -153,7 +153,7 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
-                  <TableCell>{format(user.createdAt ? new Date(user.createdAt) : new Date(), 'PP')}</TableCell>
+                  <TableCell>{format(user.createdAt, 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
                       <Badge variant="destructive">Blocked</Badge>
@@ -216,5 +216,7 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
+    
 
     
