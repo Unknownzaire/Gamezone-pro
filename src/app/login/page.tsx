@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/Logo";
 import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
@@ -16,8 +16,13 @@ import { User } from "@/lib/types";
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('login');
+  
+  const referralCodeFromUrl = searchParams.get('ref');
+  const initialTab = referralCodeFromUrl ? 'signup' : 'login';
+  
+  const [activeTab, setActiveTab] = useState(initialTab);
   const { login, signup, user } = useUser();
   
   const [loginForm, setLoginForm] = useState({
@@ -32,7 +37,7 @@ export default function LoginPage() {
       mobile: '',
       email: '',
       password: '',
-      referralCode: '',
+      referralCode: referralCodeFromUrl || '',
   });
 
   const usernameRef = useRef<HTMLInputElement>(null);

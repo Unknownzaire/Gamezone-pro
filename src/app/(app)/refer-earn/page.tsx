@@ -12,12 +12,14 @@ export default function ReferEarnPage() {
   const { toast } = useToast();
   
   const referralCode = user ? `ARENA${user.id.substring(0, 6).toUpperCase()}` : 'LOGIN-TO-REFER';
+  const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
+
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralCode);
+    navigator.clipboard.writeText(referralUrl);
     toast({
       title: "Copied to clipboard!",
-      description: "Your referral code has been copied.",
+      description: "Your referral link has been copied.",
     });
   };
 
@@ -25,15 +27,15 @@ export default function ReferEarnPage() {
     if (navigator.share) {
       navigator.share({
         title: 'Join me on Arena Ace!',
-        text: `Join me on Arena Ace and start competing in BGMI tournaments. Use my referral code: ${referralCode}`,
-        url: window.location.href,
+        text: `Join me on Arena Ace and start competing in BGMI tournaments. Use my referral link to get started!`,
+        url: referralUrl,
       }).catch((error) => console.log('Error sharing', error));
     } else {
         // Fallback for browsers that don't support navigator.share
         handleCopy();
         toast({
             title: "Share not supported",
-            description: "Your browser does not support native sharing. The referral code has been copied to your clipboard instead.",
+            description: "Your browser does not support native sharing. The referral link has been copied to your clipboard instead.",
         });
     }
   };
@@ -46,7 +48,7 @@ export default function ReferEarnPage() {
         <CardHeader>
           <CardTitle>Invite Your Friends</CardTitle>
           <CardDescription>
-            Share your referral code with friends. When they sign up and join their first tournament, you both get a bonus!
+            Share your referral link with friends. When they sign up and join their first tournament, you both get a bonus!
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -56,14 +58,15 @@ export default function ReferEarnPage() {
               <p className="text-2xl font-bold font-mono tracking-widest text-primary border-2 border-dashed border-primary p-3 rounded-lg">
                 {referralCode}
               </p>
-              <Button variant="ghost" size="icon" onClick={handleCopy}>
-                <Copy className="h-5 w-5" />
-              </Button>
             </div>
+             <button onClick={handleCopy} className="mt-2 text-xs text-muted-foreground hover:text-primary flex items-center gap-1 mx-auto">
+                <Copy className="h-3 w-3" />
+                Copy Link
+             </button>
           </div>
           <Button className="w-full" onClick={handleShare}>
             <Share2 className="mr-2 h-4 w-4" />
-            Share Your Code
+            Share Your Link
           </Button>
         </CardContent>
       </Card>
@@ -75,11 +78,11 @@ export default function ReferEarnPage() {
         <CardContent className="space-y-4 text-sm text-muted-foreground">
            <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">1</div>
-              <p>Share your unique referral code with your friends.</p>
+              <p>Share your unique referral link with your friends.</p>
            </div>
             <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">2</div>
-              <p>Your friend signs up using your code.</p>
+              <p>Your friend signs up using your link, and the code is filled automatically.</p>
            </div>
            <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">3</div>
