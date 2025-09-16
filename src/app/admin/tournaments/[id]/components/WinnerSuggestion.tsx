@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/select";
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Checkbox } from '@/components/ui/checkbox';
 
 export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: Tournament, onWinnerDeclare: (updatedTournament: Tournament) => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -200,7 +199,12 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
                 <div className="space-y-3 pr-4">
                     {tournament.participants.map(p => (
                         <div key={p.id} className="flex items-center justify-between gap-4">
-                            <Label htmlFor={`rank-${p.id}`} className="flex-1 truncate">{p.user.username}</Label>
+                            <div className="flex-1 truncate">
+                                <p className="font-semibold">{p.user.username}</p>
+                                <p className="text-xs text-muted-foreground">
+                                    {p.user.bgmiUsername} ({p.user.bgmiId})
+                                </p>
+                            </div>
                              <Select 
                                 onValueChange={(value) => handleRankChange(p.id, value)}
                                 value={ranks[p.id]?.toString() ?? "0"}
@@ -227,5 +231,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     </div>
   );
 }
+
+    
 
     
