@@ -151,6 +151,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string) => {
     
+    // Uniqueness checks
+    if (allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
+        return;
+    }
+    if (allUsers.some(u => u.email.toLowerCase() === userDetails.email.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
+        return;
+    }
+    if (allUsers.some(u => u.mobile === userDetails.mobile)) {
+        toast({ variant: 'destructive', title: 'Mobile Number Exists', description: 'An account with this mobile number already exists.' });
+        return;
+    }
+    if (userDetails.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === userDetails.bgmiUsername!.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already linked to an account.' });
+        return;
+    }
+    if (userDetails.bgmiId && allUsers.some(u => u.bgmiId === userDetails.bgmiId)) {
+        toast({ variant: 'destructive', title: 'BGMI ID Exists', description: 'This BGMI ID is already linked to an account.' });
+        return;
+    }
+
+
     let referredBy: string | undefined = undefined;
     if (referralCode) {
         const referrer = allUsers.find(u => u.referralCode === referralCode);
@@ -175,6 +198,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     setUser(newUser);
     setTransactions([]);
+    toast({
+      title: 'Sign Up Successful',
+      description: 'Welcome to Arena Ace!',
+    });
+    router.push('/home');
   };
 
   const logout = () => {

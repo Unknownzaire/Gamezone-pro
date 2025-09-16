@@ -120,12 +120,6 @@ export default function LoginPage() {
     };
     
     signup(newUser, signupForm.password, signupForm.referralCode);
-    
-    toast({
-      title: 'Sign Up Successful',
-      description: 'Welcome to Arena Ace!',
-    });
-    router.push('/home');
   };
 
   return (
