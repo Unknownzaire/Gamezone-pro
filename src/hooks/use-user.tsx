@@ -323,7 +323,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const hasUserJoinedTournament = (userId: string): boolean => {
+    return tournaments.some(t => t.participants.some(p => p.user.id === userId));
+  };
+
   const joinTournament = (tournamentId: string, userToJoin: User) => {
+    const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
+
     setTournaments(prevTournaments => 
       prevTournaments.map(t => {
         if (t.id === tournamentId) {
@@ -342,16 +348,39 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return t;
       })
     );
+
+    if (isFirstTournament && userToJoin.referredBy) {
+        const referrer = allUsers.find(u => u.id === userToJoin.referredBy);
+        if (referrer) {
+            const storedSettings = localStorage.getItem('referralSettings');
+            const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
+            const bonus = settings.referralBonus;
+
+            // Update referrer's balance
+            setAllUsers(prevUsers => prevUsers.map(u => u.id === referrer.id ? { ...u, walletBalance: u.walletBalance + bonus } : u));
+            
+            // Create transaction for referrer
+            const bonusTransaction: Transaction = {
+                id: `tx-referral-bonus-${userToJoin.id}`,
+                userId: referrer.id,
+                amount: bonus,
+                type: 'credit',
+                description: `Referral bonus for ${userToJoin.username}`,
+                createdAt: new Date(),
+                status: 'completed'
+            };
+            setAllTransactions(prevTxs => [bonusTransaction, ...prevTxs]);
+            
+            // This toast is for the joining user, might want a different notification system for the referrer
+            console.log(`Referrer ${referrer.username} has been awarded a bonus of ₹${bonus}.`);
+        }
+    }
   };
   
   const reload = () => {
     setLoading(true);
     loadInitialData();
   }
-
-  const hasUserJoinedTournament = (userId: string): boolean => {
-    return tournaments.some(t => t.participants.some(p => p.user.id === userId));
-  };
 
 
   return (

@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers as initialUsers, mockTransactions, mockTournaments } from "@/lib/mock-data";
+import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments } from "@/lib/mock-data";
 import { ArrowLeft, RefreshCw, Search, Settings, MoreHorizontal } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
@@ -37,7 +37,7 @@ export default function AdminReferralsPage() {
         allUsers = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : initialUsers;
 
         const storedTransactions = localStorage.getItem('allTransactions');
-        allTransactions = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt) })) : mockTransactions;
+        allTransactions = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt) })) : initialTransactions;
         
         const storedTournaments = localStorage.getItem('allTournaments');
         allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime) })) : mockTournaments;
@@ -50,23 +50,13 @@ export default function AdminReferralsPage() {
     setTransactions(allTransactions);
     setTournaments(allTournaments);
 
-    // Calculate referrer stats for all users
     const stats: ReferrerStats[] = allUsers.map(user => {
-        let totalReferrals = 0;
-        let totalEarnings = 0;
-
-        const referredUsers = allUsers.filter(u => u.referredBy === user.id || u.referredBy === user.bgmiId);
-        totalReferrals = referredUsers.length;
+        const referredUsers = allUsers.filter(u => u.referredBy === user.id);
+        const totalReferrals = referredUsers.length;
         
-        const hasUserJoinedTournament = (userId: string): boolean => {
-            return allTournaments.some(t => t.participants.some(p => p.user.id === userId));
-        };
-        
-        referredUsers.forEach(referredUser => {
-            if(hasUserJoinedTournament(referredUser.id)){
-                totalEarnings += 25;
-            }
-        });
+        const totalEarnings = allTransactions
+            .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.description.startsWith('Referral bonus for'))
+            .reduce((acc, tx) => acc + tx.amount, 0);
 
         return { user, totalReferrals, totalEarnings };
     });
@@ -80,7 +70,7 @@ export default function AdminReferralsPage() {
     loadData();
 
     const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'allUsers') {
+        if (event.key === 'allUsers' || event.key === 'allTransactions') {
             loadData();
         }
     };
