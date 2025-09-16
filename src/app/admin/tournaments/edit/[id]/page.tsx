@@ -126,11 +126,11 @@ export default function EditTournamentPage() {
       return;
     }
 
-    if (totalPercentage > 100) {
+    if (totalPercentage !== 100) {
         toast({
             variant: 'destructive',
             title: "Invalid Prize Distribution",
-            description: `Total prize percentage cannot exceed 100%. Current total: ${totalPercentage.toFixed(2)}%`
+            description: `Total prize percentage must be exactly 100%. Current total: ${totalPercentage.toFixed(2)}%`
         });
         return;
     }
