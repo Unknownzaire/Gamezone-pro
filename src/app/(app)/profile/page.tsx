@@ -18,7 +18,7 @@ import type { User } from '@/lib/types';
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, setUser, updateUser } = useUser();
+  const { user: currentUser, updateUser, logout } = useUser();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -151,8 +151,8 @@ export default function ProfilePage() {
   };
 
   const handleLogout = () => {
+    logout();
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
-    router.push('/login');
   };
   
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
