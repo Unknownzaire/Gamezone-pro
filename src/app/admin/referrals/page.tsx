@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions, mockTournaments } from "@/lib/mock-data";
-import { ArrowLeft, RefreshCw, Search } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search, Settings } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
 import Link from "next/link";
@@ -114,10 +114,18 @@ export default function AdminReferralsPage() {
             <p className="text-muted-foreground">Summary of user referral performance.</p>
           </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => loadData()}>
-            <RefreshCw className="h-4 w-4" />
-            <span className="sr-only">Refresh referrals</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={() => loadData()}>
+                <RefreshCw className="h-4 w-4" />
+                <span className="sr-only">Refresh referrals</span>
+            </Button>
+             <Link href="/admin/settings">
+              <Button variant="outline" size="icon">
+                  <Settings className="h-4 w-4" />
+                  <span className="sr-only">Referral Settings</span>
+              </Button>
+            </Link>
+        </div>
       </div>
 
       <Card>
