@@ -25,6 +25,7 @@ export default function AdminDashboardPage() {
   const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers]       = useState<User[]>([]);
+  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const { toast } = useToast();
   
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -40,10 +41,11 @@ export default function AdminDashboardPage() {
     setTotalUsers(users.length);
 
     const storedTransactions = localStorage.getItem('allTransactions');
-    const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
+    const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
+    setAllTransactions(transactions);
 
-    setPendingDeposits(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
-    setPendingWithdrawals(allTransactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
+    setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
+    setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
 
     const storedTournaments = localStorage.getItem('allTournaments');
     const allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
@@ -71,12 +73,13 @@ export default function AdminDashboardPage() {
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
     const isDeposit = type === 'credit';
     
-    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-    const transaction = allTransactions.find(tx => tx.id === transactionId);
+    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+    const transaction = currentAllTransactions.find(tx => tx.id === transactionId);
     if(!transaction) return;
 
-    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
-    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+    currentAllTransactions = currentAllTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
+    localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
+    setAllTransactions(currentAllTransactions);
 
     let updatedUsers = [...allUsers];
     const userToUpdate = allUsers.find(u => u.id === transaction.userId);
@@ -132,6 +135,12 @@ export default function AdminDashboardPage() {
     loadData();
     toast({ title: "Dashboard Updated", description: "Pending requests have been refreshed." });
   };
+  
+  const getTotalDepositsForUser = (userId: string) => {
+    return allTransactions
+      .filter(tx => tx.userId === userId && tx.type === 'credit' && tx.status === 'completed')
+      .reduce((acc, tx) => acc + tx.amount, 0);
+  };
 
 
   return (
@@ -183,7 +192,7 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="max-w-4xl">
             <DialogHeader>
               <div className="flex items-center justify-between">
                   <div className="flex-1">
@@ -201,6 +210,7 @@ export default function AdminDashboardPage() {
                       <TableHead>User</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Ref No.</TableHead>
+                      <TableHead>Total Deposits</TableHead>
                       <TableHead>History</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -223,12 +233,13 @@ export default function AdminDashboardPage() {
                           </TableCell>
                           <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
                           <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
+                          <TableCell>₹{user ? getTotalDepositsForUser(user.id).toLocaleString() : 'N/A'}</TableCell>
                            <TableCell>
                             {user && (
                               <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                                   <History className="h-4 w-4" />
-                                  Transaction History
+                                  History
                                 </Button>
                               </Link>
                             )}
@@ -332,7 +343,7 @@ export default function AdminDashboardPage() {
                               <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
                                 <Button variant="ghost" size="sm" className="flex items-center gap-2">
                                   <History className="h-4 w-4" />
-                                  Transaction History
+                                  History
                                 </Button>
                               </Link>
                             )}
@@ -384,5 +395,7 @@ export default function AdminDashboardPage() {
 
     </div>
   );
+
+    
 
     
