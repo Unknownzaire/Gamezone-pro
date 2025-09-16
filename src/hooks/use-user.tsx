@@ -178,7 +178,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        const referrer = allUsers.find(u => u.bgmiId === referralCode || u.id === referralCode);
+        const referrer = allUsers.find(u => u.bgmiId === referralCode || u.id === referralCode || u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
             const storedSettings = localStorage.getItem('referralSettings');
@@ -189,6 +189,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
            return 'error';
         }
     }
+
+    const generateUniqueReferralCode = (): string => {
+        let newCode;
+        let isUnique = false;
+        while (!isUnique) {
+            newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            if (!allUsers.some(u => u.referralCode === newCode)) {
+                isUnique = true;
+            }
+        }
+        return newCode!;
+    };
     
     const newUser: User = {
         ...userDetails,
@@ -199,7 +211,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         isBlocked: false,
         createdAt: new Date(),
         referredBy,
-        referralCode: userDetails.bgmiId || `USER${Date.now()}`,
+        referralCode: generateUniqueReferralCode(),
     };
     
     let updatedTransactions = [...allTransactions];

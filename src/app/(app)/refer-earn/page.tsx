@@ -28,7 +28,7 @@ export default function ReferEarnPage() {
     }
   }, []);
   
-  const referralCode = user?.bgmiId || 'LOGIN-TO-REFER';
+  const referralCode = user?.referralCode || 'LOGIN-TO-REFER';
   const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
 
 
@@ -72,7 +72,7 @@ export default function ReferEarnPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <p className="text-sm text-muted-foreground">Your Unique Referral Code (BGMI ID)</p>
+            <p className="text-sm text-muted-foreground">Your Unique Referral Code</p>
             <div className="flex items-center justify-center gap-2 mt-2">
               <p className="text-2xl font-bold font-mono tracking-widest text-primary border-2 border-dashed border-primary p-3 rounded-lg">
                 {referralCode}
