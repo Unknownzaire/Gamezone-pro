@@ -11,9 +11,11 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wallet, Hourglass } from 'lucide-react';
+import { ArrowLeft, Edit, Wallet, Hourglass, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 
 type UserMatchHistory = {
   tournament: Tournament;
@@ -191,34 +193,104 @@ export default function UserHistoryPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Description</TableHead>
+                                        <TableHead>Details</TableHead>
                                         <TableHead>Date</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Credit</TableHead>
-                                        <TableHead className="text-right">Debit</TableHead>
-                                        <TableHead className="text-right">Pending</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredTransactions.map(tx => (
-                                        <TableRow key={tx.id}>
-                                            <TableCell className="font-medium">{tx.description}</TableCell>
-                                            <TableCell>{format(new Date(tx.createdAt), 'PPp')}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">
-                                                    {tx.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium text-green-500">
-                                                {tx.type === 'credit' && tx.status === 'completed' ? `₹${tx.amount.toLocaleString()}` : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium text-red-500">
-                                                {tx.type === 'debit' && tx.status === 'completed' ? `₹${tx.amount.toLocaleString()}` : '-'}
-                                            </TableCell>
-                                            <TableCell className="text-right font-medium text-yellow-500">
-                                                 {tx.status === 'pending' ? `₹${tx.amount.toLocaleString()}` : '-'}
-                                            </TableCell>
-                                        </TableRow>
+                                        <Dialog key={tx.id}>
+                                            <DialogTrigger asChild>
+                                                <TableRow className="cursor-pointer">
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="p-2 bg-muted rounded-full">
+                                                                {tx.type === 'credit' ? <ArrowDownLeft className="h-4 w-4 text-green-500" /> : <ArrowUpRight className="h-4 w-4 text-red-500" />}
+                                                            </div>
+                                                            <div>
+                                                                <p className="font-medium">{tx.description}</p>
+                                                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize mt-1">{tx.status}</Badge>
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-xs text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</TableCell>
+                                                     <TableCell className={`text-right font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                                        {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                                                    </TableCell>
+                                                </TableRow>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Transaction Details</DialogTitle>
+                                                </DialogHeader>
+                                                <div className="space-y-3 text-sm">
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Transaction ID:</span>
+                                                        <span className="font-mono text-xs">{tx.id}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Date:</span>
+                                                        <span className="font-medium">{format(new Date(tx.createdAt), 'PPp')}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Description:</span>
+                                                        <span className="font-medium">{tx.description}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Amount:</span>
+                                                        <span className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                                        {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Type:</span>
+                                                        <span className="font-medium capitalize">{tx.type}</span>
+                                                    </div>
+                                                    <div className="flex justify-between">
+                                                        <span className="text-muted-foreground">Status:</span>
+                                                        <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">{tx.status}</Badge>
+                                                    </div>
+                                                    {tx.paymentDetails && (
+                                                        <>
+                                                        <Separator />
+                                                        <p className="font-semibold">Payment Details</p>
+                                                        <div className="flex justify-between">
+                                                            <span className="text-muted-foreground">Method:</span>
+                                                            <span className="font-medium uppercase">{tx.paymentDetails.method}</span>
+                                                        </div>
+                                                        {tx.paymentDetails.method === 'upi' && tx.paymentDetails.upiId && (
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">{tx.description.includes('Withdrawal') ? 'UPI ID:' : 'Reference No.:'}</span>
+                                                                <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
+                                                            </div>
+                                                        )}
+                                                        {tx.paymentDetails.method === 'bank' && (
+                                                            <>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Account Holder:</span>
+                                                                <span>{tx.paymentDetails.accountHolderName}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Account Number:</span>
+                                                                <span>{tx.paymentDetails.accountNumber}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">IFSC Code:</span>
+                                                                <span className="font-mono">{tx.paymentDetails.ifscCode}</span>
+                                                            </div>
+                                                            </>
+                                                        )}
+                                                        </>
+                                                    )}
+                                                </div>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline">Close</Button>
+                                                    </DialogClose>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
                                     ))}
                                 </TableBody>
                             </Table>
@@ -233,3 +305,5 @@ export default function UserHistoryPage() {
     </div>
   );
 }
+
+    

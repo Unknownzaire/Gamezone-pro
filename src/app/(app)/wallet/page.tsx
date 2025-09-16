@@ -146,7 +146,8 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, reload: reloadUser, toast } = useUser();
+  const { user, transactions, addTransaction, reload: reloadUser } = useUser();
+  const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
     maxWithdrawal: 5000,
@@ -520,4 +521,5 @@ export default function WalletPage() {
 
     
 
+    
     
