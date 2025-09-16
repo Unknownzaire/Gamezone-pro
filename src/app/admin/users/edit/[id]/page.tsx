@@ -42,7 +42,7 @@ export default function EditUserPage() {
         .reduce((acc, tx) => acc + tx.amount, 0);
       setTotalDeposits(userToEdit.totalDeposits ?? deposits);
       
-      const referrals = allUsers.filter(u => u.referredBy === userToEdit.id || u.referredBy === userToEdit.bgmiId).length;
+      const referrals = allUsers.filter(u => u.referredBy === userToEdit.id).length;
       setTotalReferrals(referrals);
 
     } else {
@@ -139,7 +139,7 @@ export default function EditUserPage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="totalReferrals">Total Referrals</Label>
-                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
+                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} disabled />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>
