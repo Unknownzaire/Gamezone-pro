@@ -154,23 +154,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        const referrer = allUsers.find(u => u.referralCode === referralCode.toUpperCase());
+        const referrer = allUsers.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
         }
     }
-
-    const generateReferralCode = () => {
-      let code: string;
-      let isUnique = false;
-      while (!isUnique) {
-        code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        if (!allUsers.some(u => u.referralCode === code)) {
-          isUnique = true;
-        }
-      }
-      return code!;
-    };
 
     const newUser: User = {
         ...userDetails,
@@ -180,7 +168,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         isBlocked: false,
         createdAt: new Date(),
         referredBy,
-        referralCode: generateReferralCode(),
+        referralCode: userDetails.bgmiId || '',
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
@@ -263,7 +251,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateBalance = (newBalance: number) => {
     if(user) {
-        setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, walletBalance: newBalance} : u))
+        setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, walletBalance: newBalance} : u))
     }
   }
 

@@ -15,7 +15,7 @@ export default function ReferEarnPage() {
   const { user, referredUsers, hasUserJoinedTournament } = useUser();
   const { toast } = useToast();
   
-  const referralCode = user?.referralCode || 'LOGIN-TO-REFER';
+  const referralCode = user?.bgmiId || 'LOGIN-TO-REFER';
   const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
 
 
@@ -48,7 +48,7 @@ export default function ReferEarnPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-headline text-3xl font-bold">Refer & Earn</h1>
+      <h1 className="font-headline text-3xl font-bold">Refer &amp; Earn</h1>
 
       <Card className="text-center">
         <CardHeader>
@@ -59,7 +59,7 @@ export default function ReferEarnPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div>
-            <p className="text-sm text-muted-foreground">Your Unique Referral Code</p>
+            <p className="text-sm text-muted-foreground">Your Unique Referral Code (BGMI ID)</p>
             <div className="flex items-center justify-center gap-2 mt-2">
               <p className="text-2xl font-bold font-mono tracking-widest text-primary border-2 border-dashed border-primary p-3 rounded-lg">
                 {referralCode}
@@ -88,7 +88,7 @@ export default function ReferEarnPage() {
            </div>
             <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">2</div>
-              <p>Your friend signs up using your link, and the code is filled automatically.</p>
+              <p>Your friend signs up using your link, and your BGMI ID is automatically filled as the referral code.</p>
            </div>
            <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">3</div>

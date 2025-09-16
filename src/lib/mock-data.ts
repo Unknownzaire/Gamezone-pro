@@ -1,23 +1,24 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
-const generateReferralCode = () => {
-  // This is a simple generator for mock data. The real uniqueness check is in use-user.tsx
-  return Math.random().toString(36).substring(2, 8).toUpperCase();
-}
+const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
+  const bgmiId = `5${Math.floor(100000000 + Math.random() * 900000000)}`;
+  return {
+    id: `user-${i + 1}`,
+    username: `Player${i + 1}`,
+    email: `player${i + 1}@example.com`,
+    walletBalance: 1500,
+    avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
+    mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
+    bgmiUsername: `Player${i + 1}BGMI`,
+    bgmiId: bgmiId,
+    createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
+    referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
+    referralCode: bgmiId,
+  }
+});
 
-export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
-  id: `user-${i + 1}`,
-  username: `Player${i + 1}`,
-  email: `player${i + 1}@example.com`,
-  walletBalance: 1500,
-  avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
-  mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-  bgmiUsername: `Player${i + 1}BGMI`,
-  bgmiId: `5${Math.floor(100000000 + Math.random() * 900000000)}`,
-  createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
-  referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
-  referralCode: generateReferralCode(),
-}));
+
+export { mockUsers };
 
 
 export const mockParticipants: Participant[] = [
