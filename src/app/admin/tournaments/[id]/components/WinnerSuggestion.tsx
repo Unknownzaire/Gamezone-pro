@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, memo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getWinnerSuggestion } from '../actions';
 import { Loader2, Sparkles, Trophy } from 'lucide-react';
-import { Tournament, User } from '@/lib/types';
+import { Tournament, User, Participant } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -19,6 +19,52 @@ import {
 } from "@/components/ui/select";
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+// Memoized component for each participant rank item to prevent unnecessary re-renders
+const ParticipantRankItem = memo(({
+  participant,
+  rank,
+  usedRanks,
+  onRankChange
+}: {
+  participant: Participant;
+  rank: number | null;
+  usedRanks: number[];
+  onRankChange: (participantId: string, rank: string) => void;
+}) => {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex-1 truncate">
+        <p className="font-semibold">{participant.user.username}</p>
+        <p className="text-xs text-muted-foreground">
+          {participant.user.bgmiUsername} ({participant.user.bgmiId})
+        </p>
+      </div>
+      <Select
+        onValueChange={(value) => onRankChange(participant.id, value)}
+        value={rank?.toString() ?? "0"}
+      >
+        <SelectTrigger className="w-32" id={`rank-${participant.id}`}>
+          <SelectValue placeholder="Rank" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="0">Unranked</SelectItem>
+          {Array.from({ length: 100 }, (_, i) => i + 1).map(rankNum => (
+            <SelectItem
+              key={rankNum}
+              value={String(rankNum)}
+              disabled={usedRanks.includes(rankNum) && rank !== rankNum}
+            >
+              Rank #{rankNum}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+});
+ParticipantRankItem.displayName = 'ParticipantRankItem';
+
 
 export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: Tournament, onWinnerDeclare: (updatedTournament: Tournament) => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -77,9 +123,9 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     };
   };
 
-  const handleRankChange = (participantId: string, rank: string) => {
+  const handleRankChange = React.useCallback((participantId: string, rank: string) => {
     setRanks(prev => ({...prev, [participantId]: rank === "0" ? null : parseInt(rank, 10)}));
-  };
+  }, []);
   
   const handleDeclareWinner = () => {
     const winnerRanks = Object.entries(ranks).filter(([, rank]) => rank !== null && rank > 0);
@@ -198,28 +244,13 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
             <ScrollArea className="h-72">
                 <div className="space-y-3 pr-4">
                     {tournament.participants.map(p => (
-                        <div key={p.id} className="flex items-center justify-between gap-4">
-                            <div className="flex-1 truncate">
-                                <p className="font-semibold">{p.user.username}</p>
-                                <p className="text-xs text-muted-foreground">
-                                    {p.user.bgmiUsername} ({p.user.bgmiId})
-                                </p>
-                            </div>
-                             <Select 
-                                onValueChange={(value) => handleRankChange(p.id, value)}
-                                value={ranks[p.id]?.toString() ?? "0"}
-                             >
-                                <SelectTrigger className="w-32" id={`rank-${p.id}`}>
-                                    <SelectValue placeholder="Rank" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                     <SelectItem value="0">Unranked</SelectItem>
-                                    {Array.from({length: 100}, (_, i) => i + 1).map(rank => (
-                                        <SelectItem key={rank} value={String(rank)} disabled={usedRanks.includes(rank) && ranks[p.id] !== rank}>Rank #{rank}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
+                       <ParticipantRankItem 
+                            key={p.id}
+                            participant={p}
+                            rank={ranks[p.id] ?? null}
+                            usedRanks={usedRanks}
+                            onRankChange={handleRankChange}
+                       />
                     ))}
                 </div>
             </ScrollArea>
@@ -231,7 +262,3 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     </div>
   );
 }
-
-    
-
-    
