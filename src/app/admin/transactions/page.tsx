@@ -198,6 +198,7 @@ export default function AdminTransactionsPage() {
 
   const deposits = transactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit'));
   const withdrawals = transactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal'));
+  const declined = transactions.filter(tx => tx.status === 'declined');
 
   return (
     <div className="space-y-6">
@@ -225,6 +226,7 @@ export default function AdminTransactionsPage() {
           <TabsTrigger value="all">All Transactions</TabsTrigger>
           <TabsTrigger value="deposits">Deposits</TabsTrigger>
           <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+          <TabsTrigger value="declined">Declined</TabsTrigger>
         </TabsList>
         <TabsContent value="all" className="mt-4">
             <Card>
@@ -247,7 +249,16 @@ export default function AdminTransactionsPage() {
                 </CardContent>
             </Card>
         </TabsContent>
+         <TabsContent value="declined" className="mt-4">
+            <Card>
+                <CardContent className='p-0'>
+                    <TransactionTable txs={declined} />
+                </CardContent>
+            </Card>
+        </TabsContent>
       </Tabs>
     </div>
   );
 }
+
+    
