@@ -24,7 +24,7 @@ export default function AdminDashboardPage() {
   const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
   const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers]       = useState<User[]>([]);
   const { toast } = useToast();
   
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -62,7 +62,7 @@ export default function AdminDashboardPage() {
   const totalRevenue = completedTournaments.reduce((acc, t) => acc + t.prizePool * (t.commissionPercentage / 100), 0);
 
   const stats = [
-    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, href: null },
+    { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/reports' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
