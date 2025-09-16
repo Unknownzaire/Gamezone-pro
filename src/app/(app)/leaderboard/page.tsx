@@ -49,6 +49,7 @@ export default function LeaderboardPage() {
   const allTournaments = JSON.parse(localStorage.getItem('allTournaments') || '[]').map((t: any) => ({...t, matchTime: new Date(t.matchTime)}));
   const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
   const tournamentParticipants = currentTournament ? currentTournament.participants : [];
+  const rankedParticipants = tournamentParticipants.filter((p: Participant) => getRank(p) !== null);
 
 
   return (
@@ -78,7 +79,7 @@ export default function LeaderboardPage() {
           </Select>
         </CardHeader>
 
-        {tournamentId && tournamentParticipants.length > 0 && (
+        {tournamentId && rankedParticipants.length > 0 && (
           <CardContent>
             <Table>
               <TableHeader>
@@ -89,7 +90,7 @@ export default function LeaderboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tournamentParticipants.sort((a: Participant, b: Participant) => {
+                {rankedParticipants.sort((a: Participant, b: Participant) => {
                   const rankA = getRank(a);
                   const rankB = getRank(b);
                   if (rankA === null) return 1;
@@ -112,6 +113,11 @@ export default function LeaderboardPage() {
                 ))}
               </TableBody>
             </Table>
+          </CardContent>
+        )}
+        {tournamentId && rankedParticipants.length === 0 && (
+          <CardContent>
+             <p className="text-muted-foreground text-center py-8">No ranked players for this tournament.</p>
           </CardContent>
         )}
       </Card>
