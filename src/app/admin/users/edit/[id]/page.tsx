@@ -3,7 +3,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, notFound, useParams } from 'next/navigation';
-import { User } from '@/lib/types';
+import { User, Transaction } from '@/lib/types';
+import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,19 +21,26 @@ export default function EditUserPage() {
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<Partial<User>>({});
+  const [totalDeposits, setTotalDeposits] = useState(0);
 
   useEffect(() => {
     if (!id) return;
     const storedUsers = localStorage.getItem('allUsers');
-    if (storedUsers) {
-      const users: User[] = JSON.parse(storedUsers);
-      const userToEdit = users.find(u => u.id === id);
-      if (userToEdit) {
-        setUser(userToEdit);
-        setFormData(userToEdit);
-      } else {
-        notFound();
-      }
+    const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+    const userToEdit = allUsers.find(u => u.id === id);
+
+    if (userToEdit) {
+      setUser(userToEdit);
+      setFormData(userToEdit);
+
+      const storedTransactions = localStorage.getItem('allTransactions');
+      const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : mockTransactions;
+      
+      const deposits = allTransactions
+        .filter(tx => tx.userId === id && tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')))
+        .reduce((acc, tx) => acc + tx.amount, 0);
+      setTotalDeposits(deposits);
+
     } else {
       notFound();
     }
@@ -94,6 +102,10 @@ export default function EditUserPage() {
             <div className="space-y-2">
                 <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
                 <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance || 0} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="totalDeposits">Total Deposits (₹)</Label>
+                <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} readOnly disabled />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
