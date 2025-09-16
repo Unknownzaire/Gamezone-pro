@@ -77,9 +77,19 @@ export default function AdminReferralsPage() {
 
   useEffect(() => {
     loadData();
+
+    const handleStorageChange = (event: StorageEvent) => {
+        if (event.key === 'allUsers') {
+            loadData();
+        }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
     window.addEventListener('focus', loadData);
+
     return () => {
-      window.removeEventListener('focus', loadData);
+        window.removeEventListener('storage', handleStorageChange);
+        window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
   
