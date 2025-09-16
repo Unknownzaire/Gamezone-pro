@@ -77,6 +77,7 @@ export default function EditTournamentPage() {
     const dist = { ...newDistributions[index] };
     const prizePool = formData.prizePool || 0;
     
+    let currentTotal = prizeDistributions.reduce((sum, item, i) => i === index ? sum : sum + (item.percentage || 0), 0);
     let newPercentage = dist.percentage;
 
     if (field === 'amount') {
@@ -86,12 +87,21 @@ export default function EditTournamentPage() {
         newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
     } else { // 'rank'
         dist[field as 'rank'] = value as string;
+        newDistributions[index] = dist;
+        setPrizeDistributions(newDistributions);
+        return;
     }
 
-    if (field !== 'rank') {
-        dist.percentage = newPercentage;
+    if (currentTotal + newPercentage > 100) {
+        toast({
+            variant: 'destructive',
+            title: "Exceeds 100%",
+            description: `Cannot set percentage to ${newPercentage} as it would exceed the 100% total.`
+        });
+        return; // Do not update state if it exceeds 100%
     }
     
+    dist.percentage = newPercentage;
     newDistributions[index] = dist;
     setPrizeDistributions(newDistributions);
 };
@@ -297,3 +307,5 @@ export default function EditTournamentPage() {
     </div>
   );
 }
+
+    
