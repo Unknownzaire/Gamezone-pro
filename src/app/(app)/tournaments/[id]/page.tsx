@@ -39,11 +39,11 @@ import { useUser } from '@/hooks/use-user.tsx';
 
 export default function TournamentDetailsPage() {
   const router = useRouter();
-  const params = useParams();
+  const { id } = useParams();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const tournament = tournaments.find((t) => t.id === params.id);
+  const tournament = tournaments.find((t) => t.id === id);
 
   if (!tournament) {
     notFound();
