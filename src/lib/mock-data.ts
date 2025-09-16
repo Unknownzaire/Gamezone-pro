@@ -1,6 +1,9 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
-const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+const generateReferralCode = () => {
+  // This is a simple generator for mock data. The real uniqueness check is in use-user.tsx
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
 
 export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   id: `user-${i + 1}`,
