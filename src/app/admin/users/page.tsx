@@ -184,6 +184,7 @@ export default function AdminUsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
+                <TableHead>Password</TableHead>
                 <TableHead>Available Balance</TableHead>
                 <TableHead>Total Balance</TableHead>
                 <TableHead>Total Deposits</TableHead>
@@ -211,6 +212,7 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell>{user.password}</TableCell>
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
