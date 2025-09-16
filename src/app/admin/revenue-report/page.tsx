@@ -85,7 +85,7 @@ export default function AdminRevenueReportPage() {
     };
   }, [loadCompletedTournaments]);
 
-  const calculateRevenue = (t: Tournament) => t.prizePool * (t.commissionPercentage / 100);
+  const calculateRevenue = (t: Tournament) => (t.participants.length * t.entryFee) - t.prizePool;
 
   const dailyReport = completed.reduce((acc: RevenueReport, t) => {
     const day = format(t.matchTime, 'yyyy-MM-dd (EEEE)');
