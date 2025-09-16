@@ -16,6 +16,7 @@ interface UserContextType {
   setUser: Dispatch<SetStateAction<User | null>>;
   transactions: Transaction[];
   tournaments: Tournament[];
+  setTournaments: Dispatch<SetStateAction<Tournament[]>>;
   promotionalAds: PromotionalAd[];
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   referredUsers: User[];
@@ -179,6 +180,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const referrer = allUsers.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
+        } else {
+           toast({ variant: 'destructive', title: 'Invalid Referral Code', description: 'The referral code you entered is not valid.' });
+           return 'error';
         }
     }
     
@@ -295,7 +299,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           if (t.participants.some(p => p.user.id === userToJoin.id)) {
             return t; 
           }
-          const newParticipant = {
+          const newParticipant: Participant = {
             id: `p-${t.id}-${userToJoin.id}`,
             user: userToJoin,
             tournamentId: t.id,
@@ -320,7 +324,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament }}>
       {!loading && children}
     </UserContext.Provider>
   );
