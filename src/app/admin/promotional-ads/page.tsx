@@ -225,9 +225,11 @@ export default function AdminPromotionalAdsPage() {
                                         <Button variant="outline" size="sm" onClick={() => handleToggleStatus(ad)}>
                                             {ad.status === 'active' ? 'Deactivate' : 'Activate'}
                                         </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </AlertDialogTrigger>
                                     </div>
                                 </TableCell>
                             </TableRow>
