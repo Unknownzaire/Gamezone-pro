@@ -43,6 +43,8 @@ export default function EditTournamentPage() {
   });
    const [imageFile, setImageFile] = useState<File | null>(null);
    const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
+   
+   const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
 
   useEffect(() => {
     if (!id) return;
@@ -86,16 +88,27 @@ export default function EditTournamentPage() {
     const newDistributions = [...prizeDistributions];
     const dist = { ...newDistributions[index] };
     const prizePool = formData.prizePool || 0;
+    const currentTotal = totalPercentage - (dist.percentage || 0);
 
     if (field === 'amount') {
         const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
         if (prizePool > 0) {
-            dist.percentage = parseFloat(((amount / prizePool) * 100).toPrecision(4));
+            const newPercentage = parseFloat(((amount / prizePool) * 100).toPrecision(4));
+            if (currentTotal + newPercentage > 100) {
+                toast({ variant: 'destructive', title: "Over 100%", description: "Total prize distribution cannot exceed 100%." });
+                return;
+            }
+            dist.percentage = newPercentage;
         } else {
             dist.percentage = 0;
         }
     } else if (field === 'percentage') {
-        dist.percentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
+        const newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
+        if (currentTotal + newPercentage > 100) {
+            toast({ variant: 'destructive', title: "Over 100%", description: "Total prize distribution cannot exceed 100%." });
+            return;
+        }
+        dist.percentage = newPercentage;
     } else {
         dist[field as 'rank'] = value as string;
     }
@@ -105,6 +118,10 @@ export default function EditTournamentPage() {
 };
 
   const addPrizeRow = () => {
+      if (totalPercentage >= 100) {
+          toast({ variant: 'destructive', title: "Already at 100%", description: "Cannot add more prize tiers." });
+          return;
+      }
       setPrizeDistributions([...prizeDistributions, { rank: '', percentage: 0 }]);
   };
 
@@ -116,7 +133,6 @@ export default function EditTournamentPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
     if (totalPercentage > 100) {
         toast({
             variant: 'destructive',
@@ -281,9 +297,9 @@ export default function EditTournamentPage() {
                                </Button>
                            </div>
                         ))}
-                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button">Add Prize Tier</Button>
+                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100}>Add Prize Tier</Button>
                         <p className="text-xs text-muted-foreground pt-2">
-                            Total percentage distributed: {prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0).toFixed(2)}%
+                            Total percentage distributed: {totalPercentage.toFixed(2)}%
                         </p>
                     </CardContent>
                 </Card>
