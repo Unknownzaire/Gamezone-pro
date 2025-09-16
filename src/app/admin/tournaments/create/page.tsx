@@ -59,9 +59,17 @@ export default function CreateTournamentPage() {
                             <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
                             <Input id="prize-pool" type="number" placeholder="5000" required />
                         </div>
-                        <div className="space-y-2 md:col-span-2">
+                        <div className="space-y-2">
                             <Label htmlFor="commission">Commission (%)</Label>
                             <Input id="commission" type="number" placeholder="10" required />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="imageUrl">Image URL</Label>
+                            <Input id="imageUrl" placeholder="https://picsum.photos/seed/example/600/400" />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="imageHint">Image Hint</Label>
+                            <Input id="imageHint" placeholder="e.g., epic battle" />
                         </div>
                         <div className="md:col-span-2 flex justify-end">
                             <Button type="submit">Create Tournament</Button>
