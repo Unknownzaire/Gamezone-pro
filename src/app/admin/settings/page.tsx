@@ -68,7 +68,7 @@ export default function AdminSettingsPage() {
                         <CardDescription>Update your admin account credentials.</CardDescription>
                     </CardHeader>
                     <form onSubmit={handleSecurityUpdate}>
-                        <CardContent className="space-y-4">
+                        <CardContent className="pt-6 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="username">Admin Username</Label>
                                 <Input id="username" defaultValue="admin" required />
@@ -94,7 +94,7 @@ export default function AdminSettingsPage() {
                         <CardDescription>Configure global wallet and payment settings.</CardDescription>
                     </CardHeader>
                     <form onSubmit={handleWalletUpdate}>
-                        <CardContent className="space-y-4">
+                        <CardContent className="pt-6 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
                                 <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required />
@@ -121,3 +121,5 @@ export default function AdminSettingsPage() {
         </div>
     );
 }
+
+    
