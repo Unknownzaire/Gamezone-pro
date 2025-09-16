@@ -37,6 +37,8 @@ export default function ProfilePage() {
   const [emailCountdown, setEmailCountdown] = useState(0);
   const [mobileCountdown, setMobileCountdown] = useState(0);
 
+  const [isEditing, setIsEditing] = useState(false);
+
   useEffect(() => {
     if (currentUser) {
       setUsername(currentUser.username || '');
@@ -64,6 +66,10 @@ export default function ProfilePage() {
   }, [mobileCountdown]);
 
   const handleUpdateProfile = () => {
+    if (!isEditing) {
+        setIsEditing(true);
+        return;
+    }
     if (currentUser) {
       const updatedFields = {
         username,
@@ -71,6 +77,7 @@ export default function ProfilePage() {
       };
       updateUser(updatedFields);
       toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+      setIsEditing(false);
     }
   };
 
@@ -200,7 +207,7 @@ export default function ProfilePage() {
             <h2 className="font-headline text-xl font-semibold">Edit Profile</h2>
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
-              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} />
+              <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={!isEditing} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
@@ -231,9 +238,9 @@ export default function ProfilePage() {
             <div className="space-y-2">
               <Label htmlFor="mobile">Mobile Number</Label>
                <div className="flex items-center gap-2">
-                    <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} />
+                    <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
                      {!mobileVerified && (
-                        <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
+                        <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || isEditing}>
                            {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                         </Button>
                     )}
@@ -246,7 +253,9 @@ export default function ProfilePage() {
                     </div>
                 )}
             </div>
-            <Button onClick={handleUpdateProfile} className="w-full">Update Profile</Button>
+            <Button onClick={handleUpdateProfile} className="w-full">
+              {isEditing ? 'Save Profile' : 'Edit Profile'}
+            </Button>
         </CardContent>
       </Card>
 
@@ -273,5 +282,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
