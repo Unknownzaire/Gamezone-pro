@@ -54,16 +54,24 @@ export default function EditUserPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const storedUsers = localStorage.getItem('allUsers');
-    if (storedUsers) {
-      let users: User[] = JSON.parse(storedUsers);
-      users = users.map(u => (u.id === id ? { ...user, ...formData } as User : u));
-      localStorage.setItem('allUsers', JSON.stringify(users));
-      toast({
-        title: "User Updated",
-        description: `Details for ${formData.username} have been updated.`,
-      });
-      router.push('/admin/users');
-    }
+    let allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : [];
+
+    // Find the original user to merge data
+    const originalUser = allUsers.find(u => u.id === id);
+    if (!originalUser) return;
+
+    // Create the updated user object
+    const updatedUser = { ...originalUser, ...formData };
+    
+    const updatedUsers = allUsers.map(u => (u.id === id ? updatedUser : u));
+
+    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    
+    toast({
+      title: "User Updated",
+      description: `Details for ${formData.username} have been updated.`,
+    });
+    router.push('/admin/users');
   };
 
   if (!user) {
