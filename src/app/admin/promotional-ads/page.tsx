@@ -99,6 +99,14 @@ export default function AdminPromotionalAdsPage() {
       a.id === ad.id ? { ...a, status: a.status === 'active' ? 'inactive' : 'active' } : a
     ));
   };
+  
+  const handleTournamentLinkSelect = (tournamentId: string) => {
+    const selectedTournament = tournaments.find(t => t.id === tournamentId);
+    if(selectedTournament) {
+        setTitle(selectedTournament.title);
+        setLink(`/tournaments/${selectedTournament.id}`);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -142,20 +150,21 @@ export default function AdminPromotionalAdsPage() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="ad-link">Link URL</Label>
-                        <Select onValueChange={setLink} value={link}>
-                            <SelectTrigger id="ad-link">
-                                <SelectValue placeholder="Select a tournament to link to" />
+                        <Label htmlFor="ad-link-select">Link to Tournament</Label>
+                        <Select onValueChange={handleTournamentLinkSelect} >
+                            <SelectTrigger id="ad-link-select">
+                                <SelectValue placeholder="Select a tournament to auto-fill link" />
                             </SelectTrigger>
                             <SelectContent>
                                 {tournaments.map(t => (
-                                <SelectItem key={t.id} value={`/tournaments/${t.id}`}>
+                                <SelectItem key={t.id} value={t.id}>
                                     {t.title}
                                 </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                          <Input
+                            id="ad-link-input"
                             value={link}
                             onChange={(e) => setLink(e.target.value)}
                             placeholder="Or enter a custom URL"
