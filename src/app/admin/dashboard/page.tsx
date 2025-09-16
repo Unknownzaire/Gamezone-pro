@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
 
   const totalTournaments = mockTournaments.length;
   const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
-  const totalRevenue = completedTournaments.reduce((acc, t) => acc + t.prizePool * (t.commissionPercentage / 100), 0);
+  const totalRevenue = completedTournaments.reduce((acc, t) => acc + (t.participants.length * t.entryFee) - t.prizePool, 0);
 
   const stats = [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
@@ -384,4 +384,5 @@ export default function AdminDashboardPage() {
 
     </div>
   );
-}
+
+    
