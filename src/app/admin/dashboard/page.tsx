@@ -1,11 +1,10 @@
-
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History } from "lucide-react";
+import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History, Settings } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -118,7 +117,15 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-headline text-3xl font-bold">Dashboard</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="font-headline text-3xl font-bold">Dashboard</h1>
+         <Link href="/admin/settings">
+          <Button variant="outline">
+            <Settings className="mr-2" />
+            Settings
+          </Button>
+        </Link>
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => {
           const cardContent = (
@@ -332,5 +339,3 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
-
-    
