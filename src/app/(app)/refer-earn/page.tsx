@@ -1,14 +1,18 @@
 
 'use client';
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useUser } from "@/hooks/use-user.tsx";
-import { Copy, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { Copy, Share2, CheckCircle } from "lucide-react";
 
 export default function ReferEarnPage() {
-  const { user } = useUser();
+  const { user, referredUsers, hasUserJoinedTournament } = useUser();
   const { toast } = useToast();
   
   const referralCode = user ? `ARENA${user.id.substring(0, 6).toUpperCase()}` : 'LOGIN-TO-REFER';
@@ -39,6 +43,8 @@ export default function ReferEarnPage() {
         });
     }
   };
+  
+  const sortedReferredUsers = referredUsers.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div className="space-y-6">
@@ -88,6 +94,56 @@ export default function ReferEarnPage() {
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">3</div>
               <p>When your friend joins their first paid tournament, you both receive a ₹25 bonus in your wallets!</p>
            </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle>Your Referrals</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {sortedReferredUsers.length > 0 ? (
+             <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Joined On</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sortedReferredUsers.map(refUser => {
+                    const bonusUnlocked = hasUserJoinedTournament(refUser.id);
+                    return (
+                       <TableRow key={refUser.id}>
+                        <TableCell>
+                           <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={refUser.avatarUrl} alt={refUser.username} />
+                                <AvatarFallback>{refUser.username.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">{refUser.username}</span>
+                            </div>
+                        </TableCell>
+                        <TableCell>{format(new Date(refUser.createdAt), 'PP')}</TableCell>
+                        <TableCell className="text-right">
+                          {bonusUnlocked ? (
+                            <Badge className="bg-green-500 hover:bg-green-600 text-white">
+                               <CheckCircle className="mr-1 h-3 w-3" />
+                               Bonus Unlocked
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">Joined</Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+             </Table>
+          ) : (
+            <p className="text-muted-foreground text-center py-8">You haven't referred any friends yet.</p>
+          )}
         </CardContent>
       </Card>
     </div>

@@ -10,6 +10,7 @@ export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   bgmiUsername: `Player${i + 1}BGMI`,
   bgmiId: `5${Math.floor(100000000 + Math.random() * 900000000)}`,
   createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
+  referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
 }));
 
 
@@ -37,6 +38,14 @@ export const mockParticipants: Participant[] = [
       tournamentId: 't-1',
       result: null,
       joinedAt: new Date('2025-09-16T10:00:00Z')
+    },
+     // user-96 (referred by user-1) joins a tournament
+    {
+      id: 'p-t1-96',
+      user: mockUsers.find(u => u.id === 'user-96')!,
+      tournamentId: 't-1',
+      result: null,
+      joinedAt: new Date('2025-09-16T11:00:00Z')
     }
 ];
 

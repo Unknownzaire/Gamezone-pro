@@ -4,6 +4,7 @@
 
 
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
@@ -75,6 +76,8 @@ export type User = {
   isBlocked?: boolean;
   createdAt: Date;
   totalDeposits?: number;
+  referredBy?: string; // ID of the user who referred this user
 };
 
       
+

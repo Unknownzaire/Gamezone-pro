@@ -117,13 +117,7 @@ export default function LoginPage() {
         bgmiId: signupForm.bgmiId,
     };
     
-    // Here you would also handle the referral code logic, e.g., apply bonus
-    if (signupForm.referralCode) {
-      console.log(`User signed up with referral code: ${signupForm.referralCode}`);
-      // Add logic to find referrer and apply bonuses
-    }
-
-    signup(newUser);
+    signup(newUser, signupForm.referralCode);
     
     setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
 

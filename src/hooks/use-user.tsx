@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 
@@ -17,15 +17,17 @@ interface UserContextType {
   tournaments: Tournament[];
   promotionalAds: PromotionalAd[];
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
+  referredUsers: User[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateBalance: (newBalance: number) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>, referralCode?: string) => void;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
+  hasUserJoinedTournament: (userId: string) => boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -38,6 +40,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [promotionalAds, setPromotionalAds] = useState<PromotionalAd[]>([]);
+  const [referredUsers, setReferredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -147,7 +150,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>, referralCode?: string) => {
+    
+    let referredBy: string | undefined = undefined;
+    if (referralCode) {
+        const referrer = allUsers.find(u => `ARENA${u.id.substring(0, 6).toUpperCase()}` === referralCode);
+        if (referrer) {
+            referredBy = referrer.id;
+        }
+    }
+
     const newUser: User = {
         ...userDetails,
         id: `user-${Date.now()}`,
@@ -155,6 +167,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
+        referredBy,
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
@@ -184,11 +197,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
 
         const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
-        
-        // The available balance is the stored balance for the UI.
+        const userReferredUsers = allUsers.filter(u => u.referredBy === liveUserData.id);
+
         const currentUser = { ...liveUserData };
         setUser(currentUser);
         setTransactions(userTransactions);
+        setReferredUsers(userReferredUsers);
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
         logout();
@@ -272,8 +286,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData();
   }
 
+  const hasUserJoinedTournament = (userId: string): boolean => {
+    return tournaments.some(t => t.participants.some(p => p.user.id === userId));
+  };
+
+
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament }}>
       {!loading && children}
     </UserContext.Provider>
   );
