@@ -251,6 +251,12 @@ export default function UserHistoryPage() {
                                                         <span className="text-muted-foreground">Status:</span>
                                                         <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">{tx.status}</Badge>
                                                     </div>
+                                                    {tx.status === 'declined' && tx.declineReason && (
+                                                        <div className="flex justify-between items-start">
+                                                        <span className="text-muted-foreground">Reason:</span>
+                                                        <span className="font-medium text-right text-destructive w-2/3">{tx.declineReason}</span>
+                                                        </div>
+                                                    )}
                                                     {tx.paymentDetails && (
                                                         <>
                                                         <Separator />

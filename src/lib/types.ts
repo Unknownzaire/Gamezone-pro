@@ -32,6 +32,7 @@ export type Transaction = {
   description: string;
   createdAt: Date;
   status: 'completed' | 'pending' | 'declined';
+  declineReason?: string;
   paymentDetails?: {
     method: 'upi' | 'bank';
     upiId?: string;
