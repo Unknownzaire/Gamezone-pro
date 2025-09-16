@@ -15,7 +15,7 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 
 export default function HomePage() {
-  const { tournaments, promotionalAds } = useUser();
+  const { user, tournaments, promotionalAds } = useUser();
   const upcomingOrLiveTournaments = tournaments.filter(
     (t) => t.status === "Upcoming" || t.status === "Live"
   );
@@ -48,8 +48,8 @@ export default function HomePage() {
                 </CarouselItem>
               ))}
             </CarouselContent>
-             <CarouselPrevious className="absolute left-6 top-1/2 -translate-y-1/2 z-10 bg-black/50 border-none hover:bg-black/70 text-white" />
-             <CarouselNext className="absolute right-6 top-1/2 -translate-y-1/2 z-10 bg-black/50 border-none hover:bg-black/70 text-white" />
+             <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/30 border-none hover:bg-black/50 text-white" />
+             <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/30 border-none hover:bg-black/50 text-white" />
           </Carousel>
       )}
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
