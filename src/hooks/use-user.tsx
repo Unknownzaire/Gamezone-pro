@@ -194,7 +194,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         let newCode;
         let isUnique = false;
         while (!isUnique) {
-            newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+            newCode = Math.floor(100000 + Math.random() * 900000).toString();
             if (!allUsers.some(u => u.referralCode === newCode)) {
                 isUnique = true;
             }
