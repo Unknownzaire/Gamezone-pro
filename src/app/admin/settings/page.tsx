@@ -80,8 +80,8 @@ export default function AdminSettingsPage() {
                                 <Input id="upi-id" defaultValue="arenaace@upi" required />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="qr-code">QR Code Image URL</Label>
-                                <Input id="qr-code" placeholder="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=..." />
+                                <Label htmlFor="qr-code">QR Code Image</Label>
+                                <Input id="qr-code" type="file" accept="image/*" />
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit">Save Wallet Settings</Button>
