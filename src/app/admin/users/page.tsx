@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
-import { MoreHorizontal, ArrowLeft, RefreshCw } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet } from "lucide-react";
 import { useEffect, useState } from "react";
 import { User, Transaction } from "@/lib/types";
 import {
@@ -24,12 +24,19 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userToFund, setUserToFund] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
+  const [fundAmount, setFundAmount] = useState('');
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -53,6 +60,11 @@ export default function AdminUsersPage() {
   const saveUsers = (updatedUsers: User[]) => {
     setUsers(updatedUsers);
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+  };
+  
+  const saveTransactions = (updatedTransactions: Transaction[]) => {
+    setTransactions(updatedTransactions);
+    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
   };
 
   const handleDeleteUser = () => {
@@ -79,7 +91,47 @@ export default function AdminUsersPage() {
     setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
+
+  const openFundDialog = (user: User) => {
+    setUserToFund(user);
+    setIsFundDialogOpen(true);
+  };
   
+  const handleAddFunds = () => {
+    if (!userToFund || !fundAmount) return;
+
+    const amount = parseFloat(fundAmount);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid positive amount." });
+      return;
+    }
+
+    const updatedUsers = users.map(u => 
+      u.id === userToFund.id ? { ...u, walletBalance: u.walletBalance + amount } : u
+    );
+    saveUsers(updatedUsers);
+
+    const newTransaction: Transaction = {
+      id: `tx-${Date.now()}`,
+      userId: userToFund.id,
+      amount,
+      type: 'credit',
+      description: 'Admin Deposit',
+      createdAt: new Date(),
+      status: 'completed'
+    };
+    saveTransactions([newTransaction, ...transactions]);
+
+    toast({
+      title: "Funds Added",
+      description: `₹${amount.toLocaleString()} has been added to ${userToFund.username}'s wallet.`,
+    });
+    
+    setIsFundDialogOpen(false);
+    setFundAmount('');
+    setUserToFund(null);
+  };
+
   const getAvailableBalance = (user: User) => {
     const pendingDebits = transactions
       .filter(tx => tx.userId === user.id && tx.status === 'pending' && tx.type === 'debit')
@@ -153,7 +205,7 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
-                  <TableCell>{format(user.createdAt, 'PP')}</TableCell>
+                   <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
                       <Badge variant="destructive">Blocked</Badge>
@@ -173,6 +225,9 @@ export default function AdminUsersPage() {
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link href={`/admin/users/edit/${user.id}`}>Edit User</Link>
+                        </DropdownMenuItem>
+                         <DropdownMenuItem onClick={() => openFundDialog(user)}>
+                            Add Funds
                         </DropdownMenuItem>
                          <DropdownMenuItem asChild>
                           <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
@@ -213,6 +268,35 @@ export default function AdminUsersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       <Dialog open={isFundDialogOpen} onOpenChange={setIsFundDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Funds to {userToFund?.username}</DialogTitle>
+            <DialogDescription>
+              Manually credit the user's wallet. This will create a transaction record.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="fund-amount">Amount (₹)</Label>
+              <Input 
+                id="fund-amount" 
+                type="number" 
+                value={fundAmount}
+                onChange={(e) => setFundAmount(e.target.value)}
+                placeholder="e.g., 100"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleAddFunds}>Confirm Deposit</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
