@@ -27,7 +27,7 @@ export default function LoginPage() {
   const { login, signup, user } = useUser();
   
   const [loginForm, setLoginForm] = useState({
-    email: 'player1@example.com',
+    email: '',
     password: 'password'
   });
 
@@ -110,7 +110,7 @@ export default function LoginPage() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'| 'password'> = {
+    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,
@@ -119,7 +119,21 @@ export default function LoginPage() {
         referralCode: signupForm.referralCode,
     };
     
-    signup(newUser, signupForm.password, signupForm.referralCode);
+    const result = signup(newUserDetails, signupForm.password, signupForm.referralCode);
+
+    if (result === 'success') {
+      setActiveTab('login');
+      setLoginForm(prev => ({ ...prev, email: signupForm.email }));
+      setSignupForm({
+          username: '',
+          bgmiUsername: '',
+          bgmiId: '',
+          mobile: '',
+          email: '',
+          password: '',
+          referralCode: '',
+      });
+    }
   };
 
   return (

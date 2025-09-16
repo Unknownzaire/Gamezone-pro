@@ -24,7 +24,7 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'>, password?: string, referralCode?: string) => 'success' | 'error';
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -149,28 +149,28 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string): 'success' | 'error' => {
     
     // Uniqueness checks
     if (allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
-        return;
+        return 'error';
     }
     if (allUsers.some(u => u.email.toLowerCase() === userDetails.email.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
-        return;
+        return 'error';
     }
     if (allUsers.some(u => u.mobile === userDetails.mobile)) {
         toast({ variant: 'destructive', title: 'Mobile Number Exists', description: 'An account with this mobile number already exists.' });
-        return;
+        return 'error';
     }
     if (userDetails.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === userDetails.bgmiUsername!.toLowerCase())) {
         toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already linked to an account.' });
-        return;
+        return 'error';
     }
     if (userDetails.bgmiId && allUsers.some(u => u.bgmiId === userDetails.bgmiId)) {
         toast({ variant: 'destructive', title: 'BGMI ID Exists', description: 'This BGMI ID is already linked to an account.' });
-        return;
+        return 'error';
     }
 
 
@@ -196,13 +196,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
     
-    setUser(newUser);
-    setTransactions([]);
     toast({
       title: 'Sign Up Successful',
-      description: 'Welcome to Arena Ace!',
+      description: 'Welcome to Arena Ace! Please log in to continue.',
     });
-    router.push('/home');
+    
+    return 'success';
   };
 
   const logout = () => {
