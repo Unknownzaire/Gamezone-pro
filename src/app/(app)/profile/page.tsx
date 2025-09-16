@@ -169,11 +169,11 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="bgmiUsername">BGMI Username</Label>
-              <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" />
+              <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" disabled />
             </div>
              <div className="space-y-2">
               <Label htmlFor="bgmiId">BGMI User ID</Label>
-              <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" />
+              <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" disabled />
             </div>
              <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
