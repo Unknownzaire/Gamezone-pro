@@ -22,6 +22,7 @@ export default function EditUserPage() {
   const [user, setUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<Partial<User>>({});
   const [totalDeposits, setTotalDeposits] = useState(0);
+  const [totalReferrals, setTotalReferrals] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -40,6 +41,9 @@ export default function EditUserPage() {
         .filter(tx => tx.userId === id && tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')))
         .reduce((acc, tx) => acc + tx.amount, 0);
       setTotalDeposits(userToEdit.totalDeposits ?? deposits);
+      
+      const referrals = allUsers.filter(u => u.referredBy === userToEdit.id || u.referredBy === userToEdit.bgmiId).length;
+      setTotalReferrals(referrals);
 
     } else {
       notFound();
@@ -128,6 +132,14 @@ export default function EditUserPage() {
             <div className="space-y-2">
               <Label htmlFor="bgmiId">BGMI ID</Label>
               <Input id="bgmiId" name="bgmiId" value={formData.bgmiId || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+                <Label htmlFor="referralCode">Referral Code</Label>
+                <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} disabled />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="totalReferrals">Total Referrals</Label>
+                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} disabled />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>
