@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
             </Card>
           );
           
-          return stat.href ? <Link href={stat.href} key={index} target={stat.href === '/admin/reports' ? '_blank' : undefined}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
+          return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
       <div className="grid gap-6 md:grid-cols-2">
