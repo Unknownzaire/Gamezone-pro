@@ -379,7 +379,10 @@ export default function WalletPage() {
                                 id="upi-ref" 
                                 placeholder="Enter the 12-digit number"
                                 value={upiRef}
-                                onChange={(e) => setUpiRef(e.target.value)}
+                                onChange={(e) => {
+                                    const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                                    setUpiRef(numericValue);
+                                }}
                                 minLength={12}
                                 maxLength={12}
                                 />
@@ -512,6 +515,8 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
 
     
 
