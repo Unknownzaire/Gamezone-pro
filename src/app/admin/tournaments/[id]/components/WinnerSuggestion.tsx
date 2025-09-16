@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState } from 'react';
@@ -8,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getWinnerSuggestion } from '../actions';
 import { Loader2, Sparkles, Trophy } from 'lucide-react';
-import { Tournament } from '@/lib/types';
+import { Tournament, User } from '@/lib/types';
 import {
   Select,
   SelectContent,
@@ -17,11 +18,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-export function WinnerSuggestion({ tournament }: { tournament: Tournament }) {
+export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: Tournament, onWinnerDeclare: (updatedTournament: Tournament) => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestWinnerFromMatchDataOutput | null>(null);
+  const [ranks, setRanks] = useState<{[participantId: string]: number | null}>({});
   const { toast } = useToast();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -58,9 +61,67 @@ export function WinnerSuggestion({ tournament }: { tournament: Tournament }) {
       setIsLoading(false);
     };
   };
+
+  const handleRankChange = (participantId: string, rank: string) => {
+    setRanks(prev => ({...prev, [participantId]: parseInt(rank, 10)}));
+  };
   
   const handleDeclareWinner = () => {
-     toast({ title: 'Winner Declared!', description: 'Prizes have been distributed.' });
+    const winnerRanks = Object.entries(ranks).filter(([, rank]) => rank !== null && rank > 0);
+    if(winnerRanks.length === 0){
+        toast({variant: 'destructive', title: 'No Ranks Assigned', description: 'Please assign at least one rank.'});
+        return;
+    }
+
+    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    let allTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+
+    const prizeDistribution = [
+        { rank: 1, prize: tournament.prizePool * 0.5 },
+        { rank: 2, prize: tournament.prizePool * 0.25 },
+        { rank: 3, prize: tournament.prizePool * 0.15 },
+        ...Array.from({length: 7}, (_, i) => ({ rank: 4 + i, prize: (tournament.prizePool * 0.1) / 7 })),
+    ];
+    
+    const updatedParticipants = tournament.participants.map(p => {
+        const rank = ranks[p.id] ?? null;
+        const prizeInfo = prizeDistribution.find(prize => prize.rank === rank);
+        
+        if (prizeInfo) {
+            const userIndex = allUsers.findIndex(u => u.id === p.user.id);
+            if(userIndex !== -1){
+                allUsers[userIndex].walletBalance += prizeInfo.prize;
+                allTransactions.push({
+                    id: `tx-${Date.now()}-${p.user.id}`,
+                    userId: p.user.id,
+                    amount: prizeInfo.prize,
+                    type: 'credit',
+                    description: `Prize for Rank #${rank} in "${tournament.title}"`,
+                    createdAt: new Date(),
+                    status: 'completed'
+                });
+            }
+        }
+        
+        return {
+            ...p,
+            result: rank ? (rank === 1 ? 'Winner' : `Rank ${rank}`) : 'Participated'
+        };
+    });
+
+    const updatedTournament: Tournament = {
+        ...tournament,
+        status: 'Completed',
+        participants: updatedParticipants,
+        winner: updatedParticipants.find(p => (ranks[p.id] === 1))?.user,
+    };
+    
+    localStorage.setItem('allUsers', JSON.stringify(allUsers));
+    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+
+    onWinnerDeclare(updatedTournament);
+    
+    toast({ title: 'Winners Declared!', description: 'Ranks assigned and prizes have been distributed.' });
   }
 
   return (
@@ -112,25 +173,34 @@ export function WinnerSuggestion({ tournament }: { tournament: Tournament }) {
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <Trophy className="text-primary" />
-            Declare Winner
+            Declare Winners
           </CardTitle>
-          <CardDescription>Manually select a winner and distribute the prizes. Use the AI suggestion for guidance.</CardDescription>
+          <CardDescription>Manually assign ranks to participants. This will distribute prizes and complete the tournament.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-            <div className="space-y-2">
-                <Label>Select Winner</Label>
-                <Select>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Choose a participant" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {tournament.participants.map(p => (
-                            <SelectItem key={p.id} value={p.user.username}>{p.user.username}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleDeclareWinner}>Declare Winner & Distribute Prize</Button>
+            <ScrollArea className="h-72">
+                <div className="space-y-3 pr-4">
+                    {tournament.participants.map(p => (
+                        <div key={p.id} className="flex items-center justify-between gap-4">
+                            <Label htmlFor={`rank-${p.id}`} className="flex-1 truncate">{p.user.username}</Label>
+                             <Select onValueChange={(value) => handleRankChange(p.id, value)}>
+                                <SelectTrigger className="w-32" id={`rank-${p.id}`}>
+                                    <SelectValue placeholder="Rank" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                     <SelectItem value="0">Unranked</SelectItem>
+                                    {Array.from({length: 100}, (_, i) => i + 1).map(rank => (
+                                        <SelectItem key={rank} value={String(rank)}>Rank #{rank}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    ))}
+                </div>
+            </ScrollArea>
+            <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleDeclareWinner} disabled={tournament.status === 'Completed'}>
+                {tournament.status === 'Completed' ? 'Already Completed' : 'Declare Winners & Distribute Prizes'}
+            </Button>
         </CardContent>
       </Card>
     </div>

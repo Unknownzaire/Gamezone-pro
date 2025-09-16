@@ -21,31 +21,37 @@ import { Tournament } from '@/lib/types';
 
 export default function ManageTournamentPage() {
   const { toast } = useToast();
-  const { id } = useParams();
+  const { id } = useParams() as { id: string };
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const tournament = tournaments.find(t => t.id === id);
+  const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
 
-  const [roomId, setRoomId] = useState(tournament?.roomId || '');
-  const [roomPassword, setRoomPassword] = useState(tournament?.roomPassword || '');
+  const [roomId, setRoomId] = useState('');
+  const [roomPassword, setRoomPassword] = useState('');
   
   useEffect(() => {
     const storedTournaments = localStorage.getItem('allTournaments');
-    if (storedTournaments) {
-        const allTournaments: Tournament[] = JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)}));
-        setTournaments(allTournaments);
-        const currentTournament = allTournaments.find(t => t.id === id);
-        if (currentTournament) {
-            setRoomId(currentTournament.roomId || '');
-            setRoomPassword(currentTournament.roomPassword || '');
-        }
+    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
+    setTournaments(allTournaments);
+    
+    const currentTournament = allTournaments.find(t => t.id === id);
+    setTournament(currentTournament);
+
+    if (currentTournament) {
+        setRoomId(currentTournament.roomId || '');
+        setRoomPassword(currentTournament.roomPassword || '');
     } else {
-        setTournaments(initialMockTournaments);
+        notFound();
     }
   }, [id]);
 
 
   if (!tournament) {
     return <div>Loading...</div>; // Or notFound() if you prefer
+  }
+
+  const updateAndSaveTournaments = (updatedTournaments: Tournament[]) => {
+      setTournaments(updatedTournaments);
+      localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
   }
   
   const handleUpdateAndGoLive = () => {
@@ -58,27 +64,33 @@ export default function ManageTournamentPage() {
       return;
     }
     
-    // In a real app, this would be a server action to update the database
     const updatedTournaments = tournaments.map(t => 
         t.id === tournament.id 
           ? { ...t, status: 'Live' as const, roomId, roomPassword } 
           : t
       );
     
-    setTournaments(updatedTournaments);
-    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+    updateAndSaveTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === id));
+
 
     toast({
       title: 'Tournament is Live!',
       description: 'Room details have been updated and status is set to Live.',
     });
   };
+  
+  const handleWinnerDeclaration = (updatedTournament: Tournament) => {
+    const updatedTournaments = tournaments.map(t => t.id === updatedTournament.id ? updatedTournament : t);
+    updateAndSaveTournaments(updatedTournaments);
+    setTournament(updatedTournament);
+  };
 
   const statCards = [
     { title: "Status", value: tournament.status, icon: Clock },
     { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
     { title: "Entry Fee", value: `₹${tournament.entryFee}`, icon: DollarSign },
-    { title: "Participants", value: tournament.participants.length, icon: Users },
+    { title: "Participants", value: `${tournament.participants.length} / 100`, icon: Users },
   ];
 
   return (
@@ -119,13 +131,15 @@ export default function ManageTournamentPage() {
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="room-id">Room ID</Label>
-                    <Input id="room-id" value={roomId} onChange={(e) => setRoomId(e.target.value)} />
+                    <Input id="room-id" value={roomId} onChange={(e) => setRoomId(e.target.value)} disabled={tournament.status !== 'Upcoming'} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="room-password">Room Password</Label>
-                    <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} />
+                    <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} disabled={tournament.status !== 'Upcoming'}/>
                 </div>
-                <Button onClick={handleUpdateAndGoLive}>Update & Go Live</Button>
+                <Button onClick={handleUpdateAndGoLive} disabled={tournament.status !== 'Upcoming'}>
+                    {tournament.status === 'Upcoming' ? 'Update & Go Live' : `Already ${tournament.status}`}
+                </Button>
             </CardContent>
         </Card>
 
@@ -163,7 +177,7 @@ export default function ManageTournamentPage() {
 
        <Separator />
       
-       <WinnerSuggestion tournament={tournament} />
+       <WinnerSuggestion tournament={tournament} onWinnerDeclare={handleWinnerDeclaration} />
 
     </div>
   );
