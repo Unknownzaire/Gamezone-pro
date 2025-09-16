@@ -7,6 +7,7 @@ import { mockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, PlusCircle, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import Image from "next/image";
 
 export default function AdminTournamentsPage() {
   return (
@@ -38,6 +39,7 @@ export default function AdminTournamentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead>Image</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prize Pool</TableHead>
                 <TableHead>Entry Fee</TableHead>
@@ -51,6 +53,16 @@ export default function AdminTournamentsPage() {
               {mockTournaments.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.title}</TableCell>
+                  <TableCell>
+                    <Image 
+                      src={t.imageUrl} 
+                      alt={t.title} 
+                      width={80} 
+                      height={45} 
+                      className="rounded-md object-cover"
+                      data-ai-hint={t.imageHint}
+                    />
+                  </TableCell>
                   <TableCell>
                     <Badge 
                       variant={
