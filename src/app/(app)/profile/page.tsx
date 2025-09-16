@@ -22,7 +22,7 @@ export default function ProfilePage() {
   const [bgmiUsername, setBgmiUsername] = useState('');
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -45,7 +45,6 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
-      setAvatarUrl(currentUser.avatarUrl || '');
     }
   }, [currentUser]);
   
@@ -82,9 +81,22 @@ export default function ProfilePage() {
   };
 
   const handleAvatarUpdate = () => {
-    if (currentUser) {
-      updateUser({ avatarUrl });
-      toast({ title: "Avatar Updated", description: "Your profile picture has been changed." });
+    if (currentUser && avatarFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const avatarUrl = event.target?.result as string;
+            updateUser({ avatarUrl });
+            toast({ title: "Avatar Updated", description: "Your profile picture has been changed." });
+        };
+        reader.readAsDataURL(avatarFile);
+    } else {
+        toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your avatar."});
+    }
+  };
+
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        setAvatarFile(e.target.files[0]);
     }
   };
 
@@ -178,11 +190,11 @@ export default function ProfilePage() {
               <DialogContent>
                 <DialogHeader>
                   <DialogTitle>Change Profile Picture</DialogTitle>
-                  <DialogDescription>Enter a new image URL to update your avatar.</DialogDescription>
+                  <DialogDescription>Upload an image file to update your avatar.</DialogDescription>
                 </DialogHeader>
                 <div className="space-y-2">
-                  <Label htmlFor="avatarUrl">Image URL</Label>
-                  <Input id="avatarUrl" value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://example.com/image.png" />
+                  <Label htmlFor="avatarFile">Image</Label>
+                  <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} />
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
