@@ -18,7 +18,7 @@ export default function CreateTournamentPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [prizePool, setPrizePool] = useState(0);
+    const [prizePool, setPrizePool] = useState(5000);
     const [matchTime, setMatchTime] = useState<Date | undefined>(new Date());
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
@@ -185,7 +185,7 @@ export default function CreateTournamentPage() {
                             <CardContent className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="title">Tournament Title</Label>
-                                    <Input id="title" name="title" placeholder="e.g., Summer Showdown" required />
+                                    <Input id="title" name="title" placeholder="e.g., Summer Showdown" defaultValue="Summer Showdown" required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="game">Game Name</Label>
@@ -197,7 +197,7 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="entry-fee">Entry Fee (₹)</Label>
-                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" required />
+                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" defaultValue={50} required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
@@ -205,7 +205,7 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>
-                                    <Input id="commission" name="commission" type="number" placeholder="10" required />
+                                    <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="imageHint">Image Hint</Label>
