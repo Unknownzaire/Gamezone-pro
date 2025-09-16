@@ -1,6 +1,7 @@
 
 
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
