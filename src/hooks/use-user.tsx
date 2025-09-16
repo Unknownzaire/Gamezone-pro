@@ -151,7 +151,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'>, password?: string, referralCode?: string): 'success' | 'error' => {
     
     // Uniqueness checks
     if (allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
@@ -178,7 +178,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        const referrer = allUsers.find(u => u.bgmiId === referralCode || u.id === referralCode || u.referralCode === referralCode);
+        const referrer = allUsers.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
             const storedSettings = localStorage.getItem('referralSettings');
@@ -324,7 +324,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    return tournaments.some(t => t.participants.some(p => p.user.id === userId));
+    const storedTournaments = localStorage.getItem('allTournaments');
+    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
+    return allTournaments.some(t => t.participants.some(p => p.user.id === userId));
   };
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
@@ -398,3 +400,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
