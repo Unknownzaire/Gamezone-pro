@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
+import { Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function LoginPage() {
   
   const [loginForm, setLoginForm] = useState({
     email: '',
-    password: 'password'
+    password: ''
   });
 
   const [signupForm, setSignupForm] = useState({
@@ -40,6 +41,8 @@ export default function LoginPage() {
       password: '',
       referralCode: referralCodeFromUrl || '',
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const usernameRef = useRef<HTMLInputElement>(null);
   const bgmiUsernameRef = useRef<HTMLInputElement>(null);
@@ -123,7 +126,7 @@ export default function LoginPage() {
 
     if (result === 'success') {
       setActiveTab('login');
-      setLoginForm(prev => ({ ...prev, email: signupForm.email }));
+      setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
       setSignupForm({
           username: '',
           bgmiUsername: '',
@@ -161,7 +164,21 @@ export default function LoginPage() {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
-                    <Input id="login-password" name="password" type="password" required value={loginForm.password} onChange={handleLoginChange} />
+                    <div className="relative">
+                      <Input id="login-password" name="password" type={showPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? <EyeOff /> : <Eye />}
+                        <span className="sr-only">
+                          {showPassword ? "Hide password" : "Show password"}
+                        </span>
+                      </Button>
+                    </div>
                     <div className="flex items-center justify-end pt-1">
                        <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
                           Forgot Password?
