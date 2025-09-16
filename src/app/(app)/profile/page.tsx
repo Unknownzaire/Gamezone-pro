@@ -199,7 +199,7 @@ export default function ProfilePage() {
         <Card className="overflow-hidden rounded-none border-x-0">
           <div className="relative h-32 bg-muted">
               {currentUser.coverImageUrl && (
-                  <Image src={currentUser.coverImageUrl} alt="Cover image" layout="fill" objectFit="cover" />
+                  <Image src={currentUser.coverImageUrl} alt="Cover image" fill objectFit="cover" />
               )}
               <Dialog>
                 <DialogTrigger asChild>
@@ -348,5 +348,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
