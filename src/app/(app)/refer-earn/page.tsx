@@ -15,7 +15,7 @@ export default function ReferEarnPage() {
   const { user, referredUsers, hasUserJoinedTournament } = useUser();
   const { toast } = useToast();
   
-  const referralCode = user ? `ARENA${user.id.substring(0, 6).toUpperCase()}` : 'LOGIN-TO-REFER';
+  const referralCode = user?.referralCode || 'LOGIN-TO-REFER';
   const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
 
 

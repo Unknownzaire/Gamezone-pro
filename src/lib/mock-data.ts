@@ -1,5 +1,7 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
+const generateReferralCode = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
 export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   id: `user-${i + 1}`,
   username: `Player${i + 1}`,
@@ -11,6 +13,7 @@ export const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => ({
   bgmiId: `5${Math.floor(100000000 + Math.random() * 900000000)}`,
   createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
   referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
+  referralCode: generateReferralCode(),
 }));
 
 

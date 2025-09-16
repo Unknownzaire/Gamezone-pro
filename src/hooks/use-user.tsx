@@ -23,7 +23,7 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>, referralCode?: string) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'>, referralCode?: string) => void;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -150,15 +150,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt'>, referralCode?: string) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'>, referralCode?: string) => {
     
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        const referrer = allUsers.find(u => `ARENA${u.id.substring(0, 6).toUpperCase()}` === referralCode);
+        const referrer = allUsers.find(u => u.referralCode === referralCode.toUpperCase());
         if (referrer) {
             referredBy = referrer.id;
         }
     }
+
+    const generateReferralCode = () => {
+      let code: string;
+      let isUnique = false;
+      while (!isUnique) {
+        code = Math.random().toString(36).substring(2, 8).toUpperCase();
+        if (!allUsers.some(u => u.referralCode === code)) {
+          isUnique = true;
+        }
+      }
+      return code!;
+    };
 
     const newUser: User = {
         ...userDetails,
@@ -168,6 +180,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         isBlocked: false,
         createdAt: new Date(),
         referredBy,
+        referralCode: generateReferralCode(),
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);
