@@ -24,7 +24,7 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'>, referralCode?: string) => void;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string) => void;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -149,7 +149,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'>, referralCode?: string) => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'>, password?: string, referralCode?: string) => {
     
     let referredBy: string | undefined = undefined;
     if (referralCode) {
@@ -158,16 +158,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             referredBy = referrer.id;
         }
     }
-
+    
     const newUser: User = {
         ...userDetails,
+        password: password,
         id: `user-${Date.now()}`,
         walletBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
         referredBy,
-        referralCode: userDetails.bgmiId || '',
+        referralCode: userDetails.bgmiId || `USER${Date.now()}`,
     };
     
     setAllUsers(prevUsers => [...prevUsers, newUser]);

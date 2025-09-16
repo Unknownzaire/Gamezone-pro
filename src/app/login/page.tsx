@@ -110,25 +110,21 @@ export default function LoginPage() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'> = {
+    const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode' | 'password'> = {
         username: signupForm.username,
         email: signupForm.email,
-        password: signupForm.password,
         mobile: signupForm.mobile,
         bgmiUsername: signupForm.bgmiUsername,
         bgmiId: signupForm.bgmiId,
     };
     
-    signup(newUser, signupForm.referralCode);
+    signup(newUser, signupForm.password, signupForm.referralCode);
     
     toast({
       title: 'Sign Up Successful',
       description: 'Welcome to Arena Ace!',
     });
     
-    // Clear login form email after signup to avoid pre-filling it
-    setLoginForm(prev => ({...prev, email: '', password: ''}));
-
     router.push('/home');
   };
 
