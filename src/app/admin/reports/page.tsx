@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -57,16 +57,33 @@ const ReportTable = ({ data, title }: { data: PrizeReport, title: string }) => {
 export default function AdminReportsPage() {
   const [completed, setCompleted] = useState<Tournament[]>([]);
 
-  useEffect(() => {
+  const loadCompletedTournaments = useCallback(() => {
     try {
       const storedTournaments = localStorage.getItem('allTournaments');
-      const allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+      const allTournaments = storedTournaments 
+        ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) 
+        : mockTournaments;
       setCompleted(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
     } catch (error) {
       console.error("Failed to load tournament data", error);
       setCompleted(mockTournaments.filter((t: Tournament) => t.status === 'Completed'));
     }
   }, []);
+
+  useEffect(() => {
+    loadCompletedTournaments();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'allTournaments') {
+        loadCompletedTournaments();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [loadCompletedTournaments]);
 
   const dailyReport = completed.reduce((acc: PrizeReport, t) => {
     const day = format(t.matchTime, 'yyyy-MM-dd (EEEE)');
