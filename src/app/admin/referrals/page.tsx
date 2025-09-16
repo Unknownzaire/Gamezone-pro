@@ -6,12 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions, mockTournaments } from "@/lib/mock-data";
-import { ArrowLeft, RefreshCw, Search, Settings } from "lucide-react";
+import { ArrowLeft, RefreshCw, Search, Settings, MoreHorizontal } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface ReferrerStats {
   user: User;
@@ -150,6 +151,7 @@ export default function AdminReferralsPage() {
                 <TableHead>Username</TableHead>
                 <TableHead className="text-center">Total Referrals</TableHead>
                 <TableHead className="text-right">Total Referral Earning</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -169,6 +171,22 @@ export default function AdminReferralsPage() {
                 </TableCell>
                 <TableCell className="text-center font-bold text-lg">{totalReferrals}</TableCell>
                 <TableCell className="text-right font-semibold text-green-500">₹{totalEarnings.toLocaleString()}</TableCell>
+                 <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button aria-haspopup="true" size="icon" variant="ghost">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Toggle menu</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                           <Link href={`/admin/users/edit/${user.id}`}>Edit User</Link>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
