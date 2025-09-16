@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useParams, notFound } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import { PromotionalAd, Tournament } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -14,9 +14,9 @@ import { ArrowLeft } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function EditPromotionalAdPage() {
+export default function EditPromotionalAdPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id } = useParams();
+  const { id } = params;
   const { toast } = useToast();
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
 
