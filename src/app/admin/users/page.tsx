@@ -172,7 +172,7 @@ export default function AdminUsersPage() {
             <p className="text-muted-foreground">Manage all registered users.</p>
           </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => window.location.reload()}>
+        <Button variant="outline" size="icon" onClick={() => loadData()}>
             <RefreshCw className="h-4 w-4" />
             <span className="sr-only">Refresh users</span>
         </Button>

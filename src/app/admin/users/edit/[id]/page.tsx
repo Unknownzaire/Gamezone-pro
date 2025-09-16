@@ -39,7 +39,7 @@ export default function EditUserPage() {
       const deposits = allTransactions
         .filter(tx => tx.userId === id && tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')))
         .reduce((acc, tx) => acc + tx.amount, 0);
-      setTotalDeposits(deposits);
+      setTotalDeposits(userToEdit.totalDeposits ?? deposits);
 
     } else {
       notFound();
@@ -53,17 +53,19 @@ export default function EditUserPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const storedUsers = localStorage.getItem('allUsers');
-    let allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : [];
+    const storedUsersJSON = localStorage.getItem('allUsers');
+    let allUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
 
-    // Find the original user to merge data
-    const originalUser = allUsers.find(u => u.id === id);
-    if (!originalUser) return;
-
-    // Create the updated user object
-    const updatedUser = { ...originalUser, ...formData, totalDeposits: totalDeposits }; // Manually add totalDeposits
-    
-    const updatedUsers = allUsers.map(u => (u.id === id ? updatedUser : u));
+    const updatedUsers = allUsers.map(u => {
+      if (u.id === id) {
+        return { 
+          ...u, 
+          ...formData, 
+          totalDeposits: totalDeposits 
+        };
+      }
+      return u;
+    });
 
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
     
