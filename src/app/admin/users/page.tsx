@@ -190,6 +190,7 @@ export default function AdminUsersPage() {
                 <TableHead>Total Deposits</TableHead>
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
+                <TableHead>Referred By</TableHead>
                 <TableHead>Registered</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>
@@ -218,6 +219,9 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
+                  <TableCell>
+                    {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
+                  </TableCell>
                    <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
                    <TableCell>
                     {user.isBlocked ? (
