@@ -187,7 +187,7 @@ export default function AdminDashboardPage() {
         })}
       </div>
       <div className="grid gap-4 md:grid-cols-2">
-        <Link href="/admin/users" target="_blank">
+        <Link href="/admin/users">
             <Card className="hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
@@ -198,7 +198,7 @@ export default function AdminDashboardPage() {
                 </CardContent>
             </Card>
         </Link>
-         <Link href="/admin/users" target="_blank">
+         <Link href="/admin/users">
             <Card className="hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
