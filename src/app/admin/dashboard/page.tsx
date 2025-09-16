@@ -68,10 +68,12 @@ export default function AdminDashboardPage() {
   
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
     const isDeposit = type === 'credit';
-    const transactionList = isDeposit ? pendingDeposits : pendingWithdrawals;
-    const setTransactionList = isDeposit ? setPendingDeposits : setPendingWithdrawals;
     
-    const transaction = transactionList.find(tx => tx.id === transactionId);
+    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
+    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+
+    const transaction = allTransactions.find(tx => tx.id === transactionId);
     if(!transaction) return;
 
     let updatedUsers = [...allUsers];
@@ -80,36 +82,27 @@ export default function AdminDashboardPage() {
     if (userToUpdate) {
         if (status === 'completed') {
             if (isDeposit) {
-                // Add to balance for approved deposit
                 updatedUsers = updatedUsers.map(u => 
                     u.id === userToUpdate.id 
                     ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
                     : u
                 );
             }
-            // For approved withdrawal, balance is already deducted on request. No change needed here.
         } else { // Declined
             if (!isDeposit) {
-                // Refund to balance for declined withdrawal
                 updatedUsers = updatedUsers.map(u => 
                     u.id === userToUpdate.id 
                     ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
                     : u
                 );
             }
-            // For declined deposit, no change to balance.
         }
     }
 
     setAllUsers(updatedUsers);
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
     
-    const storedTransactions = localStorage.getItem('allTransactions');
-    let allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : initialTransactions;
-    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
-    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
-
-    setTransactionList(prev => prev.filter(tx => tx.id !== transactionId));
+    loadData();
     
     toast({
       title: `Request ${status === 'completed' ? 'Approved' : 'Declined'}`,
@@ -124,7 +117,6 @@ export default function AdminDashboardPage() {
 
   const openDeclineDialog = (tx: Transaction) => {
     setTransactionToDecline(tx);
-    setDeclineReason('');
   }
 
   const confirmDecline = () => {
@@ -384,3 +376,5 @@ export default function AdminDashboardPage() {
     </div>
   );
 }
+
+    
