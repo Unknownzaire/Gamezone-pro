@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
@@ -30,12 +30,12 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 
 // Let's create a provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-  const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [transactions, setTransactions] = React.useState<Transaction[]>([]);
+  const [tournaments, setTournaments] = React.useState<Tournament[]>([]);
+  const [allUsers, setAllUsers] = React.useState<User[]>([]);
+  const [allTransactions, setAllTransactions] = React.useState<Transaction[]>([]);
+  const [loading, setLoading] = React.useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
