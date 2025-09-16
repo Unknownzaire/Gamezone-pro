@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2 } from "lucide-react";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
@@ -32,7 +32,7 @@ export default function CreateTournamentPage() {
     const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
         const newDistributions = [...prizeDistributions];
         const dist = { ...newDistributions[index] };
-        
+
         let newPercentage = dist.percentage;
 
         if (field === 'amount') {
@@ -43,7 +43,7 @@ export default function CreateTournamentPage() {
         } else { // 'rank'
             dist[field as 'rank'] = value as string;
         }
-
+        
         if (field !== 'rank') {
             dist.percentage = newPercentage;
         }
