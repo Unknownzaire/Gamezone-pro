@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
