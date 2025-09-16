@@ -82,15 +82,27 @@ export default function EditTournamentPage() {
     }
   };
 
-  const handlePrizeChange = (index: number, field: keyof PrizeDistribution, value: string | number) => {
+  const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
     const newDistributions = [...prizeDistributions];
-    if (field === 'percentage' && typeof value === 'string') {
-         newDistributions[index][field] = parseFloat(value) || 0;
+    const dist = { ...newDistributions[index] };
+    const prizePool = formData.prizePool || 0;
+
+    if (field === 'amount') {
+        const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
+        if (prizePool > 0) {
+            dist.percentage = parseFloat(((amount / prizePool) * 100).toPrecision(4));
+        } else {
+            dist.percentage = 0;
+        }
+    } else if (field === 'percentage') {
+        dist.percentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
     } else {
-        newDistributions[index][field] = value as never;
+        dist[field as keyof PrizeDistribution] = value as never;
     }
+    
+    newDistributions[index] = dist;
     setPrizeDistributions(newDistributions);
-  };
+};
 
   const addPrizeRow = () => {
       setPrizeDistributions([...prizeDistributions, { rank: '', percentage: 0 }]);
@@ -109,7 +121,7 @@ export default function EditTournamentPage() {
         toast({
             variant: 'destructive',
             title: "Invalid Prize Distribution",
-            description: `Total prize percentage cannot exceed 100%. Current total: ${totalPercentage}%`
+            description: `Total prize percentage cannot exceed 100%. Current total: ${totalPercentage.toFixed(2)}%`
         });
         return;
     }
@@ -150,9 +162,9 @@ export default function EditTournamentPage() {
 
   const getPrizeAmount = (percentage: number) => {
       const prizePool = formData.prizePool || 0;
-      if (!prizePool || !percentage) return "₹0";
+      if (!prizePool || !percentage) return 0;
       const amount = (prizePool * percentage) / 100;
-      return `₹${amount.toLocaleString()}`;
+      return amount;
   };
 
   if (!tournament) {
@@ -238,19 +250,24 @@ export default function EditTournamentPage() {
                                    </div>
                                    <div className="space-y-1">
                                        <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
-                                       <Input _id={`percentage-${index}`}
-                                           type="number" 
+                                       <Input
+                                            id={`percentage-${index}`}
+                                           type="number"
+                                           step="0.01"
                                            placeholder="e.g., 50"
                                            value={dist.percentage}
                                            onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
                                        />
                                    </div>
                                     <div className="space-y-1">
-                                       <Label className="text-xs">Amount</Label>
-                                       <Input 
-                                           readOnly 
+                                       <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
+                                       <Input
+                                           id={`amount-${index}`}
+                                           type="number"
+                                           step="0.01"
+                                           placeholder="e.g., 2500"
                                            value={getPrizeAmount(dist.percentage)} 
-                                           className="bg-muted text-muted-foreground"
+                                           onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
                                        />
                                    </div>
                                </div>
@@ -266,7 +283,7 @@ export default function EditTournamentPage() {
                         ))}
                         <Button variant="outline" size="sm" onClick={addPrizeRow} type="button">Add Prize Tier</Button>
                         <p className="text-xs text-muted-foreground pt-2">
-                            Total percentage distributed: {prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0)}%
+                            Total percentage distributed: {prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0).toFixed(2)}%
                         </p>
                     </CardContent>
                 </Card>
