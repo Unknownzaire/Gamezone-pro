@@ -435,6 +435,21 @@ export default function WalletPage() {
                              <p className="text-xs text-muted-foreground">Min: ₹{walletSettings.minWithdrawal}, Max: ₹{walletSettings.maxWithdrawal}</p>
                         </div>
                         <div className="space-y-2">
+                                <Label>Quick Withdraw</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {quickAmounts.map(amount => (
+                                        <Button 
+                                            key={amount} 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => setWithdrawAmount(amount.toString())}
+                                        >
+                                            ₹{amount}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
+                        <div className="space-y-2">
                             <Label>Withdrawal Method</Label>
                             <RadioGroup defaultValue="upi" onValueChange={(v) => setWithdrawMethod(v as 'upi' | 'bank')} className="flex gap-4">
                             <div className="flex items-center space-x-2">
