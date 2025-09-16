@@ -24,25 +24,25 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
-
-      {activeAds.length > 0 && (
+        {activeAds.length > 0 && (
           <Carousel 
             plugins={[Autoplay({ delay: 5000 })]}
             opts={{ loop: true }}
-            className="w-full"
+            className="w-full -mx-4"
           >
             <CarouselContent>
               {activeAds.map((ad) => (
                 <CarouselItem key={ad.id}>
                     <Link href={ad.link}>
-                        <div className="relative aspect-video w-full overflow-hidden rounded-lg">
+                        <div className="relative aspect-video w-full overflow-hidden">
                             <Image
                                 src={ad.imageUrl}
                                 alt={ad.title}
                                 fill
                                 className="object-cover"
                             />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                            <h3 className="absolute bottom-4 left-4 text-white font-bold text-xl font-headline">{ad.title}</h3>
                         </div>
                    </Link>
                 </CarouselItem>
@@ -50,6 +50,7 @@ export default function HomePage() {
             </CarouselContent>
           </Carousel>
       )}
+      <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
 
       <div className="grid grid-cols-1 gap-4">
         {upcomingOrLiveTournaments.map((tournament) => (
