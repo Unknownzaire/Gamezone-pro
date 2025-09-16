@@ -7,6 +7,7 @@ import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments 
 import { User, Transaction, Tournament, PromotionalAd, Participant } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
+import { ReferralSettings } from '@/app/admin/settings/page';
 
 // Let's create a very simple global state for our user
 // In a real app, you'd use a more robust state management library or React Context with more features
@@ -95,7 +96,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData();
 
      const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allTournaments' || event.key === 'promotionalAds') {
+      if (event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'referralSettings') {
         loadInitialData();
       }
     };
@@ -174,13 +175,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return 'error';
     }
 
-
+    let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
     if (referralCode) {
-        // A user can be referred by either BGMI ID (which is the referral code) or user ID
         const referrer = allUsers.find(u => u.bgmiId === referralCode || u.id === referralCode);
         if (referrer) {
             referredBy = referrer.id;
+            const storedSettings = localStorage.getItem('referralSettings');
+            const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
+            newUserBonus = settings.newUserBonus;
         } else {
            toast({ variant: 'destructive', title: 'Invalid Referral Code', description: 'The referral code you entered is not valid.' });
            return 'error';
@@ -191,7 +194,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         ...userDetails,
         password: password,
         id: `user-${Date.now()}`,
-        walletBalance: 0,
+        walletBalance: newUserBonus,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
@@ -199,6 +202,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         referralCode: userDetails.bgmiId || `USER${Date.now()}`,
     };
     
+    let updatedTransactions = [...allTransactions];
+    if (newUserBonus > 0) {
+      const bonusTransaction: Transaction = {
+        id: `tx-new-user-bonus-${newUser.id}`,
+        userId: newUser.id,
+        amount: newUserBonus,
+        type: 'credit',
+        description: 'New user referral bonus',
+        createdAt: new Date(),
+        status: 'completed'
+      };
+      updatedTransactions = [bonusTransaction, ...updatedTransactions];
+    }
+    
+    setAllTransactions(updatedTransactions);
     setAllUsers(prevUsers => [...prevUsers, newUser]);
     
     toast({

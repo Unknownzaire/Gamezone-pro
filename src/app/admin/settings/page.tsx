@@ -17,6 +17,11 @@ export interface WalletSettings {
     qrCodeImageUrl?: string;
 }
 
+export interface ReferralSettings {
+    referralBonus: number;
+    newUserBonus: number;
+}
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const [walletSettings, setWalletSettings] = useState<WalletSettings>({
@@ -25,12 +30,20 @@ export default function AdminSettingsPage() {
         depositUpiId: 'arenaace@upi',
         qrCodeImageUrl: '',
     });
+    const [referralSettings, setReferralSettings] = useState<ReferralSettings>({
+        referralBonus: 25,
+        newUserBonus: 25,
+    });
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
 
     useEffect(() => {
-        const storedSettings = localStorage.getItem('walletSettings');
-        if (storedSettings) {
-            setWalletSettings(JSON.parse(storedSettings));
+        const storedWalletSettings = localStorage.getItem('walletSettings');
+        if (storedWalletSettings) {
+            setWalletSettings(JSON.parse(storedWalletSettings));
+        }
+        const storedReferralSettings = localStorage.getItem('referralSettings');
+        if (storedReferralSettings) {
+            setReferralSettings(JSON.parse(storedReferralSettings));
         }
     }, []);
 
@@ -67,11 +80,28 @@ export default function AdminSettingsPage() {
         }
     }
 
+    const handleReferralUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        localStorage.setItem('referralSettings', JSON.stringify(referralSettings));
+        toast({
+            title: "Referral Settings Updated",
+            description: "The referral program settings have been saved."
+        });
+    }
+
     const handleWalletInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value, type } = e.target;
         setWalletSettings(prev => ({
             ...prev,
             [id]: type === 'number' ? Number(value) : value,
+        }));
+    }
+
+    const handleReferralInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setReferralSettings(prev => ({
+            ...prev,
+            [id]: Number(value),
         }));
     }
 
@@ -150,6 +180,32 @@ export default function AdminSettingsPage() {
                             </div>
                             <div className="flex justify-end">
                                 <Button type="submit">Save Wallet Settings</Button>
+                            </div>
+                        </CardContent>
+                    </form>
+                </Card>
+
+                <Card className="lg:col-span-2">
+                    <CardHeader>
+                        <CardTitle>Referral Settings</CardTitle>
+                        <CardDescription>Configure bonuses for the user referral program.</CardDescription>
+                    </CardHeader>
+                    <form onSubmit={handleReferralUpdate}>
+                        <CardContent className="pt-6 space-y-4">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="referralBonus">Referrer Bonus (₹)</Label>
+                                    <Input id="referralBonus" type="number" value={referralSettings.referralBonus} onChange={handleReferralInputChange} required />
+                                    <p className="text-xs text-muted-foreground">Bonus for the user who refers a new player.</p>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="newUserBonus">New User Bonus (₹)</Label>
+                                    <Input id="newUserBonus" type="number" value={referralSettings.newUserBonus} onChange={handleReferralInputChange} required />
+                                    <p className="text-xs text-muted-foreground">Bonus for the new user who signs up with a referral code.</p>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <Button type="submit">Save Referral Settings</Button>
                             </div>
                         </CardContent>
                     </form>

@@ -10,10 +10,23 @@ import { useUser } from "@/hooks/use-user.tsx";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import { Copy, Share2, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { ReferralSettings } from "@/app/admin/settings/page";
 
 export default function ReferEarnPage() {
   const { user, referredUsers, hasUserJoinedTournament } = useUser();
   const { toast } = useToast();
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings>({
+    referralBonus: 25,
+    newUserBonus: 25,
+  });
+
+  useEffect(() => {
+    const storedSettings = localStorage.getItem('referralSettings');
+    if (storedSettings) {
+      setReferralSettings(JSON.parse(storedSettings));
+    }
+  }, []);
   
   const referralCode = user?.bgmiId || 'LOGIN-TO-REFER';
   const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
@@ -88,11 +101,11 @@ export default function ReferEarnPage() {
            </div>
             <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">2</div>
-              <p>Your friend signs up using your link, and your BGMI ID is automatically filled as the referral code.</p>
+              <p>Your friend signs up using your link and gets a <span className="font-bold text-primary">₹{referralSettings.newUserBonus}</span> bonus instantly.</p>
            </div>
            <div className="flex items-start gap-4">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">3</div>
-              <p>When your friend joins their first paid tournament, you both receive a ₹25 bonus in your wallets!</p>
+              <p>When your friend joins their first paid tournament, you receive a <span className="font-bold text-primary">₹{referralSettings.referralBonus}</span> bonus in your wallet!</p>
            </div>
         </CardContent>
       </Card>
