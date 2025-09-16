@@ -28,8 +28,7 @@ const toDateTimeLocal = (date: Date): string => {
 
 export default function EditTournamentPage() {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = useParams();
   const { toast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -43,6 +42,7 @@ export default function EditTournamentPage() {
     imageUrl: '',
     imageHint: '',
   });
+   const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -65,19 +65,40 @@ export default function EditTournamentPage() {
       [name]: type === 'number' ? parseFloat(value) : value
     }));
   };
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+        setImageFile(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, this would be a server action to update the database
-    console.log("Updated tournament data:", {
-        ...formData,
-        matchTime: new Date(formData.matchTime)
-    });
-    toast({
-      title: "Tournament Updated",
-      description: `Details for ${formData.title} have been updated.`,
-    });
-    router.push('/admin/tournaments');
+    
+    const processAndSubmit = (imageUrl?: string) => {
+        const updatedData = {
+            ...formData,
+            matchTime: new Date(formData.matchTime),
+            imageUrl: imageUrl ?? formData.imageUrl
+        };
+        console.log("Updated tournament data:", updatedData);
+        toast({
+            title: "Tournament Updated",
+            description: `Details for ${formData.title} have been updated.`,
+        });
+        router.push('/admin/tournaments');
+    };
+
+    if (imageFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const newImageUrl = event.target?.result as string;
+            processAndSubmit(newImageUrl);
+        };
+        reader.readAsDataURL(imageFile);
+    } else {
+        processAndSubmit();
+    }
   };
 
   if (!tournament) {
@@ -130,8 +151,9 @@ export default function EditTournamentPage() {
                 <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} />
             </div>
             <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange} />
+                <Label htmlFor="imageFile">Tournament Image</Label>
+                <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+                {formData.imageUrl && !imageFile && <p className="text-xs text-muted-foreground pt-1">Current image is set. Upload a new file to replace it.</p>}
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>

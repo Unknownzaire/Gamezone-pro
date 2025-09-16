@@ -9,19 +9,45 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import React, { useState } from "react";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
     const { toast } = useToast();
+    const [imageFile, setImageFile] = useState<File | null>(null);
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        toast({
-            title: "Tournament Created",
-            description: "The new tournament has been successfully created."
-        });
-        router.push('/admin/tournaments');
+        
+        const processAndSubmit = (imageUrl?: string) => {
+            console.log("Image URL to save:", imageUrl);
+            toast({
+                title: "Tournament Created",
+                description: "The new tournament has been successfully created."
+            });
+            router.push('/admin/tournaments');
+        };
+        
+        if (imageFile) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const imageUrl = event.target?.result as string;
+                processAndSubmit(imageUrl);
+            };
+            reader.readAsDataURL(imageFile);
+        } else {
+             const formData = new FormData(e.currentTarget);
+             const imageUrl = formData.get('imageUrl') as string;
+             processAndSubmit(imageUrl);
+        }
     }
+
+     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setImageFile(e.target.files[0]);
+        }
+    };
+
 
     return (
         <div className="space-y-6">
@@ -64,13 +90,13 @@ export default function CreateTournamentPage() {
                             <Label htmlFor="commission">Commission (%)</Label>
                             <Input id="commission" type="number" placeholder="10" required />
                         </div>
-                        <div className="space-y-2">
+                         <div className="space-y-2">
                             <Label htmlFor="imageHint">Image Hint</Label>
                             <Input id="imageHint" placeholder="e.g., epic battle" />
                         </div>
-                        <div className="space-y-2 md:col-span-2">
-                            <Label htmlFor="imageUrl">Image URL</Label>
-                            <Input id="imageUrl" placeholder="https://picsum.photos/seed/example/600/400" />
+                         <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="imageFile">Tournament Image</Label>
+                            <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
                         </div>
                         <div className="md:col-span-2 flex justify-end">
                             <Button type="submit">Create Tournament</Button>
