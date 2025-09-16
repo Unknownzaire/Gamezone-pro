@@ -97,7 +97,7 @@ export default function EditTournamentPage() {
     } else if (field === 'percentage') {
         dist.percentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
     } else {
-        dist[field as keyof PrizeDistribution] = value as never;
+        dist[field as 'rank'] = value as string;
     }
     
     newDistributions[index] = dist;
