@@ -190,6 +190,10 @@ export default function WalletPage() {
         loadWalletSettings();
         toast({ title: "Wallet settings updated", description: "The deposit information has been updated by the admin." });
       }
+      if (event.key === 'allTransactions' || event.key === 'allUsers') {
+        reloadUser();
+        toast({ title: "Wallet Updated", description: "Your wallet has been updated by an admin." });
+      }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -197,7 +201,7 @@ export default function WalletPage() {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-  }, [toast]);
+  }, [toast, reloadUser]);
 
   const handleWithdraw = () => {
     if (!user) return;
@@ -547,18 +551,5 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-    
-
-    
-
-    
-
-    
 
     
