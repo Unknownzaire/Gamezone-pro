@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament, PromotionalAd } from '@/lib/types';
-import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone } from "lucide-react";
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -86,6 +86,8 @@ export default function AdminDashboardPage() {
   const totalPromotions = allTransactions
     .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('promotion') || tx.description.toLowerCase().includes('bonus') || tx.description.toLowerCase() === 'admin deposit'))
     .reduce((acc, tx) => acc + tx.amount, 0);
+
+  const totalReferredUsers = allUsers.filter(u => u.referredBy).length;
 
   const stats = [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
@@ -194,7 +196,7 @@ export default function AdminDashboardPage() {
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         <Link href="/admin/transactions?tab=deposits">
             <Card className="hover:bg-muted/50 transition-colors">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -236,6 +238,17 @@ export default function AdminDashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{activeAdsCount}</div>
+                </CardContent>
+            </Card>
+        </Link>
+        <Link href="/admin/users">
+            <Card className="hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Referred Users</CardTitle>
+                    <UserPlus className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{totalReferredUsers}</div>
                 </CardContent>
             </Card>
         </Link>
@@ -469,3 +482,5 @@ export default function AdminDashboardPage() {
 
 
       
+
+    
