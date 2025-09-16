@@ -167,12 +167,29 @@ export default function WalletPage() {
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
-  useEffect(() => {
+  const loadWalletSettings = () => {
     const storedSettings = localStorage.getItem('walletSettings');
     if (storedSettings) {
-        setWalletSettings(JSON.parse(storedSettings));
+      setWalletSettings(JSON.parse(storedSettings));
     }
-  }, []);
+  };
+
+  useEffect(() => {
+    loadWalletSettings();
+
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'walletSettings') {
+        loadWalletSettings();
+        toast({ title: "Wallet settings updated", description: "The deposit information has been updated by the admin." });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [toast]);
 
   const handleWithdraw = () => {
     if (!user) return;
