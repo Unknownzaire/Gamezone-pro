@@ -17,7 +17,7 @@ import {
   SidebarInset,
 } from '@/components/ui/sidebar';
 import Logo from '@/components/Logo';
-import { LayoutDashboard, LogOut, Settings, Swords, Users } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 
@@ -25,6 +25,7 @@ const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/tournaments', label: 'Tournaments', icon: Swords },
   { href: '/admin/users', label: 'Users', icon: Users },
+  { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
