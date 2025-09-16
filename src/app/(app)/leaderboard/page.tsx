@@ -1,3 +1,4 @@
+
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +14,16 @@ import {
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation";
 import { Trophy } from "lucide-react";
+import { Participant } from "@/lib/types";
 
+
+const getRank = (participant: Participant) => {
+    if (participant.result === 'Winner') return 1;
+    if (participant.result?.startsWith('Rank #')) {
+      return parseInt(participant.result.replace('Rank #', ''));
+    }
+    return null;
+};
 
 export default function LeaderboardPage() {
   const router = useRouter();
@@ -36,16 +46,19 @@ export default function LeaderboardPage() {
   }).sort((a,b) => b.points - a.points);
 
 
-  const tournamentParticipants = tournamentId ? mockParticipants.filter(p => p.tournamentId === tournamentId) : [];
+  const allTournaments = JSON.parse(localStorage.getItem('allTournaments') || '[]').map((t: any) => ({...t, matchTime: new Date(t.matchTime)}));
+  const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
+  const tournamentParticipants = currentTournament ? currentTournament.participants : [];
+
 
   return (
     <div className="space-y-6">
        <div className="flex justify-between items-center">
          <h1 className="font-headline text-3xl font-bold">Leaderboard</h1>
-         {tournamentId && mockTournaments.find(t => t.id === tournamentId)?.winner && (
+         {tournamentId && currentTournament?.winner && (
             <div className="flex items-center gap-2 text-yellow-400">
               <Trophy />
-              <span className="font-bold">{mockTournaments.find(t => t.id === tournamentId)?.winner?.username}</span>
+              <span className="font-bold">{currentTournament?.winner?.username}</span>
             </div>
          )}
        </div>
@@ -76,9 +89,15 @@ export default function LeaderboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tournamentParticipants.sort((a,b) => (a.result === 'Winner' ? -1 : 1)).map((p, index) => (
+                {tournamentParticipants.sort((a: Participant, b: Participant) => {
+                  const rankA = getRank(a);
+                  const rankB = getRank(b);
+                  if (rankA === null) return 1;
+                  if (rankB === null) return -1;
+                  return rankA - rankB;
+                }).map((p: Participant) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-bold">{index + 1}</TableCell>
+                    <TableCell className="font-bold">{getRank(p) ?? 'Unranked'}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
