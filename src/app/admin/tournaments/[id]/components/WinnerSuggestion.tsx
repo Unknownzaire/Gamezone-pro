@@ -149,7 +149,6 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
         if (dist.rank.includes('-')) {
             const [start, end] = dist.rank.split('-').map(Number);
             if (rank >= start && rank <= end) {
-                // If the prize is for a range, we need to know how many people are in that range
                 const winnerCountInRange = Object.values(ranks).filter(r => r && r >= start && r <= end).length;
                 const totalPrizeForRange = prizePool * (dist.percentage / 100);
                 return winnerCountInRange > 0 ? totalPrizeForRange / winnerCountInRange : 0;
@@ -180,9 +179,12 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     
     const updatedParticipants = tournament.participants.map(p => {
         const rank = ranks[p.id] ?? null;
+        let newResult = 'Participated';
         
         if (rank) {
+            newResult = rank === 1 ? 'Winner' : `Rank #${rank}`;
             const prizeAmount = getPrizeForRank(rank, tournament.prizePool, prizeDistribution);
+            
             if (prizeAmount > 0) {
                  const userIndex = allUsers.findIndex(u => u.id === p.user.id);
                 if(userIndex !== -1){
@@ -202,7 +204,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
         
         return {
             ...p,
-            result: rank ? (rank === 1 ? 'Winner' : `Rank #${rank}` as `Rank #${number}`) : 'Participated'
+            result: newResult
         };
     });
 
@@ -210,7 +212,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
         ...tournament,
         status: 'Completed',
         participants: updatedParticipants,
-        winner: updatedParticipants.find(p => (ranks[p.id] === 1))?.user,
+        winner: updatedParticipants.find(p => p.result === 'Winner')?.user,
     };
     
     localStorage.setItem('allUsers', JSON.stringify(allUsers));

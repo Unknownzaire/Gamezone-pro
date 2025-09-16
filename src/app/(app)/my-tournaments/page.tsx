@@ -53,12 +53,10 @@ export default function MyTournamentsPage() {
         if (dist.rank.includes('-')) {
             const [start, end] = dist.rank.split('-').map(Number);
             if (rank >= start && rank <= end) {
-                // To calculate individual prize, we'd need to know how many winners are in the range.
-                // This is a simplification and might not be perfectly accurate if not all ranks in the range are filled.
-                 const winnerCountInRange = tournament.participants.filter(p => {
+                const winnerCountInRange = tournament.participants.filter(p => {
                     const pRankMatch = p.result?.match(/#(\d+)/);
                     const pRank = p.result === 'Winner' ? 1 : pRankMatch ? parseInt(pRankMatch[1]) : null;
-                    return pRank && pRank >= start && pRank <= end;
+                    return pRank !== null && pRank >= start && pRank <= end;
                 }).length;
                 
                 const totalPrizeForRange = tournament.prizePool * (dist.percentage / 100);
