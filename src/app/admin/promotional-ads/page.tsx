@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, PlusCircle, Trash2 } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Pencil } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
@@ -35,11 +35,11 @@ export default function AdminPromotionalAdsPage() {
 
   useEffect(() => {
     if (isFormVisible && tournaments.length > 0) {
-      // Pre-fill the form with the first tournament's data
       const firstTournament = tournaments[0];
-      handleTournamentLinkSelect(firstTournament.id);
+      if (firstTournament) {
+        handleTournamentLinkSelect(firstTournament.id);
+      }
     } else {
-      // Reset form when it's hidden
       setTitle('');
       setLink('');
       setImageFile(null);
@@ -71,10 +71,6 @@ export default function AdminPromotionalAdsPage() {
         setPromotionalAds(prev => [...prev, newAd]);
         toast({ title: 'Promotional Ad Created', description: `The ad "${title}" is now live.` });
         
-        // Reset form
-        setTitle('');
-        setLink('');
-        setImageFile(null);
         setIsFormVisible(false);
     };
     reader.readAsDataURL(imageFile);
@@ -150,9 +146,9 @@ export default function AdminPromotionalAdsPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="ad-link-select">Link to Tournament</Label>
-                        <Select onValueChange={handleTournamentLinkSelect} >
+                         <Select onValueChange={handleTournamentLinkSelect} >
                             <SelectTrigger id="ad-link-select">
-                                <SelectValue placeholder="Select a tournament to auto-fill link" />
+                                <SelectValue placeholder="Select a tournament to auto-fill fields" />
                             </SelectTrigger>
                             <SelectContent>
                                 {tournaments.map(t => (
@@ -224,9 +220,30 @@ export default function AdminPromotionalAdsPage() {
                                         <Button variant="outline" size="sm" onClick={() => handleToggleStatus(ad)}>
                                             {ad.status === 'active' ? 'Deactivate' : 'Activate'}
                                         </Button>
-                                        <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
-                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                        </Button>
+                                        <Link href={`/admin/promotional-ads/edit/${ad.id}`}>
+                                          <Button variant="ghost" size="icon">
+                                            <Pencil className="h-4 w-4" />
+                                          </Button>
+                                        </Link>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the ad "{ad.title}". This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteAd()} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </div>
                                 </TableCell>
                             </TableRow>
@@ -238,21 +255,6 @@ export default function AdminPromotionalAdsPage() {
                  )}
             </CardContent>
         </Card>
-
-        <AlertDialog open={!!adToDelete} onOpenChange={() => setAdToDelete(null)}>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                    <AlertDialogDescription>
-                        This will permanently delete the ad "{adToDelete?.title}". This action cannot be undone.
-                    </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteAd} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
     </div>
   );
 }
