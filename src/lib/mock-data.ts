@@ -1,3 +1,4 @@
+
 import { User, Tournament, Participant, Transaction } from './types';
 
 const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
@@ -6,6 +7,7 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
     id: `user-${i + 1}`,
     username: `Player${i + 1}`,
     email: `player${i + 1}@example.com`,
+    password: 'password',
     walletBalance: 1500,
     avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
     mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,

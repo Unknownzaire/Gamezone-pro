@@ -112,6 +112,7 @@ export default function LoginPage() {
     const newUser: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'referralCode'> = {
         username: signupForm.username,
         email: signupForm.email,
+        password: signupForm.password,
         mobile: signupForm.mobile,
         bgmiUsername: signupForm.bgmiUsername,
         bgmiId: signupForm.bgmiId,
@@ -124,6 +125,9 @@ export default function LoginPage() {
       description: 'Welcome to Arena Ace!',
     });
     
+    // Clear login form email after signup to avoid pre-filling it
+    setLoginForm(prev => ({...prev, email: ''}));
+
     router.push('/home');
   };
 

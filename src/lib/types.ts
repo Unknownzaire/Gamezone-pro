@@ -61,6 +61,7 @@ export type User = {
   id: string;
   username: string;
   email: string;
+  password?: string;
   walletBalance: number;
   avatarUrl: string;
   coverImageUrl?: string;

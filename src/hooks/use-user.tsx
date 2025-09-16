@@ -133,7 +133,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [promotionalAds, loading]);
 
   const login = (email: string, password: string): boolean | 'blocked' => {
-    const userToLogin = allUsers.find(u => u.email === email);
+    const userToLogin = allUsers.find(u => u.email === email && u.password === password);
     
     if (!userToLogin) {
       return false; 
@@ -143,8 +143,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         router.push('/blocked');
         return 'blocked';
     }
-    
-    // For demo, we are not checking password. In a real app, you'd check a hashed password.
     
     loadUserContext(userToLogin.id);
     return true;
