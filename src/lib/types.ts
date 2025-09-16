@@ -1,4 +1,5 @@
 
+
 export type Tournament = {
   id: string;
   title: string;
@@ -53,4 +54,5 @@ export type User = {
   bgmiId?: string;
   isBlocked?: boolean;
   createdAt: Date;
+  totalDeposits?: number;
 };

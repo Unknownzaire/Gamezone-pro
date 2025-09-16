@@ -61,7 +61,7 @@ export default function EditUserPage() {
     if (!originalUser) return;
 
     // Create the updated user object
-    const updatedUser = { ...originalUser, ...formData };
+    const updatedUser = { ...originalUser, ...formData, totalDeposits: totalDeposits }; // Manually add totalDeposits
     
     const updatedUsers = allUsers.map(u => (u.id === id ? updatedUser : u));
 

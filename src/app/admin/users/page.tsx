@@ -148,6 +148,9 @@ export default function AdminUsersPage() {
   };
 
   const getTotalDeposits = (user: User) => {
+    if (user.totalDeposits !== undefined) {
+      return user.totalDeposits;
+    }
     return transactions
       .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')))
       .reduce((acc, tx) => acc + tx.amount, 0);
