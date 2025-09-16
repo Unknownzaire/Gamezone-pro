@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,6 +61,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                               {showStatus && tx.status && (
                                   <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="mt-1 flex items-center gap-1 capitalize">
                                       {tx.status === 'pending' && <Clock className="h-3 w-3" />}
+                                       {tx.status === 'declined' && <XCircle className="h-3 w-3" />}
                                       {tx.status}
                                   </Badge>
                               )}
@@ -324,6 +325,7 @@ export default function WalletPage() {
   const creditTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'credit' && tx.status === 'completed'));
   const debitTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'debit' && tx.status === 'completed'));
   const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
+  const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
 
 
   return (
@@ -483,11 +485,12 @@ export default function WalletPage() {
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
          <Tabs defaultValue="all" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
+            <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="all">All</TabsTrigger>
                 <TabsTrigger value="credit">Credit</TabsTrigger>
                 <TabsTrigger value="debit">Debit</TabsTrigger>
                 <TabsTrigger value="pending">Pending</TabsTrigger>
+                <TabsTrigger value="declined">Declined</TabsTrigger>
             </TabsList>
             <TabsContent value="all" className="mt-4">
                 <Card>
@@ -517,6 +520,13 @@ export default function WalletPage() {
                     </CardContent>
                 </Card>
             </TabsContent>
+            <TabsContent value="declined" className="mt-4">
+                <Card>
+                    <CardContent className="p-0">
+                       <TransactionList transactions={declinedTransactions} showStatus={true}/>
+                    </CardContent>
+                </Card>
+            </TabsContent>
         </Tabs>
       </div>
     </div>
@@ -528,6 +538,8 @@ export default function WalletPage() {
     
 
     
+    
+
     
 
     
