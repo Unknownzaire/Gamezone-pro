@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament } from '@/lib/types';
-import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History, Settings, BarChart3 } from "lucide-react";
+import { DollarSign, Swords, Trophy, Users, Clock, ArrowDownLeft, ArrowUpRight, RefreshCw, History, Settings, BarChart3, Banknote } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -59,15 +59,23 @@ export default function AdminDashboardPage() {
   }, [loadData]);
 
 
-  const totalTournaments = mockTournaments.length;
+  const totalTournaments = completedTournaments.length;
   const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
   const totalRevenue = completedTournaments.reduce((acc, t) => acc + (t.participants.length * t.entryFee) - t.prizePool, 0);
+
+  const totalDeposits = allTransactions
+    .filter(tx => tx.type === 'credit' && tx.status === 'completed')
+    .reduce((acc, tx) => acc + tx.amount, 0);
+
+  const totalWithdrawals = allTransactions
+    .filter(tx => tx.type === 'debit' && tx.status === 'completed' && tx.description.toLowerCase().includes('withdrawal'))
+    .reduce((acc, tx) => acc + tx.amount, 0);
 
   const stats = [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
-    { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
+    { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];
   
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
@@ -170,6 +178,26 @@ export default function AdminDashboardPage() {
           
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+         <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Deposits</CardTitle>
+                <Banknote className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">₹{totalDeposits.toLocaleString()}</div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total Withdrawals</CardTitle>
+                <Banknote className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">₹{totalWithdrawals.toLocaleString()}</div>
+            </CardContent>
+        </Card>
       </div>
       <div className="grid gap-6 md:grid-cols-2">
         <Dialog open={isDepositModalOpen} onOpenChange={setIsDepositModalOpen}>
@@ -395,6 +423,8 @@ export default function AdminDashboardPage() {
 
     </div>
   );
+
+    
 
     
 
