@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export interface WalletSettings {
@@ -24,6 +25,9 @@ export interface ReferralSettings {
 
 export default function AdminSettingsPage() {
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const showOnly = searchParams.get('show');
+
     const [walletSettings, setWalletSettings] = useState<WalletSettings>({
         minWithdrawal: 100,
         maxWithdrawal: 5000,
@@ -115,7 +119,7 @@ export default function AdminSettingsPage() {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-4">
-                 <Link href="/admin/dashboard">
+                 <Link href={showOnly ? `/admin/referrals` : "/admin/dashboard"}>
                     <Button variant="outline" size="icon" className="h-7 w-7">
                         <ArrowLeft className="h-4 w-4" />
                         <span className="sr-only">Back</span>
@@ -128,88 +132,94 @@ export default function AdminSettingsPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Admin Security</CardTitle>
-                        <CardDescription>Update your admin account credentials.</CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleSecurityUpdate}>
-                        <CardContent className="pt-6 space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="username">Admin Username</Label>
-                                <Input id="username" defaultValue="admin" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="current-password">Current Password</Label>
-                                <Input id="current-password" type="password" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="new-password">New Password</Label>
-                                <Input id="new-password" type="password" />
-                            </div>
-                            <div className="flex justify-end">
-                                <Button type="submit">Save Security Settings</Button>
-                            </div>
-                        </CardContent>
-                    </form>
-                </Card>
-
-                 <Card>
-                    <CardHeader>
-                        <CardTitle>Wallet Settings</CardTitle>
-                        <CardDescription>Configure global wallet and payment settings.</CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleWalletUpdate}>
-                        <CardContent className="pt-6 space-y-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
-                                <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="maxWithdrawal">Maximum Withdrawal (₹)</Label>
-                                <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
-                                <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="qr-code">QR Code Image</Label>
-                                <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} />
-                                {walletSettings.qrCodeImageUrl && !qrCodeFile && <p className="text-xs text-muted-foreground pt-1">Current QR code is set. Upload a new file to replace it.</p>}
-                            </div>
-                            <div className="flex justify-end">
-                                <Button type="submit">Save Wallet Settings</Button>
-                            </div>
-                        </CardContent>
-                    </form>
-                </Card>
-
-                <Card className="lg:col-span-2">
-                    <CardHeader>
-                        <CardTitle>Referral Settings</CardTitle>
-                        <CardDescription>Configure bonuses for the user referral program.</CardDescription>
-                    </CardHeader>
-                    <form onSubmit={handleReferralUpdate}>
-                        <CardContent className="pt-6 space-y-4">
-                            <div className="grid md:grid-cols-2 gap-4">
+                {(!showOnly || showOnly === 'security') && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Admin Security</CardTitle>
+                            <CardDescription>Update your admin account credentials.</CardDescription>
+                        </CardHeader>
+                        <form onSubmit={handleSecurityUpdate}>
+                            <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="referralBonus">Referrer Bonus (₹)</Label>
-                                    <Input id="referralBonus" type="number" value={referralSettings.referralBonus} onChange={handleReferralInputChange} required />
-                                    <p className="text-xs text-muted-foreground">Bonus for the user who refers a new player.</p>
+                                    <Label htmlFor="username">Admin Username</Label>
+                                    <Input id="username" defaultValue="admin" required />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="newUserBonus">New User Bonus (₹)</Label>
-                                    <Input id="newUserBonus" type="number" value={referralSettings.newUserBonus} onChange={handleReferralInputChange} required />
-                                    <p className="text-xs text-muted-foreground">Bonus for the new user who signs up with a referral code.</p>
+                                    <Label htmlFor="current-password">Current Password</Label>
+                                    <Input id="current-password" type="password" required />
                                 </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <Button type="submit">Save Referral Settings</Button>
-                            </div>
-                        </CardContent>
-                    </form>
-                </Card>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-password">New Password</Label>
+                                    <Input id="new-password" type="password" />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Save Security Settings</Button>
+                                </div>
+                            </CardContent>
+                        </form>
+                    </Card>
+                )}
+
+                 {(!showOnly || showOnly === 'wallet') && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Wallet Settings</CardTitle>
+                            <CardDescription>Configure global wallet and payment settings.</CardDescription>
+                        </CardHeader>
+                        <form onSubmit={handleWalletUpdate}>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
+                                    <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="maxWithdrawal">Maximum Withdrawal (₹)</Label>
+                                    <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
+                                    <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="qr-code">QR Code Image</Label>
+                                    <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} />
+                                    {walletSettings.qrCodeImageUrl && !qrCodeFile && <p className="text-xs text-muted-foreground pt-1">Current QR code is set. Upload a new file to replace it.</p>}
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Save Wallet Settings</Button>
+                                </div>
+                            </CardContent>
+                        </form>
+                    </Card>
+                 )}
+
+                {(!showOnly || showOnly === 'referrals') && (
+                    <Card className="lg:col-span-2">
+                        <CardHeader>
+                            <CardTitle>Referral Settings</CardTitle>
+                            <CardDescription>Configure bonuses for the user referral program.</CardDescription>
+                        </CardHeader>
+                        <form onSubmit={handleReferralUpdate}>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="referralBonus">Referrer Bonus (₹)</Label>
+                                        <Input id="referralBonus" type="number" value={referralSettings.referralBonus} onChange={handleReferralInputChange} required />
+                                        <p className="text-xs text-muted-foreground">Bonus for the user who refers a new player.</p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="newUserBonus">New User Bonus (₹)</Label>
+                                        <Input id="newUserBonus" type="number" value={referralSettings.newUserBonus} onChange={handleReferralInputChange} required />
+                                        <p className="text-xs text-muted-foreground">Bonus for the new user who signs up with a referral code.</p>
+                                    </div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Save Referral Settings</Button>
+                                </div>
+                            </CardContent>
+                        </form>
+                    </Card>
+                )}
             </div>
         </div>
     );

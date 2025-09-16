@@ -119,7 +119,7 @@ export default function AdminReferralsPage() {
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh referrals</span>
             </Button>
-             <Link href="/admin/settings">
+             <Link href="/admin/settings?show=referrals">
               <Button variant="outline" size="icon">
                   <Settings className="h-4 w-4" />
                   <span className="sr-only">Referral Settings</span>
