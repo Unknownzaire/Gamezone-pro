@@ -164,7 +164,7 @@ export default function EditTournamentPage() {
       const prizePool = formData.prizePool || 0;
       if (!prizePool || !percentage) return 0;
       const amount = (prizePool * percentage) / 100;
-      return amount;
+      return Number(amount.toFixed(2));
   };
 
   if (!tournament) {

@@ -76,7 +76,7 @@ export default function CreateTournamentPage() {
                 gameName: formData.get('game') as string,
                 matchTime: new Date(formData.get('match-time') as string),
                 entryFee: Number(formData.get('entry-fee')),
-                prizePool: Number(formData.get('prize-pool')),
+                prizePool: prizePool,
                 commissionPercentage: Number(formData.get('commission')),
                 imageUrl,
                 imageHint: formData.get('imageHint') as string,
@@ -119,7 +119,7 @@ export default function CreateTournamentPage() {
     const getPrizeAmount = (percentage: number) => {
         if(!prizePool || !percentage) return 0;
         const amount = (prizePool * percentage) / 100;
-        return amount;
+        return Number(amount.toFixed(2));
     }
 
 
@@ -163,7 +163,7 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
-                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required onChange={(e) => setPrizePool(Number(e.target.value))} />
+                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>
