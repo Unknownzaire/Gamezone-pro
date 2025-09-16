@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect, memo } from 'react';
+import React, { useState, useEffect, memo, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,15 +10,9 @@ import { useToast } from '@/hooks/use-toast';
 import { getWinnerSuggestion } from '../actions';
 import { Loader2, Sparkles, Trophy } from 'lucide-react';
 import { Tournament, User, Participant } from '@/lib/types';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // Memoized component for each participant rank item to prevent unnecessary re-renders
 const ParticipantRankItem = memo(({
@@ -32,6 +26,29 @@ const ParticipantRankItem = memo(({
   usedRanks: number[];
   onRankChange: (participantId: string, rank: string) => void;
 }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [tempRank, setTempRank] = useState(rank ? rank.toString() : '');
+
+  const handleSaveRank = () => {
+    const rankNum = parseInt(tempRank, 10);
+    if(tempRank === '' || tempRank === '0') {
+      onRankChange(participant.id, '0');
+    } else if (!isNaN(rankNum) && rankNum >= 1 && rankNum <= 100) {
+      if (usedRanks.includes(rankNum) && rankNum !== rank) {
+        // This rank is taken, do nothing or show toast (already handled by disabled state, but as a fallback)
+      } else {
+        onRankChange(participant.id, tempRank);
+      }
+    }
+    setIsDialogOpen(false);
+  };
+  
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSaveRank();
+    }
+  };
+
   return (
     <div className="flex items-center justify-between gap-4">
       <div className="flex-1 truncate">
@@ -40,26 +57,31 @@ const ParticipantRankItem = memo(({
           {participant.user.bgmiUsername} ({participant.user.bgmiId})
         </p>
       </div>
-      <Select
-        onValueChange={(value) => onRankChange(participant.id, value)}
-        value={rank?.toString() ?? "0"}
-      >
-        <SelectTrigger className="w-32" id={`rank-${participant.id}`}>
-          <SelectValue placeholder="Rank" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="0">Unranked</SelectItem>
-          {Array.from({ length: 100 }, (_, i) => i + 1).map(rankNum => (
-            <SelectItem
-              key={rankNum}
-              value={String(rankNum)}
-              disabled={usedRanks.includes(rankNum) && rank !== rankNum}
-            >
-              Rank #{rankNum}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-32 justify-start">
+              {rank ? `Rank #${rank}` : 'Unranked'}
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[280px]">
+             <DialogHeader>
+                <DialogTitle>Set Rank for {participant.user.username}</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <Input 
+                type="number"
+                min="1"
+                max="100"
+                placeholder="Enter rank (1-100)"
+                value={tempRank}
+                onChange={(e) => setTempRank(e.target.value)}
+                onKeyDown={handleKeyDown}
+                autoFocus
+              />
+            </div>
+            <Button onClick={handleSaveRank}>Set Rank</Button>
+          </DialogContent>
+      </Dialog>
     </div>
   );
 });
@@ -123,8 +145,8 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     };
   };
 
-  const handleRankChange = React.useCallback((participantId: string, rank: string) => {
-    setRanks(prev => ({...prev, [participantId]: rank === "0" ? null : parseInt(rank, 10)}));
+  const handleRankChange = useCallback((participantId: string, rank: string) => {
+    setRanks(prev => ({...prev, [participantId]: rank === "0" || rank === "" ? null : parseInt(rank, 10)}));
   }, []);
   
   const handleDeclareWinner = () => {
@@ -262,5 +284,3 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     </div>
   );
 }
-
-    
