@@ -70,18 +70,17 @@ export default function AdminDashboardPage() {
     const isDeposit = type === 'credit';
     
     let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
-    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
-
     const transaction = allTransactions.find(tx => tx.id === transactionId);
     if(!transaction) return;
+
+    allTransactions = allTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
+    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
 
     let updatedUsers = [...allUsers];
     const userToUpdate = allUsers.find(u => u.id === transaction.userId);
 
     if (userToUpdate) {
       if (status === 'completed') {
-        // If a deposit is approved, add the amount to the user's balance.
         if (isDeposit) {
           updatedUsers = updatedUsers.map(u => 
             u.id === userToUpdate.id 
@@ -89,9 +88,7 @@ export default function AdminDashboardPage() {
             : u
           );
         }
-        // If a withdrawal is approved, the balance was already reduced when the request was submitted, so no change is needed.
-      } else { // status === 'declined'
-        // If a withdrawal is declined, add the amount back to the user's balance.
+      } else { 
         if (!isDeposit) {
           updatedUsers = updatedUsers.map(u => 
             u.id === userToUpdate.id 
@@ -99,10 +96,8 @@ export default function AdminDashboardPage() {
             : u
           );
         }
-        // If a deposit is declined, no change to balance is needed.
       }
     }
-
 
     setAllUsers(updatedUsers);
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
@@ -129,6 +124,13 @@ export default function AdminDashboardPage() {
     handleRequest(transactionToDecline.id, 'declined', transactionToDecline.type, declineReason);
     setTransactionToDecline(null);
   }
+  
+  const handleRefreshClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    loadData();
+    toast({ title: "Dashboard Updated", description: "Pending requests have been refreshed." });
+  };
+
 
   return (
     <div className="space-y-6">
@@ -168,7 +170,7 @@ export default function AdminDashboardPage() {
                   Pending Deposits
                 </CardTitle>
                  <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); window.location.reload();}}>
+                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRefreshClick}>
                         <RefreshCw className="h-4 w-4" />
                     </Button>
                     <Badge variant="secondary">{pendingDeposits.length}</Badge>
@@ -256,7 +258,7 @@ export default function AdminDashboardPage() {
                         Pending Withdrawals
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => { e.stopPropagation(); window.location.reload();}}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRefreshClick}>
                             <RefreshCw className="h-4 w-4" />
                         </Button>
                         <Badge variant="destructive">{pendingWithdrawals.length}</Badge>
@@ -384,4 +386,5 @@ export default function AdminDashboardPage() {
 
     
 
+    
     
