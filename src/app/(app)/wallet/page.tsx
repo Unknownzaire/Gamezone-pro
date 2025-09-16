@@ -250,8 +250,8 @@ export default function WalletPage() {
       toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount to add." });
       return;
     }
-    if (!upiRef) {
-       toast({ variant: 'destructive', title: "Missing Reference Number", description: "Please enter the UPI transaction reference number." });
+    if (!upiRef || upiRef.length !== 12) {
+       toast({ variant: 'destructive', title: "Invalid Reference Number", description: "Please enter the 12-digit UPI transaction reference number." });
       return;
     }
 
@@ -380,6 +380,8 @@ export default function WalletPage() {
                                 placeholder="Enter the 12-digit number"
                                 value={upiRef}
                                 onChange={(e) => setUpiRef(e.target.value)}
+                                minLength={12}
+                                maxLength={12}
                                 />
                             </div>
                         </div>
@@ -510,5 +512,7 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
 
     
