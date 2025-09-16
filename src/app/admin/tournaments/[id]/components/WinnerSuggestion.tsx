@@ -27,27 +27,16 @@ const ParticipantRankItem = memo(({
   onRankChange: (participantId: string, rank: string) => void;
 }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tempRank, setTempRank] = useState(rank ? rank.toString() : '');
-
-  const handleSaveRank = () => {
-    const rankNum = parseInt(tempRank, 10);
-    if(tempRank === '' || tempRank === '0') {
-      onRankChange(participant.id, '0');
-    } else if (!isNaN(rankNum) && rankNum >= 1 && rankNum <= 100) {
-      if (usedRanks.includes(rankNum) && rankNum !== rank) {
-        // This rank is taken, do nothing or show toast (already handled by disabled state, but as a fallback)
-      } else {
-        onRankChange(participant.id, tempRank);
-      }
-    }
+  
+  const handleRankSelect = (newRank: number) => {
+    onRankChange(participant.id, newRank.toString());
     setIsDialogOpen(false);
   };
   
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
-      handleSaveRank();
-    }
-  };
+  const handleUnrank = () => {
+    onRankChange(participant.id, '0');
+    setIsDialogOpen(false);
+  }
 
   return (
     <div className="flex items-center justify-between gap-4">
@@ -63,23 +52,29 @@ const ParticipantRankItem = memo(({
               {rank ? `Rank #${rank}` : 'Unranked'}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[280px]">
+          <DialogContent className="max-w-lg">
              <DialogHeader>
                 <DialogTitle>Set Rank for {participant.user.username}</DialogTitle>
             </DialogHeader>
-            <div className="py-4">
-              <Input 
-                type="number"
-                min="1"
-                max="100"
-                placeholder="Enter rank (1-100)"
-                value={tempRank}
-                onChange={(e) => setTempRank(e.target.value)}
-                onKeyDown={handleKeyDown}
-                autoFocus
-              />
+            <div className="py-2">
+                <ScrollArea className="h-72">
+                    <div className="grid grid-cols-5 gap-2 pr-4">
+                        {Array.from({length: 100}, (_, i) => i + 1).map(rankNum => (
+                            <Button
+                                key={rankNum}
+                                variant={rank === rankNum ? 'default' : 'outline'}
+                                disabled={usedRanks.includes(rankNum) && rank !== rankNum}
+                                onClick={() => handleRankSelect(rankNum)}
+                            >
+                                #{rankNum}
+                            </Button>
+                        ))}
+                    </div>
+                </ScrollArea>
             </div>
-            <Button onClick={handleSaveRank}>Set Rank</Button>
+            {rank !== null && (
+                <Button variant="destructive" onClick={handleUnrank}>Remove Rank</Button>
+            )}
           </DialogContent>
       </Dialog>
     </div>
