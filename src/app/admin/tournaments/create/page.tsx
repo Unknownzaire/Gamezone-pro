@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -64,12 +65,12 @@ export default function CreateTournamentPage() {
                             <Input id="commission" type="number" placeholder="10" required />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="imageUrl">Image URL</Label>
-                            <Input id="imageUrl" placeholder="https://picsum.photos/seed/example/600/400" />
-                        </div>
-                        <div className="space-y-2 md:col-span-2">
                             <Label htmlFor="imageHint">Image Hint</Label>
                             <Input id="imageHint" placeholder="e.g., epic battle" />
+                        </div>
+                        <div className="space-y-2 md:col-span-2">
+                            <Label htmlFor="imageUrl">Image URL</Label>
+                            <Input id="imageUrl" placeholder="https://picsum.photos/seed/example/600/400" />
                         </div>
                         <div className="md:col-span-2 flex justify-end">
                             <Button type="submit">Create Tournament</Button>

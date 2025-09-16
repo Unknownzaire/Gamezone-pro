@@ -125,13 +125,13 @@ export default function EditTournamentPage() {
               <Label htmlFor="commissionPercentage">Commission (%)</Label>
               <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required />
             </div>
-             <div className="space-y-2">
-                <Label htmlFor="imageUrl">Image URL</Label>
-                <Input id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange} />
-            </div>
-            <div className="space-y-2 md:col-span-2">
+            <div className="space-y-2">
                 <Label htmlFor="imageHint">Image Hint</Label>
                 <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="imageUrl">Image URL</Label>
+                <Input id="imageUrl" name="imageUrl" value={formData.imageUrl} onChange={handleChange} />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>
