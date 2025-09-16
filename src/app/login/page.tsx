@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -126,7 +127,7 @@ export default function LoginPage() {
     });
     
     // Clear login form email after signup to avoid pre-filling it
-    setLoginForm(prev => ({...prev, email: ''}));
+    setLoginForm(prev => ({...prev, email: '', password: ''}));
 
     router.push('/home');
   };
