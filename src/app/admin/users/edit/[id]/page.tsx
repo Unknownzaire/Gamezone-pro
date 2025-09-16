@@ -139,7 +139,7 @@ export default function EditUserPage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="totalReferrals">Total Referrals</Label>
-                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} disabled />
+                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>
