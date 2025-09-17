@@ -272,11 +272,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (loading) return;
+
     try {
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
             const loggedInUser: User = JSON.parse(storedUser);
-            loadUserContext(loggedInUser.id);
+            // This is the key change: ensure we reload context from the latest `allUsers` state
+            const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
+            if(liveUserData) {
+                 if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
+                    loadUserContext(loggedInUser.id);
+                }
+            } else {
+                logout();
+            }
         } else {
             const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
              if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
@@ -300,23 +309,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
 
-    setAllUsers(prevAllUsers => {
-        const currentUser = prevAllUsers.find(u => u.id === user.id);
-        if (!currentUser) return prevAllUsers;
-
-        let newBalance = currentUser.walletBalance;
-
-        if (newTx.status === 'completed') {
-            if (newTx.type === 'credit') {
-                newBalance += newTx.amount;
-            } else if (newTx.type === 'debit') {
-                newBalance -= newTx.amount;
-            }
-        }
-        
-        return prevAllUsers.map(u => u.id === user.id ? { ...u, walletBalance: newBalance } : u);
-    });
-
+    if (newTx.status === 'completed' && newTx.type === 'credit') {
+        setAllUsers(prevAllUsers => 
+            prevAllUsers.map(u => 
+                u.id === user.id ? { ...u, walletBalance: u.walletBalance + newTx.amount } : u
+            )
+        );
+    }
+    
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
@@ -413,6 +413,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-
-    
