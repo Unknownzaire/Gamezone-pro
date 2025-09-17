@@ -96,6 +96,12 @@ export default function CreateTournamentPage() {
             toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
             return;
         }
+        
+        const entryFee = Number(formData.get('entry-fee'));
+        if (entryFee < 0) {
+            toast({ variant: 'destructive', title: "Invalid Entry Fee", description: "Entry fee cannot be negative." });
+            return;
+        }
 
         const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
         if (Math.abs(finalTotalPercentage - 100) > 0.01) { // Allow for small floating point inaccuracies
@@ -113,7 +119,7 @@ export default function CreateTournamentPage() {
                 title: formData.get('title') as string,
                 gameName: formData.get('game') as string,
                 matchTime: matchTime,
-                entryFee: Number(formData.get('entry-fee')),
+                entryFee: entryFee,
                 prizePool: prizePool,
                 commissionPercentage: Number(formData.get('commission')),
                 imageUrl,
@@ -295,6 +301,5 @@ export default function CreateTournamentPage() {
         </div>
     );
 }
-
 
     

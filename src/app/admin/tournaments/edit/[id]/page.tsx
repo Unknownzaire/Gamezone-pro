@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter, notFound, useParams } from 'next/navigation';
 import { Tournament, PrizeDistribution } from '@/lib/types';
 import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,10 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 
-export default function EditTournamentPage({ params }: { params: { id: string } }) {
+export default function EditTournamentPage() {
   const router = useRouter();
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
   const { toast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -145,6 +146,11 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
     if (!matchTime) {
       toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
       return;
+    }
+
+    if (formData.entryFee && formData.entryFee < 0) {
+        toast({ variant: 'destructive', title: "Invalid Entry Fee", description: "Entry fee cannot be negative." });
+        return;
     }
 
     const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
