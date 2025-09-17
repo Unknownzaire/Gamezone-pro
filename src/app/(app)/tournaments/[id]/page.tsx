@@ -32,7 +32,7 @@ import {
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import React, from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -43,6 +43,7 @@ export default function TournamentDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
+  const [isJoining, setIsJoining] = useState(false);
   
   const tournament = tournaments.find((t) => t.id === id);
 
@@ -72,9 +73,12 @@ export default function TournamentDetailsPage() {
         return;
     }
 
+    setIsJoining(true);
+
     const currentTournamentState = tournaments.find(t => t.id === id);
     if (!currentTournamentState) {
         toast({ variant: 'destructive', title: "Error", description: "Tournament not found." });
+        setIsJoining(false);
         return;
     }
     
@@ -84,6 +88,7 @@ export default function TournamentDetailsPage() {
         title: "Already Joined",
         description: "You have already joined this tournament.",
       });
+      setIsJoining(false);
        return;
     }
 
@@ -93,6 +98,7 @@ export default function TournamentDetailsPage() {
             title: "Account Blocked",
             description: `Your account is blocked. You cannot join tournaments.`,
         });
+        setIsJoining(false);
         return;
     }
     
@@ -102,6 +108,7 @@ export default function TournamentDetailsPage() {
         title: "Tournament Full",
         description: "This tournament has reached its maximum capacity.",
       });
+      setIsJoining(false);
       return;
     }
 
@@ -111,6 +118,7 @@ export default function TournamentDetailsPage() {
         title: "Insufficient Balance",
         description: `You need ₹${currentTournamentState.entryFee} to join. Please add funds to your wallet.`,
       });
+      setIsJoining(false);
       return;
     }
 
@@ -130,6 +138,7 @@ export default function TournamentDetailsPage() {
       title: "Successfully Joined!",
       description: `You have joined the "${currentTournamentState.title}" tournament. ₹${currentTournamentState.entryFee} has been deducted.`,
     });
+    // isJoining will be implicitly false on re-render because the button will be disabled
   };
 
   const getPrizeForRankString = (rankString: string, prizePool: number, distribution: PrizeDistribution[]): string => {
@@ -236,10 +245,11 @@ export default function TournamentDetailsPage() {
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
-  if (isAlreadyJoined) joinButtonText = 'Already Joined';
+  if (isJoining) joinButtonText = 'Joining...';
+  else if (isAlreadyJoined) joinButtonText = 'Already Joined';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
   else if(isBlocked) joinButtonText = 'Account Blocked';
@@ -420,5 +430,3 @@ export default function TournamentDetailsPage() {
 
     </div>
   );
-
-    

@@ -152,6 +152,11 @@ export default function EditTournamentPage() {
         toast({ variant: 'destructive', title: "Invalid Entry Fee", description: "Entry fee cannot be negative." });
         return;
     }
+    
+    if (formData.prizePool && formData.prizePool < 0) {
+        toast({ variant: 'destructive', title: "Invalid Prize Pool", description: "Prize pool cannot be negative." });
+        return;
+    }
 
     const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
     if (Math.abs(finalTotalPercentage - 100) > 0.01) { // Allow for small floating point inaccuracies
