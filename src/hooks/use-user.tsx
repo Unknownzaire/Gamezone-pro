@@ -26,11 +26,12 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'>, password?: string, referralCode?: string) => 'success' | 'error';
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance'>, password?: string, referralCode?: string) => 'success' | 'error';
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
   hasUserJoinedTournament: (userId: string) => boolean;
+  moveReferralBonusToWallet: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -159,7 +160,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'>, password?: string, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'referralBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'>, password?: string, referralCode?: string): 'success' | 'error' => {
     
     // Uniqueness checks
     if (allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
@@ -214,7 +215,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         ...userDetails,
         password: password,
         id: `user-${Date.now()}`,
-        walletBalance: newUserBonus,
+        walletBalance: 0,
+        referralBalance: newUserBonus,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
@@ -380,8 +382,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
             const bonus = settings.referralBonus;
 
-            // Update referrer's balance
-            setAllUsers(prevUsers => prevUsers.map(u => u.id === referrer.id ? { ...u, walletBalance: u.walletBalance + bonus } : u));
+            // Update referrer's referral balance
+            setAllUsers(prevUsers => prevUsers.map(u => u.id === referrer.id ? { ...u, referralBalance: (u.referralBalance || 0) + bonus } : u));
             
             // Create transaction for referrer
             const bonusTransaction: Transaction = {
@@ -394,15 +396,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 status: 'completed'
             };
             setAllTransactions(prevTxs => [bonusTransaction, ...prevTxs]);
-            
-            console.log(`Referrer ${referrer.username} has been awarded a bonus of ₹${bonus}.`);
         }
     }
   };
+  
+  const moveReferralBonusToWallet = () => {
+    if (!user || !user.referralBalance || user.referralBalance <= 0) return;
+    
+    const bonusAmount = user.referralBalance;
+
+    updateBalance(balance => balance + bonusAmount);
+
+    setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, referralBalance: 0 } : u));
+    
+    addTransaction({
+      amount: bonusAmount,
+      type: 'credit',
+      description: 'Referral earnings moved to wallet',
+      status: 'completed'
+    });
+  }
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet }}>
       {!loading && children}
     </UserContext.Provider>
   );

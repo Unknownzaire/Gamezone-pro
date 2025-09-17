@@ -63,6 +63,7 @@ export type User = {
   email: string;
   password?: string;
   walletBalance: number;
+  referralBalance?: number;
   avatarUrl: string;
   coverImageUrl?: string;
   mobile?: string;

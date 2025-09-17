@@ -155,7 +155,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, updateBalance, reload: reloadUser } = useUser();
+  const { user, transactions, addTransaction, updateBalance, reload: reloadUser, moveReferralBonusToWallet } = useUser();
   const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
@@ -274,6 +274,11 @@ export default function WalletPage() {
     reloadUser();
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
+  
+  const handleMoveToWallet = () => {
+    moveReferralBonusToWallet();
+    toast({ title: "Funds Moved!", description: "Your referral bonus has been moved to your main wallet." });
+  }
 
   const payeeName = 'Arena Ace';
   const qrCodeUrl = walletSettings.qrCodeImageUrl
@@ -318,9 +323,7 @@ export default function WalletPage() {
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
   const referralTransactions = allSortedTransactions
-    .filter(tx => tx.status === 'completed' && tx.description.toLowerCase().includes('referral'));
-
-  const referralEarnings = referralTransactions.reduce((acc, tx) => acc + (tx.type === 'credit' ? tx.amount : 0), 0);
+    .filter(tx => tx.status === 'completed' && tx.description.toLowerCase().includes('referral bonus'));
 
 
   return (
@@ -504,7 +507,7 @@ export default function WalletPage() {
                 </CardHeader>
                 <CardContent>
                 <p className="text-3xl font-bold text-primary">
-                    ₹{referralEarnings.toFixed(2)}
+                    ₹{(user.referralBalance || 0).toFixed(2)}
                 </p>
                 </CardContent>
             </Card>
@@ -513,7 +516,7 @@ export default function WalletPage() {
             <DialogHeader>
                 <DialogTitle>Referral Bonus History</DialogTitle>
                 <DialogDescription>
-                    These are all the bonuses you've received from referrals. They are automatically added to your main balance.
+                    These are all the bonuses you've received from referrals.
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="h-72">
@@ -528,6 +531,11 @@ export default function WalletPage() {
              <DialogFooter>
                 <DialogClose asChild>
                     <Button variant="outline">Close</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button onClick={handleMoveToWallet} disabled={!user.referralBalance || user.referralBalance <= 0}>
+                    Move to Wallet
+                  </Button>
                 </DialogClose>
             </DialogFooter>
         </DialogContent>
