@@ -43,8 +43,11 @@ export default function TournamentDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
+  const [tournament, setTournament] = useState<Tournament | undefined>(tournaments.find((t) => t.id === id));
 
-  const tournament = tournaments.find((t) => t.id === id);
+  useEffect(() => {
+    setTournament(tournaments.find((t) => t.id === id));
+  }, [id, tournaments]);
   
   if (!tournament) {
     const isDataStillLoading = tournaments.length === 0;
