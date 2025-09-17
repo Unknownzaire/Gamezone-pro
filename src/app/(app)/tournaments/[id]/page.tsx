@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter, useParams } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -34,6 +34,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
+import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
@@ -42,25 +43,24 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const [tournament, setTournament] = React.useState<Tournament | undefined>(undefined);
-
-  React.useEffect(() => {
-    const foundTournament = tournaments.find((t) => t.id === id);
-    setTournament(foundTournament);
-  }, [id, tournaments]);
-
+  const tournament = tournaments.find((t) => t.id === id);
 
   if (!tournament) {
-    // Initial load or not found
-     return (
-      <div className="space-y-6 animate-pulse">
-        <div className="flex items-center gap-4">
-          <div className="h-10 w-10 rounded-md bg-muted"></div>
-          <div className="h-8 w-48 rounded-md bg-muted"></div>
+    // Let's use notFound for a cleaner "Not Found" experience if the data is loaded and tournament is missing.
+    // The skeleton provides a loading state while tournaments are being fetched initially.
+    const isDataStillLoading = tournaments.length === 0;
+    if (isDataStillLoading) {
+       return (
+        <div className="space-y-6 animate-pulse">
+          <div className="flex items-center gap-4">
+            <div className="h-10 w-10 rounded-md bg-muted"></div>
+            <div className="h-8 w-48 rounded-md bg-muted"></div>
+          </div>
+           <div className="h-80 w-full rounded-lg bg-muted"></div>
         </div>
-         <div className="h-80 w-full rounded-lg bg-muted"></div>
-      </div>
-    );
+      );
+    }
+    notFound();
   }
   
   const handleJoin = () => {
@@ -73,8 +73,12 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         return;
     }
 
+    // Always get the freshest tournament state from the source of truth before performing actions
     const currentTournamentState = tournaments.find(t => t.id === id);
-    if (!currentTournamentState) return;
+    if (!currentTournamentState) {
+        toast({ variant: 'destructive', title: "Error", description: "Tournament not found." });
+        return;
+    }
     
     if (currentTournamentState.participants.some(p => p.user.id === currentUser.id)) {
       toast({
