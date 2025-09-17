@@ -36,9 +36,8 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
@@ -64,7 +63,7 @@ export default function TournamentDetailsPage() {
     );
   }
   
-  const handleJoin = (tournamentToJoin: Tournament) => {
+  const handleJoin = () => {
     if (!currentUser) {
         toast({
             variant: 'destructive',
@@ -72,6 +71,18 @@ export default function TournamentDetailsPage() {
             description: `Please log in to join a tournament.`,
         });
         return;
+    }
+
+    const currentTournamentState = tournaments.find(t => t.id === id);
+    if (!currentTournamentState) return;
+    
+    if (currentTournamentState.participants.some(p => p.user.id === currentUser.id)) {
+      toast({
+        variant: 'destructive',
+        title: "Already Joined",
+        description: "You have already joined this tournament.",
+      });
+      return;
     }
 
     if(currentUser.isBlocked) {
@@ -83,7 +94,7 @@ export default function TournamentDetailsPage() {
         return;
     }
     
-    if (tournamentToJoin.participants.length >= 100) {
+    if (currentTournamentState.participants.length >= 100) {
       toast({
         variant: 'destructive',
         title: "Tournament Full",
@@ -92,31 +103,31 @@ export default function TournamentDetailsPage() {
       return;
     }
 
-    if (currentUser.walletBalance < tournamentToJoin.entryFee) {
+    if (currentUser.walletBalance < currentTournamentState.entryFee) {
        toast({
         variant: 'destructive',
         title: "Insufficient Balance",
-        description: `You need ₹${tournamentToJoin.entryFee} to join. Please add funds to your wallet.`,
+        description: `You need ₹${currentTournamentState.entryFee} to join. Please add funds to your wallet.`,
       });
       return;
     }
 
     // This would be a server action in a real app
-    const newBalance = currentUser.walletBalance - tournamentToJoin.entryFee;
+    const newBalance = currentUser.walletBalance - currentTournamentState.entryFee;
     updateBalance(newBalance);
 
     addTransaction({
-        amount: tournamentToJoin.entryFee,
+        amount: currentTournamentState.entryFee,
         type: 'debit',
-        description: `Joined "${tournamentToJoin.title}"`,
+        description: `Joined "${currentTournamentState.title}"`,
         status: 'completed'
     });
     
-    joinTournament(tournamentToJoin.id, currentUser);
+    joinTournament(currentTournamentState.id, currentUser);
 
     toast({
       title: "Successfully Joined!",
-      description: `You have joined the "${tournamentToJoin.title}" tournament. ₹${tournamentToJoin.entryFee} has been deducted.`,
+      description: `You have joined the "${currentTournamentState.title}" tournament. ₹${currentTournamentState.entryFee} has been deducted.`,
     });
   };
 
@@ -398,7 +409,7 @@ export default function TournamentDetailsPage() {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleJoin(tournament)}>
+              <AlertDialogAction onClick={handleJoin}>
                 Confirm & Join
               </AlertDialogAction>
             </AlertDialogFooter>
