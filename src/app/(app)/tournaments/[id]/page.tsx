@@ -43,6 +43,7 @@ export default function TournamentDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
+  const [isJoining, setIsJoining] = useState(false);
   
   const tournament = tournaments.find((t) => t.id === id);
 
@@ -72,9 +73,12 @@ export default function TournamentDetailsPage() {
         return;
     }
 
+    setIsJoining(true);
+
     const currentTournamentState = tournaments.find(t => t.id === id);
     if (!currentTournamentState) {
         toast({ variant: 'destructive', title: "Error", description: "Tournament not found." });
+        setIsJoining(false);
         return;
     }
     
@@ -84,6 +88,7 @@ export default function TournamentDetailsPage() {
         title: "Already Joined",
         description: "You have already joined this tournament.",
       });
+       setIsJoining(false);
       return;
     }
 
@@ -93,6 +98,7 @@ export default function TournamentDetailsPage() {
             title: "Account Blocked",
             description: `Your account is blocked. You cannot join tournaments.`,
         });
+        setIsJoining(false);
         return;
     }
     
@@ -102,6 +108,7 @@ export default function TournamentDetailsPage() {
         title: "Tournament Full",
         description: "This tournament has reached its maximum capacity.",
       });
+      setIsJoining(false);
       return;
     }
 
@@ -111,6 +118,7 @@ export default function TournamentDetailsPage() {
         title: "Insufficient Balance",
         description: `You need ₹${currentTournamentState.entryFee} to join. Please add funds to your wallet.`,
       });
+      setIsJoining(false);
       return;
     }
 
@@ -236,10 +244,11 @@ export default function TournamentDetailsPage() {
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isAlreadyJoined) joinButtonText = 'Already Joined';
+  else if (isJoining) joinButtonText = 'Joining...';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
   else if(isBlocked) joinButtonText = 'Account Blocked';
@@ -420,5 +429,7 @@ export default function TournamentDetailsPage() {
 
     </div>
   );
+
+    
 
     
