@@ -208,7 +208,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
-  const canJoin = !!currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isAlreadyJoined) joinButtonText = 'Already Joined';
@@ -366,7 +366,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin}>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin && !isAlreadyJoined && tournament.status === 'Upcoming'}>
               {joinButtonText}
             </Button>
           </AlertDialogTrigger>
