@@ -321,11 +321,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    // We check `allTransactions` instead of the user's filtered transactions
     return allTransactions.some(tx => 
-      tx.userId === userId && 
-      tx.type === 'debit' && 
-      tx.description.toLowerCase().startsWith('joined')
+        tx.userId === userId && 
+        tx.type === 'debit' && 
+        tx.status === 'completed' &&
+        tx.description.toLowerCase().startsWith('joined')
     );
   };
   
