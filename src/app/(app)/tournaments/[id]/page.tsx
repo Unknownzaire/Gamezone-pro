@@ -207,6 +207,8 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isAlreadyJoined) joinButtonText = 'Already Joined';
   else if (isFull) joinButtonText = 'Tournament Full';
@@ -298,7 +300,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                         </DialogHeader>
                         <ScrollArea className="h-72">
                             <div className="space-y-3 pr-4">
-                            {tournament.participants.map((p) => (
+                            {tournament.participants.length > 0 ? tournament.participants.map((p) => (
                                 <div key={p.id} className="flex items-center gap-3 rounded-md bg-muted p-2">
                                 <Avatar className="h-10 w-10">
                                     <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
@@ -311,7 +313,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
                                   </p>
                                 </div>
                                 </div>
-                            ))}
+                            )) : <p className="text-muted-foreground text-center py-8">No players have joined yet.</p>}
                             </div>
                         </ScrollArea>
                       </DialogContent>
@@ -363,7 +365,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={tournament.status !== 'Upcoming' || isAlreadyJoined || isFull || isBlocked}>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin}>
               {joinButtonText}
             </Button>
           </AlertDialogTrigger>
