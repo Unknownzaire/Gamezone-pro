@@ -36,11 +36,10 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
+export default function TournamentDetailsPage({ params: { id } }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
-  const { id } = params;
 
   const tournament = tournaments.find((t) => t.id === id);
 
@@ -366,7 +365,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin && !isAlreadyJoined && tournament.status === 'Upcoming'}>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin}>
               {joinButtonText}
             </Button>
           </AlertDialogTrigger>
@@ -393,3 +392,5 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     </div>
   );
 }
+
+    
