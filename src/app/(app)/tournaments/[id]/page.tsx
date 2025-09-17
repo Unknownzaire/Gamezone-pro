@@ -43,12 +43,9 @@ export default function TournamentDetailsPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
-  const [tournament, setTournament] = useState<Tournament | undefined>(tournaments.find((t) => t.id === id));
-
-  useEffect(() => {
-    setTournament(tournaments.find((t) => t.id === id));
-  }, [id, tournaments]);
   
+  const tournament = tournaments.find((t) => t.id === id);
+
   if (!tournament) {
     const isDataStillLoading = tournaments.length === 0;
     if (isDataStillLoading) {
@@ -414,7 +411,7 @@ export default function TournamentDetailsPage() {
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction onClick={handleJoin}>
-                Confirm & Join
+                Confirm &amp; Join
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
@@ -423,4 +420,5 @@ export default function TournamentDetailsPage() {
 
     </div>
   );
-}
+
+    
