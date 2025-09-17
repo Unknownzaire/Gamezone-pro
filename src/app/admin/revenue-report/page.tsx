@@ -10,12 +10,15 @@ import { Tournament } from "@/lib/types";
 import { format, getWeek, getYear, startOfWeek, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Eye } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 type RevenueReport = {
   [key: string]: {
     totalRevenue: number;
     count: number;
+    tournaments: Tournament[];
   }
 };
 
@@ -31,6 +34,7 @@ const ReportTable = ({ data, title, valueHeader }: { data: RevenueReport, title:
               <TableHead>{title}</TableHead>
               <TableHead className="text-right">Tournaments</TableHead>
               <TableHead className="text-right">{valueHeader}</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -39,12 +43,43 @@ const ReportTable = ({ data, title, valueHeader }: { data: RevenueReport, title:
                 <TableCell className="font-medium">{period}</TableCell>
                 <TableCell className="text-right">{stats.count}</TableCell>
                 <TableCell className="text-right font-semibold">₹{stats.totalRevenue.toLocaleString()}</TableCell>
+                <TableCell className="text-right">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                       <Button variant="ghost" size="sm"><Eye className="mr-2 h-4 w-4" />View</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Tournaments for {period}</DialogTitle>
+                        <DialogDescription>
+                           A total of {stats.count} tournaments were completed in this period.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <ScrollArea className="h-72">
+                        <div className="space-y-2 pr-4">
+                          {stats.tournaments.map(t => (
+                            <div key={t.id} className="flex items-center justify-between rounded-md border p-3">
+                              <div>
+                                <p className="font-semibold">{t.title}</p>
+                                <p className="text-sm text-muted-foreground">{format(new Date(t.matchTime), 'PPp')}</p>
+                              </div>
+                               <Link href={`/admin/tournaments/${t.id}`}>
+                                <Button size="sm">Manage</Button>
+                               </Link>
+                            </div>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                </TableCell>
               </TableRow>
             ))}
              <TableRow className="bg-muted/50 font-bold">
               <TableCell>Total</TableCell>
               <TableCell className="text-right">{Object.values(data).reduce((acc, curr) => acc + curr.count, 0)}</TableCell>
               <TableCell className="text-right">₹{Object.values(data).reduce((acc, curr) => acc + curr.totalRevenue, 0).toLocaleString()}</TableCell>
+              <TableCell></TableCell>
             </TableRow>
           </TableBody>
         </Table>
@@ -89,9 +124,10 @@ export default function AdminRevenueReportPage() {
 
   const dailyReport = completed.reduce((acc: RevenueReport, t) => {
     const day = format(t.matchTime, 'yyyy-MM-dd (EEEE)');
-    if (!acc[day]) acc[day] = { totalRevenue: 0, count: 0 };
+    if (!acc[day]) acc[day] = { totalRevenue: 0, count: 0, tournaments: [] };
     acc[day].totalRevenue += calculateRevenue(t);
     acc[day].count += 1;
+    acc[day].tournaments.push(t);
     return acc;
   }, {});
 
@@ -102,25 +138,28 @@ export default function AdminRevenueReportPage() {
     const weekEnd = format(endOfWeek(t.matchTime, { weekStartsOn: 1 }), 'MMM d, yyyy');
     const key = `${year}, Week ${week} (${weekStart} - ${weekEnd})`;
     
-    if (!acc[key]) acc[key] = { totalRevenue: 0, count: 0 };
+    if (!acc[key]) acc[key] = { totalRevenue: 0, count: 0, tournaments: [] };
     acc[key].totalRevenue += calculateRevenue(t);
     acc[key].count += 1;
+    acc[key].tournaments.push(t);
     return acc;
   }, {});
 
   const monthlyReport = completed.reduce((acc: RevenueReport, t) => {
     const month = format(t.matchTime, 'yyyy-MM (MMMM)');
-    if (!acc[month]) acc[month] = { totalRevenue: 0, count: 0 };
+    if (!acc[month]) acc[month] = { totalRevenue: 0, count: 0, tournaments: [] };
     acc[month].totalRevenue += calculateRevenue(t);
     acc[month].count += 1;
+    acc[month].tournaments.push(t);
     return acc;
   }, {});
   
   const yearlyReport = completed.reduce((acc: RevenueReport, t) => {
     const year = format(t.matchTime, 'yyyy');
-    if (!acc[year]) acc[year] = { totalRevenue: 0, count: 0 };
+    if (!acc[year]) acc[year] = { totalRevenue: 0, count: 0, tournaments: [] };
     acc[year].totalRevenue += calculateRevenue(t);
     acc[year].count += 1;
+    acc[year].tournaments.push(t);
     return acc;
   }, {});
 
