@@ -203,15 +203,15 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="entry-fee">Entry Fee (₹)</Label>
-                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" defaultValue={50} required />
+                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" defaultValue={50} required min="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
-                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} />
+                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} min="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>
-                                    <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required />
+                                    <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required min="0" />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="imageHint">Image Hint</Label>
