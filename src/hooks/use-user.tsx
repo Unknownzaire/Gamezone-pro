@@ -51,35 +51,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const loadInitialData = () => {
     try {
-        const storedUsers = localStorage.getItem('allUsers');
+        let storedUsers = localStorage.getItem('allUsers');
         if (storedUsers) {
             setAllUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
         } else {
-            setAllUsers(mockUsers);
             localStorage.setItem('allUsers', JSON.stringify(mockUsers));
+            setAllUsers(mockUsers);
         }
         
-        const storedTransactions = localStorage.getItem('allTransactions');
+        let storedTransactions = localStorage.getItem('allTransactions');
         if (storedTransactions) {
             setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
         } else {
-            setAllTransactions(mockTransactions);
             localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
+            setAllTransactions(mockTransactions);
         }
 
-        const storedTournaments = localStorage.getItem('allTournaments');
+        let storedTournaments = localStorage.getItem('allTournaments');
         if (storedTournaments) {
             setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
         } else {
-            setTournaments(initialMockTournaments);
             localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
+            setTournaments(initialMockTournaments);
         }
 
-        const storedAds = localStorage.getItem('promotionalAds');
+        let storedAds = localStorage.getItem('promotionalAds');
         if (storedAds) {
             setPromotionalAds(JSON.parse(storedAds));
         } else {
             localStorage.setItem('promotionalAds', JSON.stringify([]));
+            setPromotionalAds([]);
         }
 
     } catch(e) {
@@ -109,17 +110,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      if (allUsers.length > 0) {
-        localStorage.setItem('allUsers', JSON.stringify(allUsers));
-      }
+      localStorage.setItem('allUsers', JSON.stringify(allUsers));
     }
   }, [allUsers, loading]);
 
   useEffect(() => {
     if (!loading) {
-      if (allTransactions.length > 0) {
-        localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
-      }
+      localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
     }
   }, [allTransactions, loading]);
   
@@ -324,8 +321,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    return tournaments.some(t => t.participants.some(p => p.user.id === userId && t.entryFee > 0));
+    return allTransactions.some(tx => tx.userId === userId && tx.type === 'debit' && tx.description.toLowerCase().startsWith('joined'));
   };
+  
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
     const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
@@ -402,3 +400,4 @@ export const useUser = () => {
     
 
     
+

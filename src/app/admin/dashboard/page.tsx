@@ -36,35 +36,31 @@ export default function AdminDashboardPage() {
   const [declineReason, setDeclineReason] = useState('');
 
   const loadData = useCallback(() => {
-    const storedUsers = localStorage.getItem('allUsers');
-    const users: User[] = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : mockUsers;
-    setAllUsers(users);
-    setTotalUsers(users.length);
-
-    const storedTransactions = localStorage.getItem('allTransactions');
-    const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
-    setAllTransactions(transactions);
-
-    setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
-    setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
-
-    let allTournaments: Tournament[] = [];
     try {
-        const storedTournaments = localStorage.getItem('allTournaments');
-        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
-    } catch(e) {
-        console.error("Failed to parse tournaments from localStorage", e);
-        allTournaments = mockTournaments;
-        localStorage.setItem('allTournaments', JSON.stringify(mockTournaments));
+      const storedUsers = localStorage.getItem('allUsers');
+      const users: User[] = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : mockUsers;
+      setAllUsers(users);
+      setTotalUsers(users.length);
+
+      const storedTransactions = localStorage.getItem('allTransactions');
+      const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
+      setAllTransactions(transactions);
+
+      setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
+      setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
+
+      let allTournaments: Tournament[] = [];
+      const storedTournaments = localStorage.getItem('allTournaments');
+      allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+      setCompletedTournaments(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
+
+      const storedAds = localStorage.getItem('promotionalAds');
+      const ads: PromotionalAd[] = storedAds ? JSON.parse(storedAds) : [];
+      setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
+
+    } catch (e) {
+      console.error("Failed to load data from localStorage", e);
     }
-    setCompletedTournaments(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
-
-    const storedAds = localStorage.getItem('promotionalAds');
-    const ads: PromotionalAd[] = storedAds ? JSON.parse(storedAds) : [];
-    setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
-
-
-    console.log("Data reloaded");
   }, []);
 
   useEffect(() => {
@@ -82,7 +78,16 @@ export default function AdminDashboardPage() {
 
   const totalTournaments = completedTournaments.length;
   const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
-  const totalRevenue = completedTournaments.reduce((acc, t) => acc + (t.participants.length * t.entryFee) - t.prizePool, 0);
+  const totalRevenue = allTransactions.filter(tx => tx.status === 'completed').reduce((acc, tx) => {
+    if (tx.type === 'debit' && tx.description.toLowerCase().includes('joined')) {
+        const tournament = mockTournaments.find(t => t.title === tx.description.replace('Joined "', '').replace('"', ''));
+        if (tournament) {
+            return acc + (tx.amount * (tournament.commissionPercentage / 100));
+        }
+    }
+    return acc;
+  }, 0);
+
 
   const totalDeposits = allTransactions
     .filter(tx => tx.type === 'credit' && tx.status === 'completed')
@@ -112,31 +117,20 @@ export default function AdminDashboardPage() {
     const transaction = currentAllTransactions.find(tx => tx.id === transactionId);
     if(!transaction) return;
 
-    currentAllTransactions = currentAllTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
-    localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
-    
-    let updatedUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    const userToUpdate = updatedUsers.find(u => u.id === transaction.userId);
+    let localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    const userToUpdate = localAllUsers.find((u:User) => u.id === transaction.userId);
 
-    if (userToUpdate) {
-        if (status === 'completed' && isDeposit) {
-            updatedUsers = updatedUsers.map(u => 
-                u.id === userToUpdate.id 
-                ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-                : u
-            );
-        }
-        // Note: For pending debits (withdrawals), balance is already reduced. If declined, we need to add it back.
-        else if (status === 'declined' && !isDeposit) {
-            updatedUsers = updatedUsers.map(u => 
-                u.id === userToUpdate.id 
-                ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-                : u
-            );
-        }
+    if (userToUpdate && status === 'completed' && isDeposit) {
+        userToUpdate.walletBalance += transaction.amount;
+    } else if (userToUpdate && status === 'declined' && !isDeposit) {
+        userToUpdate.walletBalance += transaction.amount;
     }
+    
+    transaction.status = status;
+    if(reason) transaction.declineReason = reason;
 
-    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
+    localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
     
     loadData();
     
@@ -159,6 +153,7 @@ export default function AdminDashboardPage() {
     if (!transactionToDecline) return;
     handleRequest(transactionToDecline.id, 'declined', transactionToDecline.type, declineReason);
     setTransactionToDecline(null);
+    setDeclineReason('');
   }
   
   const handleRefreshClick = (e: React.MouseEvent) => {
@@ -454,7 +449,7 @@ export default function AdminDashboardPage() {
         </Dialog>
       </div>
 
-       <AlertDialog open={!!transactionToDecline} onOpenChange={(open) => !open && setTransactionToDecline(null)}>
+       <AlertDialog open={!!transactionToDecline} onOpenChange={(open) => {if(!open) {setTransactionToDecline(null); setDeclineReason('');}}}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reason for Decline</AlertDialogTitle>
@@ -472,7 +467,7 @@ export default function AdminDashboardPage() {
             />
           </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setTransactionToDecline(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => {setTransactionToDecline(null); setDeclineReason('');}}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDecline} disabled={!declineReason}>
               Confirm Decline
             </AlertDialogAction>
@@ -494,4 +489,5 @@ export default function AdminDashboardPage() {
     
 
     
+
 
