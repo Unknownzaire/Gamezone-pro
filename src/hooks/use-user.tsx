@@ -301,18 +301,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     setAllUsers(prevAllUsers => {
-        return prevAllUsers.map(u => {
-            if (u.id === user.id) {
-                let newBalance = u.walletBalance;
-                if (newTx.type === 'debit' && newTx.status === 'pending') {
-                    newBalance -= newTx.amount;
-                } else if (newTx.type === 'credit' && newTx.status === 'completed') {
-                    newBalance += newTx.amount;
-                }
-                return { ...u, walletBalance: newBalance };
+        const currentUser = prevAllUsers.find(u => u.id === user.id);
+        if (!currentUser) return prevAllUsers;
+
+        let newBalance = currentUser.walletBalance;
+
+        if (newTx.status === 'completed') {
+            if (newTx.type === 'credit') {
+                newBalance += newTx.amount;
+            } else if (newTx.type === 'debit') {
+                newBalance -= newTx.amount;
             }
-            return u;
-        });
+        }
+        
+        return prevAllUsers.map(u => u.id === user.id ? { ...u, walletBalance: newBalance } : u);
     });
 
     setAllTransactions(prev => [newTx, ...prev]);
@@ -411,3 +413,6 @@ export const useUser = () => {
   }
   return context;
 };
+
+
+    

@@ -273,14 +273,14 @@ export default function WalletPage() {
         amount,
         type: 'credit',
         description: `Deposit via UPI`,
-        status: 'completed',
+        status: 'pending',
         paymentDetails: {
           method: 'upi',
           upiId: upiRef, // Store the reference number here
         }
     });
 
-    toast({ title: "Deposit Successful", description: `₹${amount.toLocaleString()} has been added to your wallet.` });
+    toast({ title: "Deposit Request Submitted", description: `Your request to add ₹${amount.toLocaleString()} is pending approval.` });
     setAddAmount('');
     setUpiRef('');
     setIsAddMoneyOpen(false);
@@ -602,3 +602,6 @@ export default function WalletPage() {
 
 
 
+
+
+    
