@@ -39,41 +39,43 @@ const ReportTable = ({ data, title, valueHeader }: { data: RevenueReport, title:
           </TableHeader>
           <TableBody>
             {sortedData.map(([period, stats]) => (
-              <TableRow key={period}>
-                <TableCell className="font-medium">{period}</TableCell>
-                <TableCell className="text-right">{stats.count}</TableCell>
-                <TableCell className="text-right font-semibold">₹{stats.totalRevenue.toLocaleString()}</TableCell>
-                <TableCell className="text-right">
-                  <Dialog>
-                    <DialogTrigger asChild>
-                       <Button variant="ghost" size="sm"><Eye className="mr-2 h-4 w-4" />View</Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Tournaments for {period}</DialogTitle>
-                        <DialogDescription>
-                           A total of {stats.count} tournaments were completed in this period.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <ScrollArea className="h-72">
-                        <div className="space-y-2 pr-4">
-                          {stats.tournaments.map(t => (
-                            <div key={t.id} className="flex items-center justify-between rounded-md border p-3">
-                              <div>
-                                <p className="font-semibold">{t.title}</p>
-                                <p className="text-sm text-muted-foreground">{format(new Date(t.matchTime), 'PPp')}</p>
-                              </div>
-                               <Link href={`/admin/tournaments/${t.id}`}>
-                                <Button size="sm">Manage</Button>
-                               </Link>
-                            </div>
-                          ))}
+              <Dialog key={period}>
+                <TableRow>
+                  <TableCell className="font-medium">{period}</TableCell>
+                  <TableCell className="text-right">{stats.count}</TableCell>
+                  <DialogTrigger asChild>
+                    <TableCell className="text-right font-semibold cursor-pointer">₹{stats.totalRevenue.toLocaleString()}</TableCell>
+                  </DialogTrigger>
+                  <TableCell className="text-right">
+                      <DialogTrigger asChild>
+                        <Button variant="ghost" size="sm"><Eye className="mr-2 h-4 w-4" />View</Button>
+                      </DialogTrigger>
+                  </TableCell>
+                </TableRow>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Tournaments for {period}</DialogTitle>
+                    <DialogDescription>
+                        A total of {stats.count} tournaments were completed in this period.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <ScrollArea className="h-72">
+                    <div className="space-y-2 pr-4">
+                      {stats.tournaments.map(t => (
+                        <div key={t.id} className="flex items-center justify-between rounded-md border p-3">
+                          <div>
+                            <p className="font-semibold">{t.title}</p>
+                            <p className="text-sm text-muted-foreground">{format(new Date(t.matchTime), 'PPp')}</p>
+                          </div>
+                            <Link href={`/admin/tournaments/${t.id}`}>
+                            <Button size="sm">Manage</Button>
+                            </Link>
                         </div>
-                      </ScrollArea>
-                    </DialogContent>
-                  </Dialog>
-                </TableCell>
-              </TableRow>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </DialogContent>
+              </Dialog>
             ))}
              <TableRow className="bg-muted/50 font-bold">
               <TableCell>Total</TableCell>
