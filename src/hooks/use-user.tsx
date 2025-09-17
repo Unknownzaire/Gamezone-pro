@@ -321,11 +321,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateBalance = (updater: (currentBalance: number) => number) => {
     if(user) {
-        setAllUsers(prevAllUsers => prevAllUsers.map(u => 
-            u.id === user.id 
-                ? { ...u, walletBalance: updater(u.walletBalance) }
-                : u
-        ));
+        setAllUsers(prevAllUsers => {
+            const newAllUsers = prevAllUsers.map(u => 
+                u.id === user.id 
+                    ? { ...u, walletBalance: updater(u.walletBalance) }
+                    : u
+            );
+            return newAllUsers;
+        });
     }
   };
 
@@ -418,3 +421,4 @@ export const useUser = () => {
 };
 
     
+
