@@ -69,9 +69,14 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadData();
-    window.addEventListener('storage', loadData);
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'allUsers' || event.key === 'allTransactions' || event.key === 'allTournaments' || event.key === 'promotionalAds') {
+        loadData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
     return () => {
-      window.removeEventListener('storage', loadData);
+      window.removeEventListener('storage', handleStorageChange);
     };
   }, [loadData]);
 
@@ -489,3 +494,4 @@ export default function AdminDashboardPage() {
     
 
     
+
