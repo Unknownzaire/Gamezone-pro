@@ -269,8 +269,6 @@ export default function WalletPage() {
       return;
     }
 
-    updateBalance(user.walletBalance + amount);
-
     addTransaction({
         amount,
         type: 'credit',

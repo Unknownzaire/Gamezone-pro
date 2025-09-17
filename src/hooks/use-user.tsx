@@ -22,7 +22,7 @@ interface UserContextType {
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   referredUsers: User[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
-  updateBalance: (newBalance: number) => void;
+  updateBalance: (updater: (currentBalance: number) => number) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => void;
   login: (email: string, password: string) => boolean | 'blocked';
@@ -98,7 +98,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
      const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'referralSettings' || event.key === 'allUsers' || event.key === 'allTransactions') {
-        loadInitialData();
+        reload();
+        if (event.key === 'allUsers' || event.key === 'allTransactions') {
+          toast({ title: "Wallet Updated", description: "Your wallet has been updated by an admin." });
+        }
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -310,25 +313,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     if (newTx.status === 'completed' && newTx.type === 'credit') {
-        setAllUsers(prevAllUsers => {
-            const currentUserIndex = prevAllUsers.findIndex(u => u.id === user.id);
-            if (currentUserIndex === -1) return prevAllUsers;
-
-            const updatedUsers = [...prevAllUsers];
-            const currentUser = updatedUsers[currentUserIndex];
-            updatedUsers[currentUserIndex] = { ...currentUser, walletBalance: currentUser.walletBalance + newTx.amount };
-            return updatedUsers;
-        });
+        updateBalance(currentBalance => currentBalance + newTx.amount);
     }
     
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
-  const updateBalance = (newBalance: number) => {
+  const updateBalance = (updater: (currentBalance: number) => number) => {
     if(user) {
-        setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, walletBalance: newBalance} : u))
+        setAllUsers(prevAllUsers => prevAllUsers.map(u => 
+            u.id === user.id 
+                ? { ...u, walletBalance: updater(u.walletBalance) }
+                : u
+        ));
     }
-  }
+  };
 
   const updateUser = (updatedFields: Partial<User>) => {
     if (user) {
