@@ -44,23 +44,36 @@ export default function TournamentDetailsPage() {
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
   const [isJoining, setIsJoining] = useState(false);
-  
-  const tournament = tournaments.find((t) => t.id === id);
+  const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
+
+  useEffect(() => {
+    const currentTournament = tournaments.find((t) => t.id === id);
+    setTournament(currentTournament);
+  }, [id, tournaments]);
+
 
   if (!tournament) {
-    const isDataStillLoading = tournaments.length === 0;
-    if (isDataStillLoading) {
-       return (
-        <div className="space-y-6 animate-pulse">
-          <div className="flex items-center gap-4">
-            <div className="h-10 w-10 rounded-md bg-muted"></div>
-            <div className="h-8 w-48 rounded-md bg-muted"></div>
-          </div>
-           <div className="h-80 w-full rounded-lg bg-muted"></div>
+    // This handles both the initial loading state and the case where the tournament is not found after loading.
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <Skeleton className="h-8 w-48 rounded-md" />
         </div>
-      );
-    }
-    notFound();
+        <Card className="overflow-hidden">
+          <Skeleton className="h-48 w-full" />
+          <CardHeader>
+            <Skeleton className="h-8 w-3/4" />
+            <Skeleton className="h-4 w-1/4" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-24 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
   
   const handleJoin = () => {
@@ -138,7 +151,7 @@ export default function TournamentDetailsPage() {
       title: "Successfully Joined!",
       description: `You have joined the "${currentTournamentState.title}" tournament. ₹${currentTournamentState.entryFee} has been deducted.`,
     });
-    // isJoining will be implicitly false on re-render because the button will be disabled
+    setIsJoining(false);
   };
 
   const getPrizeForRankString = (rankString: string, prizePool: number, distribution: PrizeDistribution[]): string => {
@@ -430,3 +443,6 @@ export default function TournamentDetailsPage() {
 
     </div>
   );
+}
+
+    
