@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle, Gift } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -330,6 +330,10 @@ export default function WalletPage() {
   const debitTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'debit' && tx.status === 'completed'));
   const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
+  
+  const referralEarnings = transactions
+    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && tx.description.toLowerCase().includes('referral'))
+    .reduce((acc, tx) => acc + tx.amount, 0);
 
 
   return (
@@ -500,6 +504,21 @@ export default function WalletPage() {
             </Dialog>
         </CardContent>
       </Card>
+
+       <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Referral Earnings</CardTitle>
+            <CardDescription>Total bonuses earned from inviting friends.</CardDescription>
+          </div>
+          <Gift className="h-8 w-8 text-primary" />
+        </CardHeader>
+        <CardContent>
+          <p className="text-3xl font-bold text-primary">
+            ₹{referralEarnings.toFixed(2)}
+          </p>
+        </CardContent>
+      </Card>
       
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
@@ -551,11 +570,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
-
-    
