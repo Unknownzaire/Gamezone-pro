@@ -332,7 +332,7 @@ export default function WalletPage() {
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
   const referralEarnings = transactions
-    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && tx.description.toLowerCase().includes('referral'))
+    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('referral') || tx.description.toLowerCase().includes('bonus')))
     .reduce((acc, tx) => acc + tx.amount, 0);
 
 
