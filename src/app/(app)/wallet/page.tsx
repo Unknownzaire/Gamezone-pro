@@ -186,24 +186,8 @@ export default function WalletPage() {
 
   useEffect(() => {
     loadWalletSettings();
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'walletSettings') {
-        loadWalletSettings();
-        toast({ title: "Wallet settings updated", description: "The deposit information has been updated by the admin." });
-      }
-      if (event.key === 'allTransactions' || event.key === 'allUsers') {
-        reloadUser();
-        toast({ title: "Wallet Updated", description: "Your wallet has been updated by an admin." });
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [toast, reloadUser]);
+    // This component is now managed by the storage event listener in useUser hook.
+  }, []);
 
   const handleWithdraw = () => {
     if (!user) return;

@@ -93,22 +93,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     setLoading(false);
   }
 
+  const reload = () => {
+    setLoading(true);
+    loadInitialData();
+  }
+
   useEffect(() => {
     loadInitialData();
-
-     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'referralSettings' || event.key === 'allUsers' || event.key === 'allTransactions') {
+    const handleStorageChange = (event: StorageEvent) => {
+      // Check if the change is one we care about
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings'].includes(event.key || '')) {
         reload();
-        if (event.key === 'allUsers' || event.key === 'allTransactions') {
-          toast({ title: "Wallet Updated", description: "Your wallet has been updated by an admin." });
-        }
       }
     };
+
     window.addEventListener('storage', handleStorageChange);
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -397,11 +401,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     }
   };
-  
-  const reload = () => {
-    setLoading(true);
-    loadInitialData();
-  }
 
 
   return (
