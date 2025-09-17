@@ -396,7 +396,7 @@ export default function TournamentDetailsPage() {
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <ShieldCheck className="text-primary" />
-            BGMI Tournament – Terms & Conditions
+            BGMI Tournament – Terms &amp; Conditions
             </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -443,6 +443,8 @@ export default function TournamentDetailsPage() {
     </div>
   );
 }
+
+    
 
     
 
