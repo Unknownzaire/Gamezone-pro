@@ -305,6 +305,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       updateBalance(user.walletBalance - newTx.amount);
     }
     
+    // For completed deposits, add to balance immediately.
+    if(newTx.type === 'credit' && newTx.status === 'completed') {
+      updateBalance(user.walletBalance + newTx.amount);
+    }
+    
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
@@ -403,4 +408,5 @@ export const useUser = () => {
 };
 
     
+
 

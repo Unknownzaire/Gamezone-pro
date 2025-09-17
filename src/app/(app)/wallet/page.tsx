@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -272,14 +273,14 @@ export default function WalletPage() {
         amount,
         type: 'credit',
         description: `Deposit via UPI`,
-        status: 'pending',
+        status: 'completed',
         paymentDetails: {
           method: 'upi',
           upiId: upiRef, // Store the reference number here
         }
     });
 
-    toast({ title: "Deposit Request Submitted", description: `Your request to add ₹${amount.toLocaleString()} is pending approval.` });
+    toast({ title: "Deposit Successful", description: `₹${amount.toLocaleString()} has been added to your wallet.` });
     setAddAmount('');
     setUpiRef('');
     setIsAddMoneyOpen(false);
@@ -419,7 +420,7 @@ export default function WalletPage() {
                         <DialogClose asChild>
                           <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button onClick={handleAddMoney}>Submit Deposit Request</Button>
+                        <Button onClick={handleAddMoney}>Confirm Deposit</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -598,4 +599,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
 
