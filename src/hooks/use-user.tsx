@@ -332,7 +332,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
     // Check if it's the user's first paid tournament *before* adding the joining transaction
-    const isFirstTournament = !allTransactions.some(tx => tx.userId === userToJoin.id && tx.description.toLowerCase().startsWith('joined'));
+    const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
 
     setTournaments(prevTournaments => 
       prevTournaments.map(t => {
@@ -403,3 +403,4 @@ export const useUser = () => {
 };
 
     
+

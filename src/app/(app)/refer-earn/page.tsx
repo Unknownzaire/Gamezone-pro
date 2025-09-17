@@ -29,19 +29,21 @@ export default function ReferEarnPage() {
   }, []);
   
   const referralCode = user?.referralCode || 'LOGIN-TO-REFER';
-  const referralUrl = `${window.location.origin}/login?ref=${referralCode}`;
+  const referralUrl = typeof window !== 'undefined' ? `${window.location.origin}/login?ref=${referralCode}` : '';
 
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(referralUrl);
-    toast({
-      title: "Copied to clipboard!",
-      description: "Your referral link has been copied.",
-    });
+    if (referralUrl) {
+      navigator.clipboard.writeText(referralUrl);
+      toast({
+        title: "Copied to clipboard!",
+        description: "Your referral link has been copied.",
+      });
+    }
   };
 
   const handleShare = () => {
-    if (navigator.share) {
+    if (navigator.share && referralUrl) {
       navigator.share({
         title: 'Join me on Arena Ace!',
         text: `Join me on Arena Ace and start competing in BGMI tournaments. Use my referral link to get started!`,
