@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -21,7 +22,6 @@ import { Textarea } from '@/components/ui/textarea';
 export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
-  const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -29,7 +29,6 @@ export default function AdminDashboardPage() {
 
   const { toast } = useToast();
   
-  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
   
   const [transactionToDecline, setTransactionToDecline] = useState<Transaction | null>(null);
@@ -46,7 +45,6 @@ export default function AdminDashboardPage() {
       const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
       setAllTransactions(transactions);
 
-      setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
       setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
 
       let allTournaments: Tournament[] = [];
@@ -111,7 +109,6 @@ export default function AdminDashboardPage() {
   ];
   
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
-    const isDeposit = type === 'credit';
 
     let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
     let localAllUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]').map((u: any) => ({ ...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
@@ -132,12 +129,8 @@ export default function AdminDashboardPage() {
     
     const userIndex = localAllUsers.findIndex(u => u.id === transaction.userId);
 
-    if (userIndex !== -1) {
-        if (status === 'completed') {
-            if (isDeposit) {
-                localAllUsers[userIndex].walletBalance = (localAllUsers[userIndex].walletBalance || 0) + transaction.amount;
-            } 
-        }
+    if (userIndex !== -1 && type === 'credit' && status === 'completed') {
+        localAllUsers[userIndex].walletBalance += transaction.amount;
     }
 
     transaction.status = status;
@@ -151,11 +144,10 @@ export default function AdminDashboardPage() {
 
     toast({
         title: `Request ${status === 'completed' ? 'Approved' : 'Declined'}`,
-        description: `The ${isDeposit ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
+        description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
     });
 
-    if (isDeposit && pendingDeposits.length <= 1) setIsDepositModalOpen(false);
-    if (!isDeposit && pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
+    if (pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
 };
   
   const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -177,12 +169,6 @@ export default function AdminDashboardPage() {
     toast({ title: "Dashboard Updated", description: "Pending requests have been refreshed." });
   };
   
-  const getTotalDepositsForUser = (userId: string) => {
-    return allTransactions
-      .filter(tx => tx.userId === userId && tx.type === 'credit' && tx.status === 'completed')
-      .reduce((acc, tx) => acc + tx.amount, 0);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -268,97 +254,7 @@ export default function AdminDashboardPage() {
             </Card>
         </Link>
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Dialog open={isDepositModalOpen} onOpenChange={setIsDepositModalOpen}>
-          <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="font-headline text-lg flex items-center gap-2">
-                  <ArrowDownLeft className="text-green-500" />
-                  Pending Deposits
-                </CardTitle>
-                 <div className="flex items-center gap-2">
-                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRefreshClick}>
-                        <RefreshCw className="h-4 w-4" />
-                    </Button>
-                    <Badge variant="secondary">{pendingDeposits.length}</Badge>
-                 </div>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground">Verify and approve user deposit requests.</p>
-              </CardContent>
-            </Card>
-          </DialogTrigger>
-          <DialogContent className="max-w-4xl">
-            <DialogHeader>
-              <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                      <DialogTitle>Pending Deposits</DialogTitle>
-                      <DialogDescription>Review and approve deposit requests from users.</DialogDescription>
-                  </div>
-                  <DialogClose />
-              </div>
-            </DialogHeader>
-            <ScrollArea className="max-h-[60vh]">
-              {pendingDeposits.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>User</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Ref No.</TableHead>
-                      <TableHead>Total Deposits</TableHead>
-                      <TableHead>History</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {pendingDeposits.map(tx => {
-                      const user = getUserById(tx.userId);
-                      return (
-                        <TableRow key={tx.id}>
-                          <TableCell>
-                            {user ? (
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="font-medium">{user.username}</div>
-                              </div>
-                            ) : 'Unknown User'}
-                          </TableCell>
-                          <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
-                          <TableCell className="font-mono text-xs">{tx.paymentDetails?.upiId}</TableCell>
-                          <TableCell>₹{user ? getTotalDepositsForUser(user.id).toLocaleString() : 'N/A'}</TableCell>
-                           <TableCell>
-                            {user && (
-                              <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
-                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
-                                  <History className="h-4 w-4" />
-                                  History
-                                </Button>
-                              </Link>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex gap-2 justify-end">
-                              <Button variant="outline" size="sm" onClick={() => openDeclineDialog(tx)}>Decline</Button>
-                              <Button size="sm" onClick={() => handleRequest(tx.id, 'completed', 'credit')}>Approve</Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              ) : (
-                <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
-              )}
-            </ScrollArea>
-          </DialogContent>
-        </Dialog>
-        
+      <div className="grid gap-6 md:grid-cols-1">
         <Dialog open={isWithdrawalModalOpen} onOpenChange={setIsWithdrawalModalOpen}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">

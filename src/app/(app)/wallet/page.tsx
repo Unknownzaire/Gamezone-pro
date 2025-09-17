@@ -155,7 +155,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, reload: reloadUser } = useUser();
+  const { user, transactions, addTransaction, updateBalance, reload: reloadUser } = useUser();
   const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
@@ -269,18 +269,20 @@ export default function WalletPage() {
       return;
     }
 
+    updateBalance(user.walletBalance + amount);
+
     addTransaction({
         amount,
         type: 'credit',
         description: `Deposit via UPI`,
-        status: 'pending',
+        status: 'completed',
         paymentDetails: {
           method: 'upi',
           upiId: upiRef, // Store the reference number here
         }
     });
 
-    toast({ title: "Deposit Request Submitted", description: `Your request to add ₹${amount.toLocaleString()} is pending approval.` });
+    toast({ title: "Deposit Successful", description: `₹${amount.toLocaleString()} has been added to your wallet.` });
     setAddAmount('');
     setUpiRef('');
     setIsAddMoneyOpen(false);
