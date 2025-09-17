@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -9,7 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament, PrizeDistribution } from '@/lib/types';
+import { Tournament, PrizeDistribution, User } from '@/lib/types';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,7 +36,9 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage({ params: { id } }: { params: { id: string } }) {
+export default function TournamentDetailsPage() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
@@ -44,7 +46,17 @@ export default function TournamentDetailsPage({ params: { id } }: { params: { id
   const tournament = tournaments.find((t) => t.id === id);
 
   if (!tournament) {
-    notFound();
+    // Give it a moment to load from the user context
+    React.useEffect(() => {
+      setTimeout(() => {
+        const t = tournaments.find((t) => t.id === id);
+        if (!t) {
+            notFound();
+        }
+      }, 500)
+    }, [id, tournaments]);
+    
+    return <div>Loading tournament...</div>;
   }
   
   const handleJoin = (tournamentToJoin: Tournament) => {
@@ -207,7 +219,7 @@ export default function TournamentDetailsPage({ params: { id } }: { params: { id
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+  const canJoin = !!currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isAlreadyJoined) joinButtonText = 'Already Joined';
@@ -392,5 +404,7 @@ export default function TournamentDetailsPage({ params: { id } }: { params: { id
     </div>
   );
 }
+
+    
 
     

@@ -250,6 +250,7 @@ export default function CreateTournamentPage() {
                                                     id={`percentage-${index}`}
                                                     type="number" 
                                                     step="0.01"
+                                                    min="0"
                                                     placeholder="e.g., 50"
                                                     value={dist.percentage}
                                                     onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
@@ -261,6 +262,7 @@ export default function CreateTournamentPage() {
                                                     id={`amount-${index}`}
                                                     type="number"
                                                     step="0.01"
+                                                    min="0"
                                                     placeholder="e.g., 2500"
                                                     value={getPrizeAmount(dist.percentage)} 
                                                     onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
@@ -293,3 +295,6 @@ export default function CreateTournamentPage() {
         </div>
     );
 }
+
+
+    

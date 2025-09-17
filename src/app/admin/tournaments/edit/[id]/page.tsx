@@ -244,15 +244,15 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="entryFee">Entry Fee (₹)</Label>
-                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required />
+                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required min="0" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="prizePool">Prize Pool (₹)</Label>
-                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required />
+                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>
-                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required />
+                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required min="0" />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="imageHint">Image Hint</Label>
@@ -291,6 +291,7 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
                                             id={`percentage-${index}`}
                                             type="number"
                                             step="0.01"
+                                            min="0"
                                             placeholder="e.g., 50"
                                             value={dist.percentage}
                                             onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
@@ -302,6 +303,7 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
                                             id={`amount-${index}`}
                                             type="number"
                                             step="0.01"
+                                            min="0"
                                             placeholder="e.g., 2500"
                                             value={getPrizeAmount(dist.percentage)} 
                                             onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
@@ -334,3 +336,5 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
     </div>
   );
 }
+
+    
