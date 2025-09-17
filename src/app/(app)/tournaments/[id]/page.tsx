@@ -2,7 +2,6 @@
 'use client';
 
 import { notFound, useRouter } from 'next/navigation';
-import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -37,12 +36,12 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage({ params: { id } }: { params: { id: string } }) {
+export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const tournament = tournaments.find((t) => t.id === id);
+  const tournament = tournaments.find((t) => t.id === params.id);
 
   if (!tournament) {
     notFound();
@@ -364,7 +363,7 @@ export default function TournamentDetailsPage({ params: { id } }: { params: { id
       <div className="pt-2">
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!currentUser || tournament.status !== 'Upcoming' || isAlreadyJoined || isFull || isBlocked}>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={tournament.status !== 'Upcoming' || isAlreadyJoined || isFull || isBlocked}>
               {joinButtonText}
             </Button>
           </AlertDialogTrigger>
