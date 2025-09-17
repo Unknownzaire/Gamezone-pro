@@ -299,17 +299,22 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       userId: user.id,
       createdAt: new Date(),
     };
-    
-    // For pending withdrawals, deduct from balance immediately to reflect "on hold" amount.
-    if(newTx.type === 'debit' && newTx.status === 'pending') {
-      updateBalance(user.walletBalance - newTx.amount);
-    }
-    
-    // For completed deposits, add to balance immediately.
-    if(newTx.type === 'credit' && newTx.status === 'completed') {
-      updateBalance(user.walletBalance + newTx.amount);
-    }
-    
+
+    setAllUsers(prevAllUsers => {
+        return prevAllUsers.map(u => {
+            if (u.id === user.id) {
+                let newBalance = u.walletBalance;
+                if (newTx.type === 'debit' && newTx.status === 'pending') {
+                    newBalance -= newTx.amount;
+                } else if (newTx.type === 'credit' && newTx.status === 'completed') {
+                    newBalance += newTx.amount;
+                }
+                return { ...u, walletBalance: newBalance };
+            }
+            return u;
+        });
+    });
+
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
@@ -406,7 +411,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    
-
-
