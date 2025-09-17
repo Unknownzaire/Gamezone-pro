@@ -300,7 +300,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
     
-    // For pending withdrawals, deduct from balance immediately.
+    // For pending withdrawals, deduct from balance immediately to reflect "on hold" amount.
     if(newTx.type === 'debit' && newTx.status === 'pending') {
       updateBalance(user.walletBalance - newTx.amount);
     }
@@ -396,8 +396,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    
-
-    
-

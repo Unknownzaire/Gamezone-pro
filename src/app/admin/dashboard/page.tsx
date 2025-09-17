@@ -113,21 +113,27 @@ export default function AdminDashboardPage() {
   const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
     const isDeposit = type === 'credit';
     
-    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-    const transaction = currentAllTransactions.find(tx => tx.id === transactionId);
-    if(!transaction) return;
+    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
+    const transactionIndex = currentAllTransactions.findIndex(tx => tx.id === transactionId);
+    if(transactionIndex === -1) return;
 
-    let localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    const userToUpdate = localAllUsers.find((u:User) => u.id === transaction.userId);
+    let localAllUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]').map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
+    const userIndex = localAllUsers.findIndex((u:User) => u.id === currentAllTransactions[transactionIndex].userId);
 
-    if (userToUpdate && status === 'completed' && isDeposit) {
-        userToUpdate.walletBalance += transaction.amount;
-    } else if (userToUpdate && status === 'declined' && !isDeposit) {
-        userToUpdate.walletBalance += transaction.amount;
+    const transaction = currentAllTransactions[transactionIndex];
+    
+    if (userIndex !== -1) {
+        if (status === 'completed' && isDeposit) {
+            localAllUsers[userIndex].walletBalance += transaction.amount;
+        } else if (status === 'declined' && !isDeposit) {
+            // Refund the balance for a declined withdrawal
+            localAllUsers[userIndex].walletBalance += transaction.amount;
+        }
     }
     
     transaction.status = status;
     if(reason) transaction.declineReason = reason;
+    currentAllTransactions[transactionIndex] = transaction;
 
     localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
     localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
@@ -477,17 +483,3 @@ export default function AdminDashboardPage() {
 
     </div>
   );
-    
-
-
-      
-
-    
-
-    
-
-    
-
-    
-
-
