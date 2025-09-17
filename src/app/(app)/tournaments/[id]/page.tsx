@@ -36,12 +36,12 @@ import React from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
+export default function TournamentDetailsPage({ params: { id } }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const tournament = tournaments.find((t) => t.id === params.id);
+  const tournament = tournaments.find((t) => t.id === id);
 
   if (!tournament) {
     notFound();
