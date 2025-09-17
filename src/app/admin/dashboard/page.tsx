@@ -124,10 +124,9 @@ export default function AdminDashboardPage() {
 
     const transaction = currentAllTransactions[transactionIndex];
     
-    // Ensure the transaction is actually pending
     if (transaction.status !== 'pending') {
         toast({ variant: 'destructive', title: "Error", description: "This transaction is not pending." });
-        loadData(); // Reload data to show the correct state
+        loadData();
         return;
     }
     
@@ -136,24 +135,8 @@ export default function AdminDashboardPage() {
     if (userIndex !== -1) {
         if (status === 'completed') {
             if (isDeposit) {
-                // For an approved deposit, add the amount to the user's balance
-                localAllUsers[userIndex].walletBalance += transaction.amount;
+                localAllUsers[userIndex].walletBalance = (localAllUsers[userIndex].walletBalance || 0) + transaction.amount;
             } 
-            // For an approved withdrawal, the amount is already deducted from the available balance,
-            // but we need to update the main balance if it wasn't already.
-            // Assuming balance is only updated on 'completed' status.
-            else {
-                // In a real system, you'd confirm the funds were sent before this.
-                // The balance was effectively "held" and now it's "gone".
-                // If the main balance already reflects the debit on 'pending', no change is needed.
-                // If not, it should be debited here. Based on use-user hook, it is not debited on pending,
-                // so we should debit it now. Let's assume it was already debited for withdrawal for now.
-            }
-        } else { // status === 'declined'
-            // No balance change for declined deposit.
-            // For a declined withdrawal, the "held" amount should be returned.
-            // But since our user hook doesn't create a 'held' state, we just don't debit.
-            // Let's assume the user balance is not yet debited for pending withdrawals
         }
     }
 
@@ -509,3 +492,5 @@ export default function AdminDashboardPage() {
 
     </div>
   );
+
+    

@@ -310,11 +310,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     if (newTx.status === 'completed' && newTx.type === 'credit') {
-        setAllUsers(prevAllUsers => 
-            prevAllUsers.map(u => 
-                u.id === user.id ? { ...u, walletBalance: u.walletBalance + newTx.amount } : u
-            )
-        );
+        setAllUsers(prevAllUsers => {
+            const currentUserIndex = prevAllUsers.findIndex(u => u.id === user.id);
+            if (currentUserIndex === -1) return prevAllUsers;
+
+            const updatedUsers = [...prevAllUsers];
+            const currentUser = updatedUsers[currentUserIndex];
+            updatedUsers[currentUserIndex] = { ...currentUser, walletBalance: currentUser.walletBalance + newTx.amount };
+            return updatedUsers;
+        });
     }
     
     setAllTransactions(prev => [newTx, ...prev]);
@@ -413,3 +417,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
