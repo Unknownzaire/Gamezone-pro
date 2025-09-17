@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -32,22 +32,26 @@ import {
 import Link from 'next/link';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function TournamentDetailsPage() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const tournament = tournaments.find((t) => t.id === id);
+  const [tournament, setTournament] = useState<Tournament | undefined>(tournaments.find((t) => t.id === id));
+  
+  useEffect(() => {
+    setTournament(tournaments.find((t) => t.id === id));
+  }, [id, tournaments]);
+
 
   if (!tournament) {
-    // Let's use notFound for a cleaner "Not Found" experience if the data is loaded and tournament is missing.
-    // The skeleton provides a loading state while tournaments are being fetched initially.
     const isDataStillLoading = tournaments.length === 0;
     if (isDataStillLoading) {
        return (
@@ -73,7 +77,6 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
         return;
     }
 
-    // Always get the freshest tournament state from the source of truth before performing actions
     const currentTournamentState = tournaments.find(t => t.id === id);
     if (!currentTournamentState) {
         toast({ variant: 'destructive', title: "Error", description: "Tournament not found." });
@@ -116,7 +119,6 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
       return;
     }
 
-    // This would be a server action in a real app
     const newBalance = currentUser.walletBalance - currentTournamentState.entryFee;
     updateBalance(newBalance);
 
