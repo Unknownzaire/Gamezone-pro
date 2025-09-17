@@ -2,7 +2,7 @@
 'use client';
 
 import { mockUsers, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { notFound } from 'next/navigation';
+import { notFound, useParams } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,9 +20,10 @@ import { Tournament } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 
-export default function ManageTournamentPage({ params }: { params: { id: string } }) {
+export default function ManageTournamentPage() {
   const { toast } = useToast();
-  const { id } = params;
+  const params = useParams();
+  const id = params.id as string;
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
 
@@ -113,7 +114,7 @@ export default function ManageTournamentPage({ params }: { params: { id: string 
   const statCards = [
     { title: "Status", value: tournament.status, icon: Clock },
     { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
-    { title: "Entry Fee", value: `₹${tournament.entryFee}`, icon: DollarSign },
+    { title: "Entry Fee", value: `₹${tournament.entryFee.toLocaleString()}`, icon: DollarSign },
     { title: "Participants", value: `${tournament.participants.length} / 100`, icon: Users },
   ];
 
