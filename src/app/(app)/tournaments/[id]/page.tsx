@@ -207,7 +207,7 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
+  const canJoin = !!currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isAlreadyJoined) joinButtonText = 'Already Joined';
