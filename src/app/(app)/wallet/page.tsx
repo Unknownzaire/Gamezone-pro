@@ -28,6 +28,7 @@ import { Transaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import type { WalletSettings } from "@/app/admin/settings/page";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
@@ -331,9 +332,10 @@ export default function WalletPage() {
   const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
-  const referralEarnings = transactions
-    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('referral') || tx.description.toLowerCase().includes('bonus')))
-    .reduce((acc, tx) => acc + tx.amount, 0);
+  const referralTransactions = allSortedTransactions
+    .filter(tx => tx.status === 'completed' && (tx.description.toLowerCase().includes('referral') || tx.description.toLowerCase().includes('bonus')));
+
+  const referralEarnings = referralTransactions.reduce((acc, tx) => acc + (tx.type === 'credit' ? tx.amount : 0), 0);
 
 
   return (
@@ -504,21 +506,47 @@ export default function WalletPage() {
             </Dialog>
         </CardContent>
       </Card>
-
-       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle>Referral Earnings</CardTitle>
-            <CardDescription>Total bonuses earned from inviting friends.</CardDescription>
-          </div>
-          <Gift className="h-8 w-8 text-primary" />
-        </CardHeader>
-        <CardContent>
-          <p className="text-3xl font-bold text-primary">
-            ₹{referralEarnings.toFixed(2)}
-          </p>
-        </CardContent>
-      </Card>
+      
+      <Dialog>
+        <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Referral Earnings</CardTitle>
+                    <CardDescription>Total bonuses earned from inviting friends.</CardDescription>
+                </div>
+                <Gift className="h-8 w-8 text-primary" />
+                </CardHeader>
+                <CardContent>
+                <p className="text-3xl font-bold text-primary">
+                    ₹{referralEarnings.toFixed(2)}
+                </p>
+                </CardContent>
+            </Card>
+        </DialogTrigger>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Referral Bonus History</DialogTitle>
+                <DialogDescription>
+                    These are all the bonuses you've received from referrals. They are automatically added to your main balance.
+                </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-72">
+                <div className="pr-4">
+                {referralTransactions.length > 0 ? (
+                    <TransactionList transactions={referralTransactions} />
+                ) : (
+                    <p className="text-muted-foreground text-center p-8">You haven't earned any referral bonuses yet.</p>
+                )}
+                </div>
+            </ScrollArea>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
@@ -570,3 +598,4 @@ export default function WalletPage() {
     </div>
   );
 }
+
