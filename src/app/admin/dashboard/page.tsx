@@ -37,7 +37,7 @@ export default function AdminDashboardPage() {
 
   const loadData = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
-    const users: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+    const users: User[] = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : mockUsers;
     setAllUsers(users);
     setTotalUsers(users.length);
 
@@ -69,6 +69,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     loadData();
+    window.addEventListener('storage', loadData);
+    return () => {
+      window.removeEventListener('storage', loadData);
+    };
   }, [loadData]);
 
   const totalTournaments = completedTournaments.length;
@@ -106,8 +110,8 @@ export default function AdminDashboardPage() {
     currentAllTransactions = currentAllTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
     localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
     
-    let updatedUsers = [...allUsers];
-    const userToUpdate = allUsers.find(u => u.id === transaction.userId);
+    let updatedUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    const userToUpdate = updatedUsers.find(u => u.id === transaction.userId);
 
     if (userToUpdate) {
         if (status === 'completed' && isDeposit) {

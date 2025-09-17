@@ -53,7 +53,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     try {
         const storedUsers = localStorage.getItem('allUsers');
         if (storedUsers) {
-            setAllUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: new Date(u.createdAt) })));
+            setAllUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
         } else {
             setAllUsers(mockUsers);
             localStorage.setItem('allUsers', JSON.stringify(mockUsers));
@@ -324,9 +324,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    const storedTournaments = localStorage.getItem('allTournaments');
-    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
-    return allTournaments.some(t => t.participants.some(p => p.user.id === userId));
+    return tournaments.some(t => t.participants.some(p => p.user.id === userId && t.entryFee > 0));
   };
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
