@@ -321,12 +321,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    return allTransactions.some(tx => tx.userId === userId && tx.type === 'debit' && tx.description.toLowerCase().startsWith('joined'));
+    // We check `allTransactions` instead of the user's filtered transactions
+    return allTransactions.some(tx => 
+      tx.userId === userId && 
+      tx.type === 'debit' && 
+      tx.description.toLowerCase().startsWith('joined')
+    );
   };
   
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
-    const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
+    // Check if it's the user's first paid tournament *before* adding the joining transaction
+    const isFirstTournament = !allTransactions.some(tx => tx.userId === userToJoin.id && tx.description.toLowerCase().startsWith('joined'));
 
     setTournaments(prevTournaments => 
       prevTournaments.map(t => {
@@ -369,7 +375,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             };
             setAllTransactions(prevTxs => [bonusTransaction, ...prevTxs]);
             
-            // This toast is for the joining user, might want a different notification system for the referrer
             console.log(`Referrer ${referrer.username} has been awarded a bonus of ₹${bonus}.`);
         }
     }
@@ -396,3 +401,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
