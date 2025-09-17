@@ -105,32 +105,28 @@ export default function AdminDashboardPage() {
 
     currentAllTransactions = currentAllTransactions.map(t => t.id === transactionId ? {...t, status: status, declineReason: reason } : t);
     localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
-    setAllTransactions(currentAllTransactions);
-
+    
     let updatedUsers = [...allUsers];
     const userToUpdate = allUsers.find(u => u.id === transaction.userId);
 
     if (userToUpdate) {
-      if (status === 'completed') {
-        if (isDeposit) {
-          updatedUsers = updatedUsers.map(u => 
-            u.id === userToUpdate.id 
-            ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-            : u
-          );
+        if (status === 'completed' && isDeposit) {
+            updatedUsers = updatedUsers.map(u => 
+                u.id === userToUpdate.id 
+                ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+                : u
+            );
         }
-      } else { 
-        if (!isDeposit) {
-          updatedUsers = updatedUsers.map(u => 
-            u.id === userToUpdate.id 
-            ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
-            : u
-          );
+        // Note: For pending debits (withdrawals), balance is already reduced. If declined, we need to add it back.
+        else if (status === 'declined' && !isDeposit) {
+            updatedUsers = updatedUsers.map(u => 
+                u.id === userToUpdate.id 
+                ? { ...u, walletBalance: u.walletBalance + transaction.amount } 
+                : u
+            );
         }
-      }
     }
 
-    setAllUsers(updatedUsers);
     localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
     
     loadData();
@@ -481,6 +477,8 @@ export default function AdminDashboardPage() {
 
 
       
+
+    
 
     
 

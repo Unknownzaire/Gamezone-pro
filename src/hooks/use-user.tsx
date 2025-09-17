@@ -96,7 +96,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData();
 
      const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'referralSettings') {
+      if (event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'referralSettings' || event.key === 'allUsers' || event.key === 'allTransactions') {
         loadInitialData();
       }
     };
@@ -400,5 +400,7 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
 
     
