@@ -135,8 +135,7 @@ export default function TournamentDetailsPage() {
       return;
     }
 
-    const newBalance = currentUser.walletBalance - currentTournamentState.entryFee;
-    updateBalance(newBalance);
+    updateBalance((balance) => balance - currentTournamentState.entryFee);
 
     addTransaction({
         amount: currentTournamentState.entryFee,
@@ -444,5 +443,7 @@ export default function TournamentDetailsPage() {
     </div>
   );
 }
+
+    
 
     
