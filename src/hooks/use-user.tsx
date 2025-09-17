@@ -186,8 +186,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
+    let referrer: User | undefined;
+
     if (referralCode) {
-        const referrer = allUsers.find(u => u.referralCode === referralCode);
+        referrer = allUsers.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
             const storedSettings = localStorage.getItem('referralSettings');
@@ -225,13 +227,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
     
     let updatedTransactions = [...allTransactions];
-    if (newUserBonus > 0) {
+    if (newUserBonus > 0 && referrer) {
       const bonusTransaction: Transaction = {
         id: `tx-new-user-bonus-${newUser.id}`,
         userId: newUser.id,
         amount: newUserBonus,
         type: 'credit',
-        description: 'New user referral bonus',
+        description: `Sign-up bonus (referred by ${referrer.username})`,
         createdAt: new Date(),
         status: 'completed'
       };
