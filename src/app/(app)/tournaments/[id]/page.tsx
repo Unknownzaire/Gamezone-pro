@@ -43,20 +43,25 @@ export default function TournamentDetailsPage() {
   const { toast } = useToast();
   const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
 
-  const tournament = tournaments.find((t) => t.id === id);
+  const [tournament, setTournament] = React.useState<Tournament | undefined>(undefined);
+
+  React.useEffect(() => {
+    const foundTournament = tournaments.find((t) => t.id === id);
+    setTournament(foundTournament);
+  }, [id, tournaments]);
+
 
   if (!tournament) {
-    // Give it a moment to load from the user context
-    React.useEffect(() => {
-      setTimeout(() => {
-        const t = tournaments.find((t) => t.id === id);
-        if (!t) {
-            notFound();
-        }
-      }, 500)
-    }, [id, tournaments]);
-    
-    return <div>Loading tournament...</div>;
+    // Initial load or not found
+     return (
+      <div className="space-y-6 animate-pulse">
+        <div className="flex items-center gap-4">
+          <div className="h-10 w-10 rounded-md bg-muted"></div>
+          <div className="h-8 w-48 rounded-md bg-muted"></div>
+        </div>
+         <div className="h-80 w-full rounded-lg bg-muted"></div>
+      </div>
+    );
   }
   
   const handleJoin = (tournamentToJoin: Tournament) => {
@@ -404,7 +409,3 @@ export default function TournamentDetailsPage() {
     </div>
   );
 }
-
-    
-
-    
