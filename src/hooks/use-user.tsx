@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { User, Transaction, Tournament, PromotionalAd, Participant } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
@@ -49,23 +49,27 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
   const { toast } = useToast();
 
-  const loadInitialData = () => {
+  const loadInitialData = useCallback(() => {
     try {
         let storedUsers = localStorage.getItem('allUsers');
+        let currentUsers: User[];
         if (storedUsers) {
-            setAllUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
+            currentUsers = JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
         } else {
             localStorage.setItem('allUsers', JSON.stringify(mockUsers));
-            setAllUsers(mockUsers);
+            currentUsers = mockUsers;
         }
+        setAllUsers(currentUsers);
         
         let storedTransactions = localStorage.getItem('allTransactions');
+        let currentTransactions: Transaction[];
         if (storedTransactions) {
-            setAllTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
+            currentTransactions = JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         } else {
             localStorage.setItem('allTransactions', JSON.stringify(mockTransactions));
-            setAllTransactions(mockTransactions);
+            currentTransactions = mockTransactions;
         }
+        setAllTransactions(currentTransactions);
 
         let storedTournaments = localStorage.getItem('allTournaments');
         if (storedTournaments) {
@@ -91,12 +95,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setPromotionalAds([]);
     }
     setLoading(false);
-  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const reload = () => {
+  const reload = useCallback(() => {
     setLoading(true);
     loadInitialData();
-  }
+  }, [loadInitialData]);
 
   useEffect(() => {
     loadInitialData();
@@ -112,8 +117,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadInitialData, reload]);
 
   useEffect(() => {
     if (!loading) {
@@ -151,7 +155,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return 'blocked';
     }
     
-    loadUserContext(userToLogin.id);
+    loadUserContext(userToLogin.id, allUsers, allTransactions);
     return true;
   };
   
@@ -243,7 +247,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return 'success';
   };
 
-  const logout = () => {
+  const logout = useCallback(() => {
     sessionStorage.removeItem('currentUser');
     setUser(null);
     setTransactions([]);
@@ -251,10 +255,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
         router.push('/login');
     }
-  }
+  }, [pathname, router]);
 
-  const loadUserContext = (userId: string) => {
-    const liveUserData = allUsers.find(u => u.id === userId);
+  const loadUserContext = useCallback((userId: string, currentAllUsers: User[], currentAllTransactions: Transaction[]) => {
+    const liveUserData = currentAllUsers.find(u => u.id === userId);
 
     if (liveUserData) {
         if (liveUserData.isBlocked) {
@@ -263,8 +267,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             return;
         }
 
-        const userTransactions = allTransactions.filter(tx => tx.userId === liveUserData.id);
-        const userReferredUsers = allUsers.filter(u => u.referredBy === liveUserData.id);
+        const userTransactions = currentAllTransactions.filter(tx => tx.userId === liveUserData.id);
+        const userReferredUsers = currentAllUsers.filter(u => u.referredBy === liveUserData.id);
 
         const currentUser = { ...liveUserData };
         setUser(currentUser);
@@ -274,7 +278,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } else {
         logout();
     }
-  }
+  }, [logout, router]);
 
 
   useEffect(() => {
@@ -284,11 +288,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = sessionStorage.getItem('currentUser');
         if (storedUser) {
             const loggedInUser: User = JSON.parse(storedUser);
-            // This is the key change: ensure we reload context from the latest `allUsers` state
             const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
             if(liveUserData) {
-                 if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
-                    loadUserContext(loggedInUser.id);
+                 if (JSON.stringify(liveUserData) !== JSON.stringify(user) || transactions.length !== allTransactions.filter(tx => tx.userId === liveUserData.id).length) {
+                    loadUserContext(loggedInUser.id, allUsers, allTransactions);
                 }
             } else {
                 logout();
@@ -303,8 +306,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error loading user from sessionStorage", e);
         logout();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allUsers, allTransactions, loading, pathname]);
+  }, [allUsers, allTransactions, loading, pathname, user, transactions.length, loadUserContext, logout]);
 
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
@@ -316,10 +318,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
     };
 
-    if (newTx.status === 'completed' && newTx.type === 'credit') {
-        updateBalance(currentBalance => currentBalance + newTx.amount);
-    }
-    
     setAllTransactions(prev => [newTx, ...prev]);
   };
   
@@ -418,9 +416,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    
-
-
-
-    
