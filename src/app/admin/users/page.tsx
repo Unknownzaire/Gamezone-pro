@@ -59,8 +59,10 @@ export default function AdminUsersPage() {
 
   useEffect(() => {
     loadData();
+    window.addEventListener('storage', loadData);
     window.addEventListener('focus', loadData);
     return () => {
+      window.removeEventListener('storage', loadData);
       window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
