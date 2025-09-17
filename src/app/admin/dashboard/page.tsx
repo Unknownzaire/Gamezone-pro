@@ -23,6 +23,7 @@ export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
   const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
+  const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [activeAdsCount, setActiveAdsCount] = useState(0);
@@ -30,6 +31,7 @@ export default function AdminDashboardPage() {
   const { toast } = useToast();
   
   const [isWithdrawalModalOpen, setIsWithdrawalModalOpen] = useState(false);
+  const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
   
   const [transactionToDecline, setTransactionToDecline] = useState<Transaction | null>(null);
   const [declineReason, setDeclineReason] = useState('');
@@ -46,6 +48,7 @@ export default function AdminDashboardPage() {
       setAllTransactions(transactions);
 
       setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
+      setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
 
       let allTournaments: Tournament[] = [];
       const storedTournaments = localStorage.getItem('allTournaments');
@@ -147,7 +150,8 @@ export default function AdminDashboardPage() {
         description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
     });
 
-    if (pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
+    if (type === 'debit' && pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
+    if (type === 'credit' && pendingDeposits.length <= 1) setIsDepositModalOpen(false);
 };
   
   const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -163,10 +167,10 @@ export default function AdminDashboardPage() {
     setDeclineReason('');
   }
   
-  const handleRefreshClick = (e: React.MouseEvent) => {
+  const handleRefreshClick = (e: React.MouseEvent, type: 'withdrawals' | 'deposits') => {
     e.stopPropagation();
     loadData();
-    toast({ title: "Dashboard Updated", description: "Pending requests have been refreshed." });
+    toast({ title: "Dashboard Updated", description: `Pending ${type} have been refreshed.` });
   };
   
   return (
@@ -254,7 +258,103 @@ export default function AdminDashboardPage() {
             </Card>
         </Link>
       </div>
-      <div className="grid gap-6 md:grid-cols-1">
+      <div className="grid gap-6 md:grid-cols-2">
+         <Dialog open={isDepositModalOpen} onOpenChange={setIsDepositModalOpen}>
+          <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="font-headline text-lg flex items-center gap-2">
+                        <ArrowDownLeft className="text-green-500" />
+                        Pending Deposits
+                    </CardTitle>
+                    <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleRefreshClick(e, 'deposits')}>
+                            <RefreshCw className="h-4 w-4" />
+                        </Button>
+                        <Badge variant="default" className="bg-green-500">{pendingDeposits.length}</Badge>
+                    </div>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-sm text-muted-foreground">Review and process user deposit requests.</p>
+                </CardContent>
+            </Card>
+          </DialogTrigger>
+          <DialogContent className="max-w-3xl">
+             <DialogHeader>
+                <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                        <DialogTitle>Pending Deposits</DialogTitle>
+                        <DialogDescription>Review and process deposit requests from users.</DialogDescription>
+                    </div>
+                    <DialogClose />
+                </div>
+            </DialogHeader>
+            <ScrollArea className="max-h-[60vh]">
+              {pendingDeposits.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>User</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Payment Details</TableHead>
+                      <TableHead>History</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingDeposits.map(tx => {
+                      const user = getUserById(tx.userId);
+                      return (
+                        <TableRow key={tx.id}>
+                          <TableCell>
+                            {user ? (
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div className="font-medium">{user.username}</div>
+                              </div>
+                            ) : 'Unknown User'}
+                          </TableCell>
+                          <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                          <TableCell>
+                            {tx.paymentDetails ? (
+                              <div className="text-xs">
+                                <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
+                                {tx.paymentDetails.method === 'upi' && <p>Ref: <span className="font-mono">{tx.paymentDetails.upiId}</span></p>}
+                              </div>
+                            ) : (
+                              <p className="text-muted-foreground">N/A</p>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {user && (
+                              <Link href={`/admin/users/${user.id}/history?tab=transactions`}>
+                                <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                                  <History className="h-4 w-4" />
+                                  History
+                                </Button>
+                              </Link>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex gap-2 justify-end">
+                               <Button variant="outline" size="sm" onClick={() => openDeclineDialog(tx)}>Decline</Button>
+                              <Button size="sm" onClick={() => handleRequest(tx.id, 'completed', 'credit')}>Approve</Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )
+                    })}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
         <Dialog open={isWithdrawalModalOpen} onOpenChange={setIsWithdrawalModalOpen}>
           <DialogTrigger asChild>
             <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
@@ -264,7 +364,7 @@ export default function AdminDashboardPage() {
                         Pending Withdrawals
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleRefreshClick}>
+                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={(e) => handleRefreshClick(e, 'withdrawals')}>
                             <RefreshCw className="h-4 w-4" />
                         </Button>
                         <Badge variant="destructive">{pendingWithdrawals.length}</Badge>
@@ -390,3 +490,6 @@ export default function AdminDashboardPage() {
   );
 
     
+
+
+      
