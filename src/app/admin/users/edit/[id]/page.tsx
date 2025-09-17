@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound, useParams } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import { User, Transaction } from '@/lib/types';
 import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditUserPage() {
+export default function EditUserPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = params;
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
@@ -139,7 +138,7 @@ export default function EditUserPage() {
             </div>
              <div className="space-y-2">
                 <Label htmlFor="totalReferrals">Total Referrals</Label>
-                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} disabled />
+                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
             </div>
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit">Save Changes</Button>
