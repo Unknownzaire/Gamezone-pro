@@ -255,6 +255,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     sessionStorage.removeItem('currentUser');
     setUser(null);
     setTransactions([]);
+    setReferredUsers([]);
     const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
     if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
         router.push('/login');
@@ -444,3 +445,4 @@ export const useUser = () => {
   }
   return context;
 };
+
