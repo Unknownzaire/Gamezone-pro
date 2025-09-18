@@ -120,14 +120,15 @@ export default function AdminDashboardPage() {
         toast({ variant: 'destructive', title: "Error", description: "Transaction not found." });
         return;
     }
-
-    const transaction = { ...currentAllTransactions[transactionIndex], status: newStatus, declineReason: reason };
     
-    if (transaction.status !== 'pending' && newStatus !== 'completed' && newStatus !== 'declined') { // Check previous status
+    const originalTransaction = currentAllTransactions[transactionIndex];
+    if (originalTransaction.status !== 'pending') {
         toast({ variant: 'destructive', title: "Error", description: "This transaction is not pending." });
         loadData();
         return;
     }
+
+    const transaction = { ...originalTransaction, status: newStatus, declineReason: reason };
     
     const userIndex = localAllUsers.findIndex(u => u.id === transaction.userId);
 
@@ -508,4 +509,5 @@ export default function AdminDashboardPage() {
 
 
       
+
 
