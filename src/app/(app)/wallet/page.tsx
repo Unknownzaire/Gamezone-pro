@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect } from "react";
@@ -155,7 +154,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, updateBalance, reload: reloadUser, moveReferralBonusToWallet } = useUser();
+  const { user, transactions, addTransaction, updateUser, reload: reloadUser, moveReferralBonusToWallet } = useUser();
   const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
@@ -225,7 +224,7 @@ export default function WalletPage() {
     }
     
     // Immediately deduct balance
-    updateBalance(balance => balance - amount);
+    updateUser({ walletBalance: user.walletBalance - amount });
 
     addTransaction({
         amount,
@@ -610,3 +609,6 @@ export default function WalletPage() {
 
 
 
+
+
+    

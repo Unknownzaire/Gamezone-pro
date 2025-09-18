@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
@@ -142,7 +141,7 @@ export default function AdminDashboardPage() {
             
             // Create a refund transaction
             const refundTx: Transaction = {
-                id: `tx-refund-${Date.now()}`,
+                id: `tx-refund-${Date.now()}-${Math.random()}`,
                 userId: transaction.userId,
                 amount: transaction.amount,
                 type: 'credit',
@@ -511,3 +510,6 @@ export default function AdminDashboardPage() {
       
 
 
+
+
+    
