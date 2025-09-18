@@ -407,9 +407,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     const bonusAmount = user.referralBalance;
 
-    updateBalance(balance => balance + bonusAmount);
-
-    setAllUsers(prev => prev.map(u => u.id === user.id ? { ...u, referralBalance: 0 } : u));
+    setAllUsers(prevAllUsers => {
+        return prevAllUsers.map(u => {
+            if (u.id === user.id) {
+                return {
+                    ...u,
+                    walletBalance: u.walletBalance + bonusAmount,
+                    referralBalance: 0,
+                };
+            }
+            return u;
+        });
+    });
     
     addTransaction({
       amount: bonusAmount,
