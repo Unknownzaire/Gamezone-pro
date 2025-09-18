@@ -20,7 +20,7 @@ import { Textarea } from '@/components/ui/textarea';
 
 export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
-  const [completedTournaments, setCompletedTournaments] = useState<Tournament[]>([]);
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
   const [pendingDeposits, setPendingDeposits] = useState<Transaction[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -49,10 +49,10 @@ export default function AdminDashboardPage() {
       setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
       setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
 
-      let allTournaments: Tournament[] = [];
+      let tournamentsData: Tournament[] = [];
       const storedTournaments = localStorage.getItem('allTournaments');
-      allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
-      setCompletedTournaments(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
+      tournamentsData = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+      setAllTournaments(tournamentsData);
 
       const storedAds = localStorage.getItem('promotionalAds');
       const ads: PromotionalAd[] = storedAds ? JSON.parse(storedAds) : [];
@@ -76,16 +76,14 @@ export default function AdminDashboardPage() {
     };
   }, [loadData]);
 
+  const completedTournaments = allTournaments.filter((t: Tournament) => t.status === 'Completed');
   const totalTournaments = completedTournaments.length;
   const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
-  const totalRevenue = allTransactions.filter(tx => tx.status === 'completed').reduce((acc, tx) => {
-    if (tx.type === 'debit' && tx.description.toLowerCase().includes('joined')) {
-        const tournament = mockTournaments.find(t => t.title === tx.description.replace('Joined "', '').replace('"', ''));
-        if (tournament) {
-            return acc + (tx.amount * (tournament.commissionPercentage / 100));
-        }
-    }
-    return acc;
+
+  const totalRevenue = completedTournaments.reduce((acc, t) => {
+    const totalCollected = t.participants.length * t.entryFee;
+    const revenueFromTournament = totalCollected * (t.commissionPercentage / 100);
+    return acc + revenueFromTournament;
   }, 0);
 
 
@@ -511,5 +509,7 @@ export default function AdminDashboardPage() {
 
 
 
+
+    
 
     
