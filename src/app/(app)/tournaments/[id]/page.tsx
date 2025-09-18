@@ -42,7 +42,7 @@ export default function TournamentDetailsPage() {
   const id = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateBalance, addTransaction, tournaments, joinTournament } = useUser();
+  const { user: currentUser, tournaments, joinTournament } = useUser();
   const [isJoining, setIsJoining] = useState(false);
   const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
 
@@ -76,81 +76,39 @@ export default function TournamentDetailsPage() {
     );
   }
   
-  const handleJoin = () => {
-    if (!currentUser) {
-        toast({
-            variant: 'destructive',
-            title: "Not Logged In",
-            description: `Please log in to join a tournament.`,
-        });
-        return;
-    }
+  const handleJoin = async () => {
+    if (!currentUser || !tournament) return;
 
     setIsJoining(true);
 
-    const currentTournamentState = tournaments.find(t => t.id === id);
-    if (!currentTournamentState) {
-        toast({ variant: 'destructive', title: "Error", description: "Tournament not found." });
-        setIsJoining(false);
-        return;
-    }
-    
-    if (currentTournamentState.participants.some(p => p.user.id === currentUser.id)) {
-      toast({
-        variant: 'destructive',
-        title: "Already Joined",
-        description: "You have already joined this tournament.",
-      });
-      setIsJoining(false);
-       return;
-    }
+    try {
+      const result = joinTournament(tournament.id, currentUser);
 
-    if(currentUser.isBlocked) {
-       toast({
-            variant: 'destructive',
-            title: "Account Blocked",
-            description: `Your account is blocked. You cannot join tournaments.`,
+      if (result === 'success') {
+        toast({
+          title: "Successfully Joined!",
+          description: `You have joined the "${tournament.title}" tournament. ₹${tournament.entryFee} has been deducted.`,
         });
+      } else {
+        // The joinTournament function will show specific toasts for failures.
+        // We might want a generic one here if it returns a generic false.
+        if (result === false) {
+           toast({
+              variant: 'destructive',
+              title: "Failed to Join",
+              description: "An unexpected error occurred. Please try again.",
+           });
+        }
+      }
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: error.message || "An unexpected error occurred.",
+        });
+    } finally {
         setIsJoining(false);
-        return;
     }
-    
-    if (currentTournamentState.participants.length >= 100) {
-      toast({
-        variant: 'destructive',
-        title: "Tournament Full",
-        description: "This tournament has reached its maximum capacity.",
-      });
-      setIsJoining(false);
-      return;
-    }
-
-    if (currentUser.walletBalance < currentTournamentState.entryFee) {
-       toast({
-        variant: 'destructive',
-        title: "Insufficient Balance",
-        description: `You need ₹${currentTournamentState.entryFee} to join. Please add funds to your wallet.`,
-      });
-      setIsJoining(false);
-      return;
-    }
-
-    updateBalance((balance) => balance - currentTournamentState.entryFee);
-
-    addTransaction({
-        amount: currentTournamentState.entryFee,
-        type: 'debit',
-        description: `Joined "${currentTournamentState.title}"`,
-        status: 'completed'
-    });
-    
-    joinTournament(currentTournamentState.id, currentUser);
-
-    toast({
-      title: "Successfully Joined!",
-      description: `You have joined the "${currentTournamentState.title}" tournament. ₹${currentTournamentState.entryFee} has been deducted.`,
-    });
-    setIsJoining(false);
   };
 
   const getPrizeForRankString = (rankString: string, prizePool: number, distribution: PrizeDistribution[]): string => {
