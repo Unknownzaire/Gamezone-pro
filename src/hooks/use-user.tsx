@@ -217,8 +217,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         ...userDetails,
         password: password,
         id: `user-${Date.now()}`,
-        walletBalance: 0,
-        referralBalance: newUserBonus,
+        walletBalance: newUserBonus,
+        referralBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
@@ -233,7 +233,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         userId: newUser.id,
         amount: newUserBonus,
         type: 'credit',
-        description: `Sign-up bonus (referred by ${referrer.username})`,
+        description: `Sign-up bonus added to wallet (referred by ${referrer.username})`,
         createdAt: new Date(),
         status: 'completed'
       };
