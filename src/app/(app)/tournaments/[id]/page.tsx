@@ -443,7 +443,6 @@ export default function TournamentDetailsPage() {
     </div>
   );
 }
-
     
 
     
