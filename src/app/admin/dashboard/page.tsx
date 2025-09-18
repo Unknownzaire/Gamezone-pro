@@ -111,8 +111,7 @@ export default function AdminDashboardPage() {
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];
   
-  const handleRequest = (transactionId: string, status: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
-
+  const handleRequest = (transactionId: string, newStatus: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
     let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
     let localAllUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]').map((u: any) => ({ ...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
     
@@ -122,9 +121,9 @@ export default function AdminDashboardPage() {
         return;
     }
 
-    const transaction = currentAllTransactions[transactionIndex];
+    const transaction = { ...currentAllTransactions[transactionIndex], status: newStatus, declineReason: reason };
     
-    if (transaction.status !== 'pending') {
+    if (transaction.status !== 'pending' && newStatus !== 'completed' && newStatus !== 'declined') { // Check previous status
         toast({ variant: 'destructive', title: "Error", description: "This transaction is not pending." });
         loadData();
         return;
@@ -132,12 +131,28 @@ export default function AdminDashboardPage() {
     
     const userIndex = localAllUsers.findIndex(u => u.id === transaction.userId);
 
-    if (userIndex !== -1 && type === 'credit' && status === 'completed') {
-        localAllUsers[userIndex].walletBalance += transaction.amount;
+    if (userIndex !== -1) {
+        if (type === 'credit' && newStatus === 'completed') {
+            localAllUsers[userIndex].walletBalance += transaction.amount;
+        }
+        if (type === 'debit' && newStatus === 'declined') {
+            // Refund the user if a withdrawal is declined
+            localAllUsers[userIndex].walletBalance += transaction.amount;
+            
+            // Create a refund transaction
+            const refundTx: Transaction = {
+                id: `tx-refund-${Date.now()}`,
+                userId: transaction.userId,
+                amount: transaction.amount,
+                type: 'credit',
+                description: `Refund for declined withdrawal: ${transaction.description}`,
+                createdAt: new Date(),
+                status: 'completed',
+            };
+            currentAllTransactions.push(refundTx);
+        }
     }
 
-    transaction.status = status;
-    if (reason) transaction.declineReason = reason;
     currentAllTransactions[transactionIndex] = transaction;
 
     localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
@@ -146,8 +161,8 @@ export default function AdminDashboardPage() {
     loadData();
 
     toast({
-        title: `Request ${status === 'completed' ? 'Approved' : 'Declined'}`,
-        description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${status === 'completed' ? 'approved' : 'declined'}.`,
+        title: `Request ${newStatus === 'completed' ? 'Approved' : 'Declined'}`,
+        description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${newStatus}.`,
     });
 
     if (type === 'debit' && pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
@@ -493,3 +508,4 @@ export default function AdminDashboardPage() {
 
 
       
+

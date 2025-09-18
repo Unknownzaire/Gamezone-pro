@@ -224,6 +224,9 @@ export default function WalletPage() {
       paymentDetails = { method: 'bank', accountNumber, ifscCode, accountHolderName };
     }
     
+    // Immediately deduct balance
+    updateBalance(balance => balance - amount);
+
     addTransaction({
         amount,
         type: 'debit',
@@ -601,3 +604,4 @@ export default function WalletPage() {
 
 
     
+
