@@ -10,7 +10,7 @@ import { Transaction, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock, Edit, Trash2 } from 'lucide-react';
+import { ArrowLeft, ArrowDownLeft, ArrowUpRight, RefreshCw, XCircle, Clock, Edit, Trash2, Search } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -36,6 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Separator } from '@/components/ui/separator';
+import { Input } from '@/components/ui/input';
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -44,6 +45,7 @@ export default function AdminTransactionsPage() {
   const initialTab = searchParams.get('tab') || 'all';
   const { toast } = useToast();
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const loadData = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -81,6 +83,10 @@ export default function AdminTransactionsPage() {
     setTransactionToDelete(null);
   };
   
+  const filteredTransactions = transactions.filter(tx => 
+    tx.id.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   const TransactionTable = ({ txs }: { txs: Transaction[] }) => {
     if (txs.length === 0) {
         return <p className="text-center text-muted-foreground py-8">No transactions in this category.</p>;
@@ -238,9 +244,9 @@ export default function AdminTransactionsPage() {
     )
   }
 
-  const deposits = transactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit') && tx.status === 'completed');
-  const withdrawals = transactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal') && tx.status === 'completed');
-  const declined = transactions.filter(tx => tx.status === 'declined');
+  const deposits = filteredTransactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit') && tx.status === 'completed');
+  const withdrawals = filteredTransactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal') && tx.status === 'completed');
+  const declined = filteredTransactions.filter(tx => tx.status === 'declined');
 
   return (
     <div className="space-y-6">
@@ -257,10 +263,22 @@ export default function AdminTransactionsPage() {
                 <p className="text-muted-foreground">A log of all deposits and withdrawals.</p>
             </div>
         </div>
-        <Button variant="outline" size="icon" onClick={handleRefresh}>
-          <RefreshCw className="h-4 w-4" />
-          <span className="sr-only">Refresh Transactions</span>
-        </Button>
+        <div className='flex items-center gap-2'>
+            <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                    type="search"
+                    placeholder="Search by transaction ID..."
+                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <Button variant="outline" size="icon" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4" />
+            <span className="sr-only">Refresh Transactions</span>
+            </Button>
+        </div>
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
@@ -273,7 +291,7 @@ export default function AdminTransactionsPage() {
         <TabsContent value="all" className="mt-4">
             <Card>
                 <CardContent className='p-0'>
-                    <TransactionTable txs={transactions} />
+                    <TransactionTable txs={filteredTransactions} />
                 </CardContent>
             </Card>
         </TabsContent>
