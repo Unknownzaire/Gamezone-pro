@@ -120,29 +120,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [loadInitialData, reload]);
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('allUsers', JSON.stringify(allUsers));
-    }
-  }, [allUsers, loading]);
+  const saveAllUsers = useCallback((updatedUsers: User[]) => {
+      setAllUsers(updatedUsers);
+      localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+  }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
-    }
-  }, [allTransactions, loading]);
-  
-  useEffect(() => {
-    if (!loading) {
-        localStorage.setItem('allTournaments', JSON.stringify(tournaments));
-    }
-  }, [tournaments, loading]);
+  const saveAllTransactions = useCallback((updatedTransactions: Transaction[]) => {
+      setAllTransactions(updatedTransactions);
+      localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+  }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
-    }
-  }, [promotionalAds, loading]);
+  const saveAllTournaments = useCallback((updatedTournaments: Tournament[]) => {
+      setTournaments(updatedTournaments);
+      localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+  }, []);
+
 
   const login = (email: string, password: string): boolean | 'blocked' => {
     const userToLogin = allUsers.find(u => u.email === email && u.password === password);
@@ -240,8 +232,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       updatedTransactions = [bonusTransaction, ...updatedTransactions];
     }
     
-    setAllTransactions(updatedTransactions);
-    setAllUsers(prevUsers => [...prevUsers, newUser]);
+    saveAllTransactions(updatedTransactions);
+    saveAllUsers([...allUsers, newUser]);
     
     toast({
       title: 'Sign Up Successful',
@@ -295,7 +287,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             const loggedInUser: User = JSON.parse(storedUser);
             const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
             if(liveUserData) {
-                 if (JSON.stringify(liveUserData) !== JSON.stringify(user) || transactions.length !== allTransactions.filter(tx => tx.userId === liveUserData.id).length) {
+                 if (JSON.stringify(liveUserData) !== JSON.stringify(user) || transactions.length !== allTransactions.filter(tx => tx.userId === liveUserData.id).length || allUsers.filter(u => u.referredBy === liveUserData.id).length !== referredUsers.length) {
                     loadUserContext(loggedInUser.id, allUsers, allTransactions);
                 }
             } else {
@@ -311,7 +303,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.error("Error loading user from sessionStorage", e);
         logout();
     }
-  }, [allUsers, allTransactions, loading, pathname, user, transactions.length, loadUserContext, logout]);
+  }, [allUsers, allTransactions, loading, pathname, user, transactions.length, loadUserContext, logout, referredUsers.length]);
 
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
@@ -322,26 +314,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       userId: user.id,
       createdAt: new Date(),
     };
-
-    setAllTransactions(prev => [newTx, ...prev]);
+    saveAllTransactions([newTx, ...allTransactions]);
   };
   
   const updateBalance = (updater: (currentBalance: number) => number) => {
     if(user) {
-        setAllUsers(prevAllUsers => {
-            const newAllUsers = prevAllUsers.map(u => 
-                u.id === user.id 
-                    ? { ...u, walletBalance: updater(u.walletBalance) }
-                    : u
-            );
-            return newAllUsers;
-        });
+        const updatedUsers = allUsers.map(u => 
+            u.id === user.id 
+                ? { ...u, walletBalance: updater(u.walletBalance) }
+                : u
+        );
+        saveAllUsers(updatedUsers);
     }
   };
 
   const updateUser = (updatedFields: Partial<User>) => {
     if (user) {
-      setAllUsers(prev => prev.map(u => u.id === user.id ? {...u, ...updatedFields} : u));
+      const updatedUsers = allUsers.map(u => u.id === user.id ? {...u, ...updatedFields} : u);
+      saveAllUsers(updatedUsers);
     }
   };
 
@@ -356,51 +346,49 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
 
   const joinTournament = (tournamentId: string, userToJoin: User) => {
-    // Check if it's the user's first paid tournament *before* adding the joining transaction
-    const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
+      const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
 
-    setTournaments(prevTournaments => 
-      prevTournaments.map(t => {
-        if (t.id === tournamentId) {
-          if (t.participants.some(p => p.user.id === userToJoin.id)) {
-            return t; 
+      const updatedTournaments = tournaments.map(t => {
+          if (t.id === tournamentId) {
+              if (t.participants.some(p => p.user.id === userToJoin.id)) {
+                  return t; // Already joined
+              }
+              const newParticipant: Participant = {
+                  id: `p-${t.id}-${userToJoin.id}`,
+                  user: userToJoin,
+                  tournamentId: t.id,
+                  result: null,
+                  joinedAt: new Date(),
+              };
+              return { ...t, participants: [...t.participants, newParticipant] };
           }
-          const newParticipant: Participant = {
-            id: `p-${t.id}-${userToJoin.id}`,
-            user: userToJoin,
-            tournamentId: t.id,
-            result: null,
-            joinedAt: new Date(),
-          };
-          return { ...t, participants: [...t.participants, newParticipant] };
-        }
-        return t;
-      })
-    );
+          return t;
+      });
 
-    if (isFirstTournament && userToJoin.referredBy) {
-        const referrer = allUsers.find(u => u.id === userToJoin.referredBy);
-        if (referrer) {
-            const storedSettings = localStorage.getItem('referralSettings');
-            const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
-            const bonus = settings.referralBonus;
+      saveAllTournaments(updatedTournaments);
 
-            // Update referrer's referral balance
-            setAllUsers(prevUsers => prevUsers.map(u => u.id === referrer.id ? { ...u, referralBalance: (u.referralBalance || 0) + bonus } : u));
-            
-            // Create transaction for referrer
-            const bonusTransaction: Transaction = {
-                id: `tx-referral-bonus-${userToJoin.id}`,
-                userId: referrer.id,
-                amount: bonus,
-                type: 'credit',
-                description: `Referral bonus for ${userToJoin.username}`,
-                createdAt: new Date(),
-                status: 'completed'
-            };
-            setAllTransactions(prevTxs => [bonusTransaction, ...prevTxs]);
-        }
-    }
+      if (isFirstTournament && userToJoin.referredBy) {
+          const referrer = allUsers.find(u => u.id === userToJoin.referredBy);
+          if (referrer) {
+              const storedSettings = localStorage.getItem('referralSettings');
+              const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
+              const bonus = settings.referralBonus;
+
+              const updatedUsers = allUsers.map(u => u.id === referrer.id ? { ...u, referralBalance: (u.referralBalance || 0) + bonus } : u);
+              saveAllUsers(updatedUsers);
+
+              const bonusTransaction: Transaction = {
+                  id: `tx-referral-bonus-${userToJoin.id}`,
+                  userId: referrer.id,
+                  amount: bonus,
+                  type: 'credit',
+                  description: `Referral bonus for ${userToJoin.username}`,
+                  createdAt: new Date(),
+                  status: 'completed'
+              };
+              saveAllTransactions([bonusTransaction, ...allTransactions]);
+          }
+      }
   };
   
   const moveReferralBonusToWallet = () => {
@@ -408,18 +396,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     const bonusAmount = user.referralBalance;
 
-    setAllUsers(prevAllUsers => {
-        return prevAllUsers.map(u => {
-            if (u.id === user.id) {
-                return {
-                    ...u,
-                    walletBalance: u.walletBalance + bonusAmount,
-                    referralBalance: 0,
-                };
-            }
-            return u;
-        });
+    const updatedUsers = allUsers.map(u => {
+        if (u.id === user.id) {
+            return {
+                ...u,
+                walletBalance: u.walletBalance + bonusAmount,
+                referralBalance: 0,
+            };
+        }
+        return u;
     });
+    saveAllUsers(updatedUsers);
     
     addTransaction({
       amount: bonusAmount,
@@ -445,4 +432,3 @@ export const useUser = () => {
   }
   return context;
 };
-
