@@ -328,7 +328,7 @@ export default function WalletPage() {
   const referralTransactions = allSortedTransactions
     .filter(tx => {
         const description = tx.description.toLowerCase();
-        return tx.status === 'completed' && (description.includes('referral') || description.includes('bonus'));
+        return tx.status === 'completed' && description.startsWith('referral bonus for');
     });
 
 
@@ -607,5 +607,6 @@ export default function WalletPage() {
 
 
     
+
 
 
