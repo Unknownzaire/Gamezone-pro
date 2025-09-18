@@ -326,7 +326,10 @@ export default function WalletPage() {
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
   const referralTransactions = allSortedTransactions
-    .filter(tx => tx.status === 'completed' && tx.description.toLowerCase().includes('referral bonus'));
+    .filter(tx => {
+        const description = tx.description.toLowerCase();
+        return tx.status === 'completed' && (description.includes('referral') || description.includes('bonus'));
+    });
 
 
   return (
@@ -604,4 +607,5 @@ export default function WalletPage() {
 
 
     
+
 
