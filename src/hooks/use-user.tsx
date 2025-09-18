@@ -25,7 +25,6 @@ interface UserContextType {
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   referredUsers: User[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
-  updateBalance: (updater: (currentBalance: number) => number) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
   login: (email: string, password: string) => boolean | 'blocked';
@@ -313,24 +312,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     const newTx: Transaction = {
       ...tx,
-      id: `tx-${Date.now()}`,
+      id: `tx-${Date.now()}-${Math.random()}`,
       userId: user.id,
       createdAt: new Date(),
     };
     saveAllTransactions([newTx, ...allTransactions]);
   };
   
-  const updateBalance = (updater: (currentBalance: number) => number) => {
-    if(user) {
-        const updatedUsers = allUsers.map(u => 
-            u.id === user.id 
-                ? { ...u, walletBalance: updater(u.walletBalance) }
-                : u
-        );
-        saveAllUsers(updatedUsers);
-    }
-  };
-
   const updateUser = (updatedFields: Partial<User>) => {
     if (user) {
       const updatedUsers = allUsers.map(u => u.id === user.id ? {...u, ...updatedFields} : u);
@@ -376,24 +364,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
       const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
 
-      // 1. Update User's balance
-      const updatedUsers = allUsers.map(u =>
-          u.id === userToJoin.id ? { ...u, walletBalance: u.walletBalance - tournament.entryFee } : u
-      );
-      
-      // 2. Add join transaction
-      const newTransaction: Transaction = {
-          id: `tx-${Date.now()}`,
-          userId: userToJoin.id,
-          amount: tournament.entryFee,
-          type: 'debit',
-          description: `Joined "${tournament.title}"`,
-          createdAt: new Date(),
-          status: 'completed'
-      };
-      let updatedTransactions = [newTransaction, ...allTransactions];
-      
-      // 3. Update tournament participants
+      // 1. Update User's balance and tournament participants
+      let updatedUsers = [...allUsers];
       const updatedTournaments = tournaments.map(t => {
           if (t.id === tournamentId) {
               const newParticipant: Participant = {
@@ -403,12 +375,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                   result: null,
                   joinedAt: new Date(),
               };
+              updatedUsers = updatedUsers.map(u => u.id === userToJoin.id ? { ...u, walletBalance: u.walletBalance - tournament.entryFee } : u);
               return { ...t, participants: [...t.participants, newParticipant] };
           }
           return t;
       });
-
-      // 4. Handle referral bonus if applicable
+      
+      // 2. Add join transaction
+      const newTransaction: Transaction = {
+          id: `tx-${Date.now()}-${Math.random()}`,
+          userId: userToJoin.id,
+          amount: tournament.entryFee,
+          type: 'debit',
+          description: `Joined "${tournament.title}"`,
+          createdAt: new Date(),
+          status: 'completed'
+      };
+      let updatedTransactions = [newTransaction, ...allTransactions];
+      
+      // 3. Handle referral bonus if applicable
       if (isFirstTournament && userToJoin.referredBy) {
           const referrer = updatedUsers.find(u => u.id === userToJoin.referredBy);
           if (referrer) {
@@ -423,7 +408,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               });
 
               const bonusTransaction: Transaction = {
-                  id: `tx-referral-bonus-${userToJoin.id}`,
+                  id: `tx-referral-bonus-${userToJoin.id}-${Math.random()}`,
                   userId: referrer.id,
                   amount: bonus,
                   type: 'credit',
@@ -435,7 +420,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
       }
 
-      // 5. Save all state updates
+      // 4. Save all state updates
       saveAllUsers(updatedUsers);
       saveAllTransactions(updatedTransactions);
       saveAllTournaments(updatedTournaments);
@@ -470,7 +455,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateBalance, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet }}>
       {!loading && children}
     </UserContext.Provider>
   );
@@ -484,3 +469,6 @@ export const useUser = () => {
   }
   return context;
 };
+
+
+    
