@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -126,7 +127,7 @@ export default function AdminUsersPage() {
     saveUsers(updatedUsers);
 
     const newTransaction: Transaction = {
-      id: `tx-${Date.now()}`,
+      id: `tx-${Date.now()}-${Math.random()}`,
       userId: userToFund.id,
       amount,
       type: 'credit',

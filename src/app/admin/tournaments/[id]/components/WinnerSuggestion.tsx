@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, memo, useCallback } from 'react';
@@ -190,7 +191,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
                 if(userIndex !== -1){
                     allUsers[userIndex].walletBalance += prizeAmount;
                     allTransactions.push({
-                        id: `tx-${Date.now()}-${p.user.id}`,
+                        id: `tx-${Date.now()}-${p.user.id}-${Math.random()}`,
                         userId: p.user.id,
                         amount: prizeAmount,
                         type: 'credit',

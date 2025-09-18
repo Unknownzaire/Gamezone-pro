@@ -223,7 +223,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let updatedTransactions = [...allTransactions];
     if (newUserBonus > 0 && referrer) {
       const bonusTransaction: Transaction = {
-        id: `tx-new-user-bonus-${newUser.id}`,
+        id: `tx-new-user-bonus-${newUser.id}-${Math.random()}`,
         userId: newUser.id,
         amount: newUserBonus,
         type: 'credit',
@@ -472,3 +472,4 @@ export const useUser = () => {
 
 
     
+

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -64,7 +65,7 @@ export default function AdminPromotionsPage() {
     const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : mockTransactions;
 
     const newTransaction: Transaction = {
-      id: `tx-promo-${Date.now()}`,
+      id: `tx-promo-${Date.now()}-${Math.random()}`,
       userId: selectedUserId,
       amount: bonusAmount,
       type: 'credit',
