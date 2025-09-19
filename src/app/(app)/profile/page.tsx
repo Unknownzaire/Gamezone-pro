@@ -28,6 +28,8 @@ export default function ProfilePage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
 
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   const [emailOtp, setEmailOtp] = useState('');
   const [mobileOtp, setMobileOtp] = useState('');
@@ -147,7 +149,21 @@ export default function ProfilePage() {
   };
 
   const handleChangePassword = () => {
+    if (!currentUser) return;
+
+    if (!currentPassword || !newPassword) {
+      toast({ variant: 'destructive', title: "Fields Required", description: "Please enter both your current and new password." });
+      return;
+    }
+    if (currentUser.password !== currentPassword) {
+      toast({ variant: 'destructive', title: "Incorrect Password", description: "The current password you entered is incorrect." });
+      return;
+    }
+
+    updateUser({ password: newPassword });
     toast({ title: "Password Changed", description: "Your password has been successfully updated." });
+    setCurrentPassword('');
+    setNewPassword('');
   };
 
   const handleLogout = () => {
@@ -352,11 +368,11 @@ export default function ProfilePage() {
               <h2 className="font-headline text-xl font-semibold">Change Password</h2>
               <div className="space-y-2">
                 <Label htmlFor="current-password">Current Password</Label>
-                <Input id="current-password" type="password" />
+                <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" />
+                <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
           </CardContent>
