@@ -89,18 +89,18 @@ export default function ForgotPasswordPage() {
                     <Input 
                       id="mobile" 
                       type="tel" 
-                      placeholder="Your mobile number" 
+                      placeholder="Your 10-digit mobile number" 
                       required 
                       value={mobileInput} 
                       onChange={(e) => {
                           const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                          if (numericValue.length <= 12) {
+                          if (numericValue.length <= 10) {
                             setMobileInput(numericValue);
                           }
                       }} 
                     />
                   </div>
-                  <Button type="submit" className="w-full">Send OTP</Button>
+                  <Button type="submit" className="w-full" disabled={mobileInput.length !== 10}>Send OTP</Button>
                 </form>
               </TabsContent>
             </Tabs>
