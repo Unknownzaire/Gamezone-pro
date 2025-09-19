@@ -29,6 +29,8 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -127,7 +129,7 @@ export default function AdminUsersPage() {
     saveUsers(updatedUsers);
 
     const newTransaction: Transaction = {
-      id: `tx-${Date.now()}-${Math.random()}`,
+      id: generateUniqueId('tx-admin-deposit'),
       userId: userToFund.id,
       amount,
       type: 'credit',

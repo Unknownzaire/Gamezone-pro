@@ -21,6 +21,8 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 
+const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
 export default function AdminPromotionsPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
@@ -65,7 +67,7 @@ export default function AdminPromotionsPage() {
     const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : mockTransactions;
 
     const newTransaction: Transaction = {
-      id: `tx-promo-${Date.now()}-${Math.random()}`,
+      id: generateUniqueId('tx-promo'),
       userId: selectedUserId,
       amount: bonusAmount,
       type: 'credit',

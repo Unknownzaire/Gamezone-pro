@@ -15,6 +15,9 @@ import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
+const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+
 // Memoized component for each participant rank item to prevent unnecessary re-renders
 const ParticipantRankItem = memo(({
   participant,
@@ -191,7 +194,7 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
                 if(userIndex !== -1){
                     allUsers[userIndex].walletBalance += prizeAmount;
                     allTransactions.push({
-                        id: `tx-${Date.now()}-${p.user.id}-${Math.random()}`,
+                        id: generateUniqueId(`tx-prize-${p.user.id}`),
                         userId: p.user.id,
                         amount: prizeAmount,
                         type: 'credit',

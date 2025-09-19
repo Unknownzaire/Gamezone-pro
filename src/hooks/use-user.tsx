@@ -38,6 +38,9 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
+const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+
+
 // Let's create a provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -223,7 +226,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let updatedTransactions = [...allTransactions];
     if (newUserBonus > 0 && referrer) {
       const bonusTransaction: Transaction = {
-        id: `tx-new-user-bonus-${newUser.id}-${Math.random()}`,
+        id: generateUniqueId(`tx-signup-bonus-${newUser.id}`),
         userId: newUser.id,
         amount: newUserBonus,
         type: 'credit',
@@ -312,7 +315,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     const newTx: Transaction = {
       ...tx,
-      id: `tx-${Date.now()}-${Math.random()}`,
+      id: generateUniqueId('tx'),
       userId: user.id,
       createdAt: new Date(),
     };
@@ -383,7 +386,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       // 2. Add join transaction
       const newTransaction: Transaction = {
-          id: `tx-${Date.now()}-${Math.random()}`,
+          id: generateUniqueId('tx-join'),
           userId: userToJoin.id,
           amount: tournament.entryFee,
           type: 'debit',
@@ -408,7 +411,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               });
 
               const bonusTransaction: Transaction = {
-                  id: `tx-referral-bonus-${userToJoin.id}-${Math.random()}`,
+                  id: generateUniqueId(`tx-referral-bonus-${userToJoin.id}`),
                   userId: referrer.id,
                   amount: bonus,
                   type: 'credit',
@@ -472,4 +475,5 @@ export const useUser = () => {
 
 
     
+
 
