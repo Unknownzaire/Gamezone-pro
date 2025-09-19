@@ -277,11 +277,6 @@ export default function WalletPage() {
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
   
-  const handleMoveToWallet = () => {
-    moveReferralBonusToWallet();
-    toast({ title: "Funds Moved!", description: "Your referral bonus has been moved to your main wallet." });
-  }
-
   const payeeName = 'Arena Ace';
   const qrCodeUrl = walletSettings.qrCodeImageUrl
     ? walletSettings.qrCodeImageUrl
@@ -324,13 +319,6 @@ export default function WalletPage() {
   const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
-  const referralTransactions = allSortedTransactions
-    .filter(tx => {
-        const description = tx.description.toLowerCase();
-        return tx.status === 'completed' && description.startsWith('referral bonus for');
-    });
-
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -500,52 +488,6 @@ export default function WalletPage() {
         </CardContent>
       </Card>
       
-      <Dialog>
-        <DialogTrigger asChild>
-            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
-                <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Referral Earnings</CardTitle>
-                    <CardDescription>Total bonuses earned from inviting friends.</CardDescription>
-                </div>
-                <Gift className="h-8 w-8 text-primary" />
-                </CardHeader>
-                <CardContent>
-                <p className="text-3xl font-bold text-primary">
-                    ₹{(user.referralBalance || 0).toFixed(2)}
-                </p>
-                </CardContent>
-            </Card>
-        </DialogTrigger>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Referral Bonus History</DialogTitle>
-                <DialogDescription>
-                    These are all the bonuses you've received from referrals.
-                </DialogDescription>
-            </DialogHeader>
-            <ScrollArea className="h-72">
-                <div className="pr-4">
-                {referralTransactions.length > 0 ? (
-                    <TransactionList transactions={referralTransactions} />
-                ) : (
-                    <p className="text-muted-foreground text-center p-8">You haven't earned any referral bonuses yet.</p>
-                )}
-                </div>
-            </ScrollArea>
-             <DialogFooter>
-                <DialogClose asChild>
-                    <Button variant="outline">Close</Button>
-                </DialogClose>
-                <DialogClose asChild>
-                  <Button onClick={handleMoveToWallet} disabled={!user.referralBalance || user.referralBalance <= 0}>
-                    Move to Wallet
-                  </Button>
-                </DialogClose>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
       <div>
         <h2 className="font-headline text-2xl font-semibold mb-4">Transaction History</h2>
          <Tabs defaultValue="all" className="w-full">
@@ -596,19 +538,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-
-
-
-
-    
-
-
-
-    
-
-
-
-
-
-    

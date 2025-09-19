@@ -9,12 +9,45 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useUser } from "@/hooks/use-user.tsx";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
-import { Copy, Share2, CheckCircle } from "lucide-react";
+import { Copy, Share2, CheckCircle, Gift } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { ReferralSettings } from "@/app/admin/settings/page";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Transaction } from "@/lib/types";
+import { Separator } from "@/components/ui/separator";
+
+function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
+    if (transactions.length === 0) {
+        return <p className="text-muted-foreground text-center p-8">No transactions in this category.</p>;
+    }
+    
+    const sortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    return (
+        <div className="space-y-4">
+            {sortedTransactions.map((tx, index) => (
+                <div key={tx.id}>
+                  <div className="flex items-center p-4">
+                      <div className="flex-1">
+                          <p className="font-semibold">{tx.description}</p>
+                          <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
+                      </div>
+                      <div className="flex flex-col items-end">
+                          <p className={`font-bold text-green-500`}>
+                              +₹{tx.amount.toLocaleString()}
+                          </p>
+                      </div>
+                  </div>
+                  {index < sortedTransactions.length - 1 && <Separator />}
+                </div>
+            ))}
+        </div>
+    );
+}
 
 export default function ReferEarnPage() {
-  const { user, referredUsers, hasUserJoinedTournament } = useUser();
+  const { user, referredUsers, hasUserJoinedTournament, transactions, moveReferralBonusToWallet } = useUser();
   const { toast } = useToast();
   const [referralSettings, setReferralSettings] = useState<ReferralSettings>({
     referralBonus: 25,
@@ -60,10 +93,72 @@ export default function ReferEarnPage() {
   };
   
   const sortedReferredUsers = referredUsers.sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  
+  const referralTransactions = transactions
+    .filter(tx => {
+        const description = tx.description.toLowerCase();
+        return tx.status === 'completed' && description.startsWith('referral bonus for');
+    });
+
+  const handleMoveToWallet = () => {
+    moveReferralBonusToWallet();
+    toast({ title: "Funds Moved!", description: "Your referral bonus has been moved to your main wallet." });
+  }
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className="space-y-6">
       <h1 className="font-headline text-3xl font-bold">Refer &amp; Earn</h1>
+
+       <Dialog>
+        <DialogTrigger asChild>
+            <Card className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Referral Earnings</CardTitle>
+                    <CardDescription>Total bonuses earned from inviting friends.</CardDescription>
+                </div>
+                <Gift className="h-8 w-8 text-primary" />
+                </CardHeader>
+                <CardContent>
+                <p className="text-3xl font-bold text-primary">
+                    ₹{(user.referralBalance || 0).toFixed(2)}
+                </p>
+                </CardContent>
+            </Card>
+        </DialogTrigger>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Referral Bonus History</DialogTitle>
+                <DialogDescription>
+                    These are all the bonuses you've received from referrals.
+                </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="h-72">
+                <div className="pr-4">
+                {referralTransactions.length > 0 ? (
+                    <TransactionList transactions={referralTransactions} />
+                ) : (
+                    <p className="text-muted-foreground text-center p-8">You haven't earned any referral bonuses yet.</p>
+                )}
+                </div>
+            </ScrollArea>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Close</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button onClick={handleMoveToWallet} disabled={!user.referralBalance || user.referralBalance <= 0}>
+                    Move to Wallet
+                  </Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <Card className="text-center">
         <CardHeader>
@@ -164,5 +259,3 @@ export default function ReferEarnPage() {
     </div>
   );
 }
-
-    
