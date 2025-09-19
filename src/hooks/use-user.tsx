@@ -38,7 +38,9 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+const generateUniqueId = (prefix: string) => {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+};
 
 
 // Let's create a provider component
@@ -372,7 +374,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const updatedTournaments = tournaments.map(t => {
           if (t.id === tournamentId) {
               const newParticipant: Participant = {
-                  id: `p-${t.id}-${userToJoin.id}`,
+                  id: generateUniqueId(`p-${t.id}-${userToJoin.id}`),
                   user: userToJoin,
                   tournamentId: t.id,
                   result: null,
@@ -475,5 +477,6 @@ export const useUser = () => {
 
 
     
+
 
 
