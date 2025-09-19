@@ -24,6 +24,7 @@ interface UserContextType {
   promotionalAds: PromotionalAd[];
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   referredUsers: User[];
+  allUsers: User[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
@@ -39,7 +40,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const generateUniqueId = (prefix: string, userId: string) => {
-  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+    return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
 
@@ -461,7 +462,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers }}>
       {!loading && children}
     </UserContext.Provider>
   );
@@ -478,6 +479,7 @@ export const useUser = () => {
 
 
     
+
 
 
 

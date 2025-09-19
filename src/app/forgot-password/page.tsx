@@ -10,31 +10,49 @@ import Logo from "@/components/Logo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useState } from "react";
+import { useUser } from "@/hooks/use-user";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { allUsers } = useUser();
+  const [emailInput, setEmailInput] = useState('');
+  const [mobileInput, setMobileInput] = useState('');
+
 
   const handleSendEmailResetLink = (e: React.FormEvent) => {
     e.preventDefault();
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    toast({
-      title: 'OTP Sent',
-      description: `If an account exists, an OTP has been sent. (OTP: ${otp})`,
-    });
-    // In a real app, you would likely navigate to a new page to enter the OTP
-    // router.push('/verify-otp'); 
+    const userExists = allUsers.some(user => user.email === emailInput);
+    if(userExists) {
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        toast({
+        title: 'OTP Sent',
+        description: `If an account exists, an OTP has been sent. (OTP: ${otp})`,
+        });
+    } else {
+        toast({
+        title: 'Request Received',
+        description: `If an account exists for this email, an OTP has been sent.`,
+        });
+    }
   };
 
   const handleSendMobileResetLink = (e: React.FormEvent) => {
     e.preventDefault();
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    toast({
-      title: 'OTP Sent',
-      description: `If an account exists, an OTP has been sent via SMS. (OTP: ${otp})`,
-    });
-    // In a real app, you would likely navigate to a new page to enter the OTP
-    // router.push('/verify-otp');
+    const userExists = allUsers.some(user => user.mobile === mobileInput);
+    if(userExists){
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        toast({
+        title: 'OTP Sent',
+        description: `If an account exists, an OTP has been sent via SMS. (OTP: ${otp})`,
+        });
+    } else {
+        toast({
+        title: 'Request Received',
+        description: `If an account exists for this mobile number, an OTP has been sent.`,
+        });
+    }
   };
 
   return (
@@ -58,7 +76,7 @@ export default function ForgotPasswordPage() {
                  <form onSubmit={handleSendEmailResetLink} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" placeholder="you@example.com" required />
+                    <Input id="email" type="email" placeholder="you@example.com" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
@@ -67,7 +85,7 @@ export default function ForgotPasswordPage() {
                  <form onSubmit={handleSendMobileResetLink} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number</Label>
-                    <Input id="mobile" type="tel" placeholder="Your mobile number" required />
+                    <Input id="mobile" type="tel" placeholder="Your mobile number" required value={mobileInput} onChange={(e) => setMobileInput(e.target.value)} />
                   </div>
                   <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
