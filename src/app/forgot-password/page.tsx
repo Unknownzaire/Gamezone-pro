@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
                  <form onSubmit={handleSendMobileResetLink} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number</Label>
-                    <Input id="mobile" type="tel" placeholder="Your mobile number" required value={mobileInput} onChange={(e) => setMobileInput(e.target.value)} />
+                    <Input id="mobile" type="tel" placeholder="Your mobile number" required value={mobileInput} onChange={(e) => setMobileInput(e.target.value.replace(/[^0-9]/g, ''))} />
                   </div>
                   <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
