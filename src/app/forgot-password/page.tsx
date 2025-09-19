@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -85,7 +86,19 @@ export default function ForgotPasswordPage() {
                  <form onSubmit={handleSendMobileResetLink} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile Number</Label>
-                    <Input id="mobile" type="tel" placeholder="Your mobile number" required value={mobileInput} onChange={(e) => setMobileInput(e.target.value.replace(/[^0-9]/g, ''))} />
+                    <Input 
+                      id="mobile" 
+                      type="tel" 
+                      placeholder="Your mobile number" 
+                      required 
+                      value={mobileInput} 
+                      onChange={(e) => {
+                          const numericValue = e.target.value.replace(/[^0-9]/g, '');
+                          if (numericValue.length <= 12) {
+                            setMobileInput(numericValue);
+                          }
+                      }} 
+                    />
                   </div>
                   <Button type="submit" className="w-full">Send OTP</Button>
                 </form>
