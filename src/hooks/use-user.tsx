@@ -39,7 +39,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const generateUniqueId = (prefix: string, userId: string) => {
-  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 };
 
 
@@ -212,7 +212,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return newCode!;
     };
     
-    const newUserId = `user-${Date.now()}`;
+    const newUserId = generateUniqueId('user', '');
     const newUser: User = {
         ...userDetails,
         password: password,
@@ -478,6 +478,7 @@ export const useUser = () => {
 
 
     
+
 
 
 
