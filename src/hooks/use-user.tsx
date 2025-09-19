@@ -38,8 +38,8 @@ interface UserContextType {
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
-const generateUniqueId = (prefix: string) => {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+const generateUniqueId = (prefix: string, userId: string) => {
+  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 };
 
 
@@ -212,10 +212,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return newCode!;
     };
     
+    const newUserId = `user-${Date.now()}`;
     const newUser: User = {
         ...userDetails,
         password: password,
-        id: `user-${Date.now()}`,
+        id: newUserId,
         walletBalance: newUserBonus,
         referralBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
@@ -228,8 +229,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let updatedTransactions = [...allTransactions];
     if (newUserBonus > 0 && referrer) {
       const bonusTransaction: Transaction = {
-        id: generateUniqueId(`tx-signup-bonus-${newUser.id}`),
-        userId: newUser.id,
+        id: generateUniqueId('tx-signup-bonus', newUserId),
+        userId: newUserId,
         amount: newUserBonus,
         type: 'credit',
         description: `Sign-up bonus added to wallet (referred by ${referrer.username})`,
@@ -317,7 +318,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!user) return;
     const newTx: Transaction = {
       ...tx,
-      id: generateUniqueId('tx'),
+      id: generateUniqueId('tx', user.id),
       userId: user.id,
       createdAt: new Date(),
     };
@@ -374,7 +375,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const updatedTournaments = tournaments.map(t => {
           if (t.id === tournamentId) {
               const newParticipant: Participant = {
-                  id: generateUniqueId(`p-${t.id}-${userToJoin.id}`),
+                  id: generateUniqueId(`p-${t.id}`, userToJoin.id),
                   user: userToJoin,
                   tournamentId: t.id,
                   result: null,
@@ -388,7 +389,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       
       // 2. Add join transaction
       const newTransaction: Transaction = {
-          id: generateUniqueId('tx-join'),
+          id: generateUniqueId('tx-join', userToJoin.id),
           userId: userToJoin.id,
           amount: tournament.entryFee,
           type: 'debit',
@@ -413,7 +414,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               });
 
               const bonusTransaction: Transaction = {
-                  id: generateUniqueId(`tx-referral-bonus-${userToJoin.id}`),
+                  id: generateUniqueId('tx-referral-bonus', userToJoin.id),
                   userId: referrer.id,
                   amount: bonus,
                   type: 'credit',
@@ -477,6 +478,7 @@ export const useUser = () => {
 
 
     
+
 
 
 

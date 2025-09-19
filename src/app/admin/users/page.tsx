@@ -29,7 +29,7 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const generateUniqueId = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
@@ -129,7 +129,7 @@ export default function AdminUsersPage() {
     saveUsers(updatedUsers);
 
     const newTransaction: Transaction = {
-      id: generateUniqueId('tx-admin-deposit'),
+      id: generateUniqueId('tx-admin-deposit', userToFund.id),
       userId: userToFund.id,
       amount,
       type: 'credit',
@@ -332,3 +332,4 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
