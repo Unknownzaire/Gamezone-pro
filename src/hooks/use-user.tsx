@@ -39,7 +39,7 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 const generateUniqueId = (prefix: string, userId: string) => {
-  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+  return `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 };
 
 
@@ -414,7 +414,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               });
 
               const bonusTransaction: Transaction = {
-                  id: generateUniqueId('tx-referral-bonus', userToJoin.id),
+                  id: generateUniqueId('tx-referral-bonus', referrer.id),
                   userId: referrer.id,
                   amount: bonus,
                   type: 'credit',
@@ -478,6 +478,7 @@ export const useUser = () => {
 
 
     
+
 
 
 
