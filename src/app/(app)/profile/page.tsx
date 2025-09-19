@@ -326,7 +326,7 @@ export default function ProfilePage() {
                 <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
                       <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
-                      {isEditing && email !== currentUser.email && !emailVerified && (
+                      {isEditing && currentUser && email !== currentUser.email && !emailVerified && (
                           <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
                               {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
                           </Button>
@@ -344,7 +344,7 @@ export default function ProfilePage() {
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="flex items-center gap-2">
                       <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
-                      {isEditing && mobile !== currentUser.mobile && !mobileVerified && (
+                      {isEditing && currentUser && mobile !== currentUser.mobile && !mobileVerified && (
                           <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
                             {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                           </Button>
