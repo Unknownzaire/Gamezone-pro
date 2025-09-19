@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
 import type { User } from '@/lib/types';
+import Link from 'next/link';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -373,6 +374,11 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+              </div>
+               <div className="flex justify-end">
+                <Link href="/forgot-password">
+                  <Button variant="link" type="button" className="text-sm p-0 h-auto">Forgot Password?</Button>
+                </Link>
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
           </CardContent>
