@@ -18,7 +18,7 @@ import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 
 
-const SocialIcon = ({ icon, url }: { icon: SocialLink['icon']; url: string }) => {
+const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url: string }) => {
     const iconProps = { className: "h-6 w-6 text-foreground" };
     let socialIcon;
     switch (icon) {
@@ -53,9 +53,11 @@ const SocialIcon = ({ icon, url }: { icon: SocialLink['icon']; url: string }) =>
             socialIcon = <LinkIcon {...iconProps} />;
     }
     return (
-        <a href={url} target="_blank" rel="noopener noreferrer" className="rounded-full bg-muted p-3 hover:bg-muted/80 transition-colors">
-            {socialIcon}
-            <span className="sr-only">{icon}</span>
+        <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 text-center group">
+            <div className="rounded-full bg-muted p-3 group-hover:bg-muted/80 transition-colors">
+              {socialIcon}
+            </div>
+            <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{name}</span>
         </a>
     );
 };
@@ -451,9 +453,9 @@ export default function ProfilePage() {
                   <CardDescription>Follow us on social media for updates and announcements.</CardDescription>
               </CardHeader>
               <CardContent>
-                  <div className="flex justify-center gap-4">
+                  <div className="flex justify-around flex-wrap gap-4">
                       {socialMediaLinks.map(link => (
-                          <SocialIcon key={link.id} icon={link.icon} url={link.url} />
+                          <SocialIcon key={link.id} name={link.name} icon={link.icon} url={link.url} />
                       ))}
                   </div>
               </CardContent>
@@ -511,5 +513,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
