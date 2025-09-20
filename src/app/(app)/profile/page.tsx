@@ -15,6 +15,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
+import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
+
 
 const DiscordIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -55,9 +57,6 @@ export default function ProfilePage() {
   const [bgmiUsername, setBgmiUsername] = useState('');
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
-  const [instagramUrl, setInstagramUrl] = useState('');
-  const [discordUrl, setDiscordUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
 
@@ -80,6 +79,10 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
+   const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
+        helplineNumber: '+911234567890',
+        supportEmail: 'support@gamezonepro.com',
+    });
 
   useEffect(() => {
     if (currentUser) {
@@ -88,13 +91,14 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
-      setYoutubeUrl(currentUser.youtubeUrl || '');
-      setInstagramUrl(currentUser.instagramUrl || '');
-      setDiscordUrl(currentUser.discordUrl || '');
     }
      const storedSocialMediaSettings = localStorage.getItem('socialMediaLinks');
     if (storedSocialMediaSettings) {
       setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
+    }
+     const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
+    if (storedHelpSettings) {
+        setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
     }
   }, [currentUser]);
   
@@ -122,9 +126,6 @@ export default function ProfilePage() {
     if (currentUser) {
       const updatedFields: Partial<User> = {
         username,
-        youtubeUrl,
-        instagramUrl,
-        discordUrl,
       };
 
       if (email !== currentUser.email && !emailVerified) {
@@ -343,21 +344,11 @@ export default function ProfilePage() {
               <div className="text-center">
                  <div className="flex items-center gap-2 justify-center">
                     <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
-                    {currentUser.youtubeUrl && (
-                        <a href={currentUser.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-red-500">
-                            <Youtube />
+                    {socialMediaLinks.map(link => (
+                        <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary">
+                            <SocialIcon icon={link.icon} />
                         </a>
-                    )}
-                    {currentUser.instagramUrl && (
-                        <a href={currentUser.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-pink-500">
-                            <Instagram />
-                        </a>
-                    )}
-                    {currentUser.discordUrl && (
-                         <a href={currentUser.discordUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-indigo-400">
-                            <DiscordIcon />
-                        </a>
-                    )}
+                    ))}
                  </div>
                 <p className="text-muted-foreground">{currentUser.email}</p>
               </div>
@@ -484,21 +475,21 @@ export default function ProfilePage() {
                     <Phone className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
                         <span className="text-sm text-muted-foreground">Helpline Number</span>
-                        <a href="tel:+911234567890" className="text-base font-medium hover:underline">+91 12345 67890</a>
+                        <a href={`tel:${helpAndSupportSettings.helplineNumber}`} className="text-base font-medium hover:underline">{helpAndSupportSettings.helplineNumber}</a>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <Mail className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
                         <span className="text-sm text-muted-foreground">Support Email</span>
-                        <a href="mailto:support@gamezonepro.com" className="text-base font-medium hover:underline">support@gamezonepro.com</a>
+                        <a href={`mailto:${helpAndSupportSettings.supportEmail}`} className="text-base font-medium hover:underline">{helpAndSupportSettings.supportEmail}</a>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
                     <MessageSquare className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
                         <span className="text-sm text-muted-foreground">Text Message</span>
-                        <a href="sms:+911234567890" className="text-base font-medium hover:underline">Send us a message</a>
+                        <a href={`sms:${helpAndSupportSettings.helplineNumber}`} className="text-base font-medium hover:underline">Send us a message</a>
                     </div>
                 </div>
             </CardContent>
@@ -513,5 +504,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    

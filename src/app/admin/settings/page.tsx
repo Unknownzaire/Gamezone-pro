@@ -25,6 +25,12 @@ export interface ReferralSettings {
     newUserBonus: number;
 }
 
+export interface HelpAndSupportSettings {
+    helplineNumber: string;
+    supportEmail: string;
+}
+
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -45,6 +51,10 @@ export default function AdminSettingsPage() {
         { id: '2', name: 'Instagram', url: 'https://instagram.com', icon: 'instagram' },
         { id: '3', name: 'Discord', url: 'https://discord.com', icon: 'discord' },
     ]);
+     const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
+        helplineNumber: '+911234567890',
+        supportEmail: 'support@gamezonepro.com',
+    });
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
 
     useEffect(() => {
@@ -59,6 +69,10 @@ export default function AdminSettingsPage() {
         const storedSocialMediaSettings = localStorage.getItem('socialMediaLinks');
         if (storedSocialMediaSettings) {
             setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
+        }
+        const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
+        if (storedHelpSettings) {
+            setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
         }
     }, []);
 
@@ -113,6 +127,15 @@ export default function AdminSettingsPage() {
         });
     }
 
+    const handleHelpAndSupportUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        localStorage.setItem('helpAndSupportSettings', JSON.stringify(helpAndSupportSettings));
+        toast({
+            title: "Help & Support Settings Updated",
+            description: "The support contact details have been saved."
+        });
+    }
+
     const handleWalletInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value, type } = e.target;
         setWalletSettings(prev => ({
@@ -148,6 +171,14 @@ export default function AdminSettingsPage() {
             setQrCodeFile(e.target.files[0]);
         }
     };
+    
+    const handleHelpInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setHelpAndSupportSettings(prev => ({
+            ...prev,
+            [id]: value,
+        }));
+    }
 
 
     return (
@@ -305,6 +336,32 @@ export default function AdminSettingsPage() {
                         </form>
                     </Card>
                  )}
+
+                 {(!showOnly || showOnly === 'help') && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Help &amp; Support Settings</CardTitle>
+                            <CardDescription>Configure contact details for user support.</CardDescription>
+                        </CardHeader>
+                        <form onSubmit={handleHelpAndSupportUpdate}>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="grid md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="helplineNumber">Helpline Number</Label>
+                                        <Input id="helplineNumber" type="tel" value={helpAndSupportSettings.helplineNumber} onChange={handleHelpInputChange} required />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="supportEmail">Support Email</Label>
+                                        <Input id="supportEmail" type="email" value={helpAndSupportSettings.supportEmail} onChange={handleHelpInputChange} required />
+                                    </div>
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Save Support Settings</Button>
+                                </div>
+                            </CardContent>
+                        </form>
+                    </Card>
+                )}
             </div>
         </div>
     );
