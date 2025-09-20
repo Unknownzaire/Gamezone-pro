@@ -36,7 +36,7 @@ export default function AdminSupportPage() {
         ? JSON.parse(storedTickets).map((t: any) => ({
             ...t, 
             createdAt: new Date(t.createdAt), 
-            messages: t.messages.map((m:any) => ({...m, createdAt: new Date(m.createdAt)}))
+            messages: t.messages ? t.messages.map((m:any) => ({...m, createdAt: new Date(m.createdAt)})) : []
           })) 
         : [];
       
@@ -195,7 +195,7 @@ export default function AdminSupportPage() {
                         <TableCell className="max-w-xs truncate cursor-pointer font-medium">{ticket.subject}</TableCell>
                        </DialogTrigger>
                        <DialogTrigger asChild>
-                        <TableCell className="cursor-pointer">{format(lastMessage.createdAt, 'PPp')}</TableCell>
+                        <TableCell className="cursor-pointer">{lastMessage ? format(lastMessage.createdAt, 'PPp') : format(ticket.createdAt, 'PPp')}</TableCell>
                        </DialogTrigger>
                        <DialogTrigger asChild>
                         <TableCell className="cursor-pointer">
@@ -292,5 +292,3 @@ export default function AdminSupportPage() {
     </div>
   );
 }
-
-    
