@@ -100,6 +100,6 @@ export type SocialLink = {
   id: string;
   name: string;
   url: string;
-  icon: 'youtube' | 'instagram' | 'discord' | 'link';
+  icon: 'youtube' | 'instagram' | 'discord' | 'telegram' | 'link';
 };
       

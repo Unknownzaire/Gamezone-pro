@@ -284,6 +284,7 @@ export default function AdminSettingsPage() {
                                                         <SelectItem value="youtube">YouTube</SelectItem>
                                                         <SelectItem value="instagram">Instagram</SelectItem>
                                                         <SelectItem value="discord">Discord</SelectItem>
+                                                        <SelectItem value="telegram">Telegram</SelectItem>
                                                         <SelectItem value="link">Generic</SelectItem>
                                                     </SelectContent>
                                                 </Select>
