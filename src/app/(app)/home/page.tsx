@@ -119,25 +119,19 @@ export default function HomePage() {
           <TabsTrigger value="completed">Completed</TabsTrigger>
         </TabsList>
         <TabsContent value="upcoming" className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {upcoming.length > 0 ? upcoming.map((tournament) => (
               <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8 col-span-1 sm:col-span-2">No upcoming tournaments.</p>}
-          </div>
+            )) : <p className="text-muted-foreground text-center py-8">No upcoming tournaments.</p>}
         </TabsContent>
         <TabsContent value="live" className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {live.length > 0 ? live.map((tournament) => (
               <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8 col-span-1 sm:col-span-2">No live tournaments.</p>}
-          </div>
+            )) : <p className="text-muted-foreground text-center py-8">No live tournaments.</p>}
         </TabsContent>
         <TabsContent value="completed" className="mt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {completed.length > 0 ? completed.map((tournament) => (
               <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8 col-span-1 sm:col-span-2">No completed tournaments.</p>}
-          </div>
+            )) : <p className="text-muted-foreground text-center py-8">No completed tournaments.</p>}
         </TabsContent>
       </Tabs>
     </div>
