@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -390,6 +390,12 @@ export default function ProfilePage() {
                 <CardDescription>Contact us if you need any assistance.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+                <Link href="/help-agent" className='w-full'>
+                    <Button variant="outline" className="w-full">
+                        <Bot className="mr-2 h-4 w-4" />
+                        Talk to Help Agent
+                    </Button>
+                </Link>
                 <div className="flex items-center gap-4">
                     <Phone className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
