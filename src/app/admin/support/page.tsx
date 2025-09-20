@@ -5,7 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers } from "@/lib/mock-data";
-import { SupportTicket, User } from "@/lib/types";
+import { SupportTicket, User, SupportTicketMessage } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -17,6 +17,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel,
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -32,7 +33,11 @@ export default function AdminSupportPage() {
       
       const storedTickets = localStorage.getItem('supportTickets');
       const allTickets: SupportTicket[] = storedTickets 
-        ? JSON.parse(storedTickets).map((t: any) => ({...t, createdAt: new Date(t.createdAt), repliedAt: t.repliedAt ? new Date(t.repliedAt) : undefined})) 
+        ? JSON.parse(storedTickets).map((t: any) => ({
+            ...t, 
+            createdAt: new Date(t.createdAt), 
+            messages: t.messages.map((m:any) => ({...m, createdAt: new Date(m.createdAt)}))
+          })) 
         : [];
       
       setTickets(allTickets.sort((a,b) => {
@@ -74,12 +79,17 @@ export default function AdminSupportPage() {
   const handleSendReply = () => {
     if (!activeTicket || !replyMessage.trim()) return;
 
+    const newMessage: SupportTicketMessage = {
+      sender: 'admin',
+      text: replyMessage,
+      createdAt: new Date(),
+    };
+
     const updatedTickets = tickets.map(t => {
       if (t.id === activeTicket.id) {
         return { 
           ...t, 
-          reply: replyMessage,
-          repliedAt: new Date(),
+          messages: [...t.messages, newMessage],
           status: 'closed' as const
         };
       }
@@ -90,7 +100,9 @@ export default function AdminSupportPage() {
     
     toast({ title: 'Reply Sent', description: 'The user has been notified.' });
     setReplyMessage('');
-    setActiveTicket(null);
+    // Keep dialog open to see new message
+    const updatedActiveTicket = updatedTickets.find(t => t.id === activeTicket.id);
+    setActiveTicket(updatedActiveTicket || null);
   };
 
 
@@ -144,8 +156,8 @@ export default function AdminSupportPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>User</TableHead>
-                <TableHead>Message</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Subject</TableHead>
+                <TableHead>Last Update</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -153,15 +165,11 @@ export default function AdminSupportPage() {
             <TableBody>
               {tickets.map((ticket) => {
                 const user = getUserForTicket(ticket.userId);
+                const lastMessage = ticket.messages[ticket.messages.length - 1];
                 return (
                  <Dialog key={ticket.id} onOpenChange={(isOpen) => {
-                   if (isOpen) {
-                     setActiveTicket(ticket);
-                     setReplyMessage(ticket.reply || '');
-                   } else {
-                     setActiveTicket(null);
-                     setReplyMessage('');
-                   }
+                   if (isOpen) setActiveTicket(ticket);
+                   else setActiveTicket(null);
                  }}>
                     <TableRow className={ticket.status === 'closed' ? 'bg-muted/50' : ''}>
                       <DialogTrigger asChild>
@@ -181,10 +189,10 @@ export default function AdminSupportPage() {
                         </TableCell>
                       </DialogTrigger>
                        <DialogTrigger asChild>
-                        <TableCell className="max-w-xs truncate cursor-pointer">{ticket.message}</TableCell>
+                        <TableCell className="max-w-xs truncate cursor-pointer">{ticket.subject}</TableCell>
                        </DialogTrigger>
                        <DialogTrigger asChild>
-                        <TableCell className="cursor-pointer">{format(ticket.createdAt, 'PPp')}</TableCell>
+                        <TableCell className="cursor-pointer">{format(lastMessage.createdAt, 'PPp')}</TableCell>
                        </DialogTrigger>
                        <DialogTrigger asChild>
                         <TableCell className="cursor-pointer">
@@ -221,51 +229,50 @@ export default function AdminSupportPage() {
                         </DropdownMenu>
                       </TableCell>
                     </TableRow>
-                     <DialogContent>
+                     <DialogContent className="max-w-lg">
                         <DialogHeader>
-                            <DialogTitle>Support Ticket</DialogTitle>
+                            <DialogTitle>Support Ticket: {ticket.subject}</DialogTitle>
                              <DialogDescription>
-                                From: {user?.username} ({user?.email}) on {format(ticket.createdAt, 'PPp')}
+                                From: {user?.username} ({user?.email})
                             </DialogDescription>
                         </DialogHeader>
-                        <div className="space-y-4">
-                           <div>
-                              <Label className="font-semibold">User's Message</Label>
-                              <div className="mt-2 rounded-md border bg-muted p-4 text-sm">
-                                  {ticket.message}
-                              </div>
-                           </div>
-                           {ticket.reply && (
-                             <div>
-                               <Label className="font-semibold">Your Reply</Label>
-                                <div className="mt-2 rounded-md border bg-primary/10 p-4 text-sm">
-                                    <p className="font-semibold text-primary">Replied on {format(new Date(ticket.repliedAt!), 'PPp')}</p>
-                                    <p>{ticket.reply}</p>
+                         <div className="flex flex-col h-[60vh]">
+                            <ScrollArea className="flex-1 p-4 border rounded-md">
+                                <div className="space-y-4">
+                                {ticket.messages.map((message, index) => (
+                                    <div key={index} className={`flex items-end gap-2 ${message.sender === 'admin' ? 'justify-end' : ''}`}>
+                                    {message.sender === 'user' && user && (
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                            <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                        <p>{message.text}</p>
+                                        <p className="text-xs opacity-70 mt-1">{format(message.createdAt, 'p')}</p>
+                                    </div>
+                                     {message.sender === 'admin' && (
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarFallback>A</AvatarFallback>
+                                        </Avatar>
+                                    )}
+                                    </div>
+                                ))}
                                 </div>
-                             </div>
-                           )}
-                           <div className="space-y-2">
-                             <Label htmlFor="reply-message" className="font-semibold">
-                               {ticket.reply ? 'Update Reply' : 'Send Reply'}
-                             </Label>
-                             <Textarea
-                               id="reply-message"
-                               placeholder="Type your response here..."
-                               value={replyMessage}
-                               onChange={(e) => setReplyMessage(e.target.value)}
-                               rows={4}
-                             />
-                           </div>
+                            </ScrollArea>
+                            <div className="p-4 border-t flex items-center gap-2">
+                                <Textarea
+                                id="reply-message"
+                                placeholder="Type your reply..."
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                                rows={2}
+                                />
+                                <Button onClick={handleSendReply} size="icon" disabled={!replyMessage.trim()}>
+                                    <Send className="h-4 w-4" />
+                                </Button>
+                            </div>
                         </div>
-                        <DialogFooter>
-                            <DialogClose asChild>
-                                <Button variant="outline">Cancel</Button>
-                            </DialogClose>
-                            <Button onClick={handleSendReply}>
-                                <Send className="mr-2 h-4 w-4" />
-                                Send Reply
-                            </Button>
-                        </DialogFooter>
                     </DialogContent>
                  </Dialog>
                 )

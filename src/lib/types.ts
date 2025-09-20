@@ -1,5 +1,6 @@
 
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
@@ -13,14 +14,19 @@ export type PromotionalAd = {
   status: 'active' | 'inactive';
 };
 
+export type SupportTicketMessage = {
+  sender: 'user' | 'admin';
+  text: string;
+  createdAt: Date;
+};
+
 export type SupportTicket = {
   id: string;
   userId: string;
-  message: string;
+  subject: string;
   status: 'open' | 'closed';
+  messages: SupportTicketMessage[];
   createdAt: Date;
-  reply?: string;
-  repliedAt?: Date;
 };
 
 

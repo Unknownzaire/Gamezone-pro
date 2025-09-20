@@ -3,25 +3,35 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SupportTicket, User } from "@/lib/types";
+import { SupportTicket, SupportTicketMessage, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, MessageSquare, CheckSquare } from 'lucide-react';
+import { ArrowLeft, Send } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Textarea } from '@/components/ui/textarea';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 export default function MyTicketsPage() {
-  const { user } = useUser();
+  const { user, addMessageToTicket } = useUser();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const [reply, setReply] = useState('');
+  const { toast } = useToast();
 
   const loadData = useCallback(() => {
     if (!user) return;
     try {
       const storedTickets = localStorage.getItem('supportTickets');
       const allTickets: SupportTicket[] = storedTickets 
-        ? JSON.parse(storedTickets).map((t: any) => ({...t, createdAt: new Date(t.createdAt), repliedAt: t.repliedAt ? new Date(t.repliedAt) : undefined})) 
+        ? JSON.parse(storedTickets).map((t: any) => ({
+            ...t, 
+            createdAt: new Date(t.createdAt), 
+            messages: t.messages.map((m: any) => ({...m, createdAt: new Date(m.createdAt)}))
+          })) 
         : [];
       
       const userTickets = allTickets
@@ -42,7 +52,13 @@ export default function MyTicketsPage() {
       window.removeEventListener('storage', loadData);
     };
   }, [loadData]);
-
+  
+  const handleReply = (ticketId: string) => {
+    if(!reply.trim()) return;
+    addMessageToTicket(ticketId, reply);
+    setReply('');
+    toast({ title: "Reply Sent", description: "Your message has been sent to support." });
+  }
 
   return (
     <div className="space-y-6">
@@ -68,7 +84,7 @@ export default function MyTicketsPage() {
                   <AccordionTrigger>
                     <div className='flex justify-between items-center w-full pr-4'>
                         <div className="text-left">
-                            <p className="font-semibold truncate max-w-[200px]">{ticket.message}</p>
+                            <p className="font-semibold truncate max-w-[200px]">{ticket.subject}</p>
                             <p className="text-xs text-muted-foreground">{format(ticket.createdAt, 'PP')}</p>
                         </div>
                         <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>
@@ -77,20 +93,41 @@ export default function MyTicketsPage() {
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
-                    <div className="space-y-4 px-1">
-                        <div>
-                            <p className="text-sm font-semibold mb-1">Your Message:</p>
-                            <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">{ticket.message}</p>
-                        </div>
-                         {ticket.reply ? (
-                            <div>
-                                <p className="text-sm font-semibold mb-1 text-primary">Admin Reply:</p>
-                                <p className="text-sm text-primary-foreground p-3 bg-primary/20 rounded-md">{ticket.reply}</p>
-                                {ticket.repliedAt && <p className="text-xs text-muted-foreground mt-1">Replied on {format(ticket.repliedAt, 'PPp')}</p>}
+                    <div className="flex flex-col h-96">
+                      <ScrollArea className="flex-1 p-4">
+                        <div className="space-y-4">
+                          {ticket.messages.map((message, index) => (
+                            <div key={index} className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                              {message.sender === 'admin' && (
+                                <Avatar className="h-8 w-8">
+                                  <AvatarFallback>A</AvatarFallback>
+                                </Avatar>
+                              )}
+                              <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                <p>{message.text}</p>
+                                <p className="text-xs opacity-70 mt-1">{format(message.createdAt, 'p')}</p>
+                              </div>
+                              {message.sender === 'user' && user && (
+                                 <Avatar className="h-8 w-8">
+                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                              )}
                             </div>
-                         ) : (
-                             <p className="text-sm text-muted-foreground text-center py-4">An admin has not replied to this ticket yet.</p>
-                         )}
+                          ))}
+                        </div>
+                      </ScrollArea>
+                      <div className="p-4 border-t flex items-center gap-2">
+                          <Textarea 
+                            placeholder="Type your reply..."
+                            value={reply}
+                            onChange={(e) => setReply(e.target.value)}
+                            rows={1}
+                            className="min-h-0"
+                          />
+                          <Button onClick={() => handleReply(ticket.id)} size="icon" disabled={!reply.trim()}>
+                            <Send className="h-4 w-4" />
+                          </Button>
+                      </div>
                     </div>
                   </AccordionContent>
                 </AccordionItem>

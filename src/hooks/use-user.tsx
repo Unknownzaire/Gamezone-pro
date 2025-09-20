@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import { ReferralSettings } from '@/app/admin/settings/page';
@@ -36,6 +36,7 @@ interface UserContextType {
   hasUserJoinedTournament: (userId: string) => boolean;
   moveReferralBonusToWallet: () => void;
   addSupportTicket: (message: string) => void;
+  addMessageToTicket: (ticketId: string, message: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -472,9 +473,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const newTicket: SupportTicket = {
       id: generateUniqueId('ticket', user.id),
       userId: user.id,
-      message,
+      subject: message.substring(0, 50),
       status: 'open',
       createdAt: new Date(),
+      messages: [{
+        sender: 'user',
+        text: message,
+        createdAt: new Date(),
+      }],
     };
 
     const storedTickets = localStorage.getItem('supportTickets');
@@ -482,10 +488,34 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const updatedTickets = [newTicket, ...allTickets];
     localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
   };
+  
+  const addMessageToTicket = (ticketId: string, message: string) => {
+    const storedTickets = localStorage.getItem('supportTickets');
+    const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
+    
+    const updatedTickets = allTickets.map(ticket => {
+      if (ticket.id === ticketId) {
+        const newMessage: SupportTicketMessage = {
+          sender: 'user',
+          text: message,
+          createdAt: new Date(),
+        };
+        return {
+          ...ticket,
+          status: 'open' as const,
+          messages: [...ticket.messages, newMessage]
+        };
+      }
+      return ticket;
+    });
+
+    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    reload(); // Force a reload to update UI everywhere
+  };
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket }}>
       {!loading && children}
     </UserContext.Provider>
   );
