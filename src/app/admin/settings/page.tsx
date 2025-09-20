@@ -316,6 +316,7 @@ export default function AdminSettingsPage() {
                                                         <SelectItem value="instagram">Instagram</SelectItem>
                                                         <SelectItem value="discord">Discord</SelectItem>
                                                         <SelectItem value="telegram">Telegram</SelectItem>
+                                                        <SelectItem value="whatsapp">WhatsApp</SelectItem>
                                                         <SelectItem value="link">Generic</SelectItem>
                                                     </SelectContent>
                                                 </Select>
