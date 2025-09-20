@@ -113,7 +113,7 @@ export default function LoginPage() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password'> = {
+    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,

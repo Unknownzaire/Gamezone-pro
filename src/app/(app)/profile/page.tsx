@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Youtube, Instagram, Sigma } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -26,6 +26,9 @@ export default function ProfilePage() {
   const [bgmiUsername, setBgmiUsername] = useState('');
   const [bgmiId, setBgmiId] = useState('');
   const [mobile, setMobile] = useState('');
+  const [youtubeUrl, setYoutubeUrl] = useState('');
+  const [instagramUrl, setInstagramUrl] = useState('');
+  const [discordUrl, setDiscordUrl] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
 
@@ -54,6 +57,9 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
+      setYoutubeUrl(currentUser.youtubeUrl || '');
+      setInstagramUrl(currentUser.instagramUrl || '');
+      setDiscordUrl(currentUser.discordUrl || '');
     }
   }, [currentUser]);
   
@@ -81,6 +87,9 @@ export default function ProfilePage() {
     if (currentUser) {
       const updatedFields: Partial<User> = {
         username,
+        youtubeUrl,
+        instagramUrl,
+        discordUrl,
       };
 
       if (email !== currentUser.email && !emailVerified) {
@@ -357,6 +366,27 @@ export default function ProfilePage() {
                           <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
                       </div>
                   )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="youtubeUrl">YouTube URL</Label>
+                <div className="relative">
+                  <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="youtubeUrl" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://youtube.com/yourchannel" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagramUrl">Instagram URL</Label>
+                 <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="instagramUrl" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://instagram.com/yourprofile" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="discordUrl">Discord URL</Label>
+                 <div className="relative">
+                  <Sigma className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="discordUrl" value={discordUrl} onChange={(e) => setDiscordUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://discord.gg/yourserver" />
+                </div>
               </div>
               <Button onClick={handleUpdateProfile} className="w-full">
                 {isEditing ? 'Save Profile' : 'Edit Profile'}

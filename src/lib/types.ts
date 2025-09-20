@@ -91,5 +91,8 @@ export type User = {
   totalDeposits?: number;
   referredBy?: string; // ID of the user who referred this user
   referralCode: string;
+  youtubeUrl?: string;
+  instagramUrl?: string;
+  discordUrl?: string;
 };
       
