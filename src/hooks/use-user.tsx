@@ -35,8 +35,8 @@ interface UserContextType {
   toast: ReturnType<typeof useToast>['toast'];
   hasUserJoinedTournament: (userId: string) => boolean;
   moveReferralBonusToWallet: () => void;
-  addSupportTicket: (message: string) => void;
-  addMessageToTicket: (ticketId: string, message: string) => void;
+  addSupportTicket: (message: string, imageUrl?: string) => void;
+  addMessageToTicket: (ticketId: string, message: string, imageUrl?: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -468,19 +468,25 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   }
   
-  const addSupportTicket = (message: string) => {
+  const addSupportTicket = (message: string, imageUrl?: string) => {
     if (!user) return;
+    
+    const initialMessage: SupportTicketMessage = {
+      sender: 'user',
+      text: message,
+      createdAt: new Date(),
+    };
+    if (imageUrl) {
+      initialMessage.imageUrl = imageUrl;
+    }
+    
     const newTicket: SupportTicket = {
       id: generateUniqueId('ticket', user.id),
       userId: user.id,
       subject: message.substring(0, 50),
       status: 'open',
       createdAt: new Date(),
-      messages: [{
-        sender: 'user',
-        text: message,
-        createdAt: new Date(),
-      }],
+      messages: [initialMessage],
     };
 
     const storedTickets = localStorage.getItem('supportTickets');
@@ -489,7 +495,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
   };
   
-  const addMessageToTicket = (ticketId: string, message: string) => {
+  const addMessageToTicket = (ticketId: string, message: string, imageUrl?: string) => {
     const storedTickets = localStorage.getItem('supportTickets');
     const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
     
@@ -500,6 +506,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           text: message,
           createdAt: new Date(),
         };
+        if (imageUrl) {
+          newMessage.imageUrl = imageUrl;
+        }
         return {
           ...ticket,
           status: 'open' as const,

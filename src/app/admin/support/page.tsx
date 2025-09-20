@@ -9,7 +9,7 @@ import { SupportTicket, User, SupportTicketMessage } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal, Send } from 'lucide-react';
+import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal, Send, Paperclip } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import Image from 'next/image';
 
 export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
@@ -222,7 +223,7 @@ export default function AdminSupportPage() {
                             </DropdownMenuItem>
                             {user && (
                                 <DropdownMenuItem asChild>
-                                <a href={`mailto:${user.email}`}>
+                                <a href={`mailto:${user.email}?subject=Re: Support Ticket ${ticket.id}`}>
                                     <Mail className="mr-2 h-4 w-4" />
                                     Reply via Email
                                 </a>
@@ -245,17 +246,22 @@ export default function AdminSupportPage() {
                                 {ticket.messages.map((message, index) => (
                                     <div key={index} className={`flex items-end gap-2 ${message.sender === 'admin' ? 'justify-end' : ''}`}>
                                     {message.sender === 'user' && user && (
-                                        <Avatar className="h-8 w-8">
+                                        <Avatar className="h-8 w-8 self-start">
                                             <AvatarImage src={user.avatarUrl} alt={user.username} />
                                             <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                     )}
                                     <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                                       {message.imageUrl && (
+                                          <div className="relative h-32 w-48 mb-2 rounded-md overflow-hidden">
+                                            <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="cover" />
+                                          </div>
+                                        )}
                                         <p>{message.text}</p>
                                         <p className="text-xs opacity-70 mt-1">{format(message.createdAt, 'p')}</p>
                                     </div>
                                      {message.sender === 'admin' && (
-                                        <Avatar className="h-8 w-8">
+                                        <Avatar className="h-8 w-8 self-start">
                                             <AvatarFallback>A</AvatarFallback>
                                         </Avatar>
                                     )}

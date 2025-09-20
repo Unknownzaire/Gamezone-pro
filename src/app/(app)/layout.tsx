@@ -9,15 +9,19 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy, Send, MessageCircle } from 'lucide-react';
+import { LifeBuoy, Send, MessageCircle, Paperclip } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import Image from 'next/image';
 
 function AppContent({ children }: { children: React.ReactNode }) {
   const { user, addSupportTicket } = useUser();
   const router = useRouter();
   const [isSupportOpen, setIsSupportOpen] = useState(false);
   const [supportMessage, setSupportMessage] = useState('');
+  const [supportImage, setSupportImage] = useState<File | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,6 +42,18 @@ function AppContent({ children }: { children: React.ReactNode }) {
       </div>
     );
   }
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setSupportImage(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreviewImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
 
   const handleSendSupportMessage = () => {
     if (!supportMessage.trim()) {
@@ -48,13 +64,29 @@ function AppContent({ children }: { children: React.ReactNode }) {
       });
       return;
     }
-    addSupportTicket(supportMessage);
-    toast({
-      title: 'Message Sent',
-      description: 'Our support team will get back to you shortly.',
-    });
-    setSupportMessage('');
-    setIsSupportOpen(false);
+
+    const sendMessage = (imageUrl?: string) => {
+      addSupportTicket(supportMessage, imageUrl);
+      toast({
+        title: 'Message Sent',
+        description: 'Our support team will get back to you shortly.',
+      });
+      setSupportMessage('');
+      setSupportImage(null);
+      setPreviewImage(null);
+      setIsSupportOpen(false);
+    };
+    
+    if (supportImage) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const imageUrl = event.target?.result as string;
+            sendMessage(imageUrl);
+        };
+        reader.readAsDataURL(supportImage);
+    } else {
+        sendMessage();
+    }
   };
 
   return (
@@ -84,11 +116,17 @@ function AppContent({ children }: { children: React.ReactNode }) {
             </DialogDescription>
             </DialogHeader>
             <Textarea
-            placeholder="Type your message here..."
-            value={supportMessage}
-            onChange={(e) => setSupportMessage(e.target.value)}
-            rows={5}
+              placeholder="Type your message here..."
+              value={supportMessage}
+              onChange={(e) => setSupportMessage(e.target.value)}
+              rows={5}
             />
+            {previewImage && (
+              <div className="relative h-32 w-32 rounded-md overflow-hidden">
+                <Image src={previewImage} alt="Image preview" layout="fill" objectFit="cover" />
+              </div>
+            )}
+            <Input id="support-image" type="file" accept="image/*" onChange={handleFileChange} className="text-xs" />
             <DialogFooter>
             <DialogClose asChild>
                 <Button variant="outline">Cancel</Button>
