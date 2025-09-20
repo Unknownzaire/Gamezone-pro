@@ -16,10 +16,10 @@ import Autoplay from "embla-carousel-autoplay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden">
-        <div className="flex">
-            <div className="relative h-32 w-32 flex-shrink-0">
-                <Link href={`/tournaments/${tournament.id}`}>
+    <Link href={`/tournaments/${tournament.id}`}>
+        <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors">
+            <div className="flex">
+                <div className="relative h-32 w-32 flex-shrink-0">
                     <Image
                         src={tournament.imageUrl}
                         alt={tournament.title}
@@ -27,43 +27,43 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                         className="object-cover"
                         data-ai-hint={tournament.imageHint}
                     />
-                </Link>
-                <Badge
-                    variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-                    className="absolute right-1 top-1"
-                >
-                    {tournament.status}
-                </Badge>
-            </div>
-            <div className="flex-1 p-4 flex flex-col justify-between">
-                <div>
-                    <h3 className="font-headline font-semibold">{tournament.title}</h3>
-                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <Trophy className="h-3 w-3 text-primary" />
-                            <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className="h-3 w-3 text-primary" />
-                            <span>Entry: ₹{tournament.entryFee}</span>
-                        </div>
-                         <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-primary" />
-                            <span>{format(new Date(tournament.matchTime), "PPp")}</span>
-                        </div>
-                    </div>
+                    <Badge
+                        variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                        className="absolute right-1 top-1"
+                    >
+                        {tournament.status}
+                    </Badge>
                 </div>
-                 {tournament.status !== 'Completed' && (
-                    <div className="mt-2 space-y-1">
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                            <span>{tournament.participants.length} / 100</span>
+                <div className="flex-1 p-4 flex flex-col justify-between">
+                    <div>
+                        <h3 className="font-headline font-semibold">{tournament.title}</h3>
+                        <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                                <Trophy className="h-3 w-3 text-primary" />
+                                <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Users className="h-3 w-3 text-primary" />
+                                <span>Entry: ₹{tournament.entryFee}</span>
+                            </div>
+                             <div className="flex items-center gap-2">
+                                <Clock className="h-3 w-3 text-primary" />
+                                <span>{format(new Date(tournament.matchTime), "PPp")}</span>
+                            </div>
                         </div>
-                        <Progress value={tournament.participants.length} className="h-2" />
                     </div>
-                )}
+                     {tournament.status !== 'Completed' && (
+                        <div className="mt-2 space-y-1">
+                            <div className="flex justify-between text-xs text-muted-foreground">
+                                <span>{tournament.participants.length} / 100</span>
+                            </div>
+                            <Progress value={tournament.participants.length} className="h-2" />
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
-    </Card>
+        </Card>
+    </Link>
 );
 
 export default function HomePage() {
