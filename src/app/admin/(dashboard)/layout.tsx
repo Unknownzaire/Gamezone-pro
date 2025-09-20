@@ -118,10 +118,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             </Avatar>
             <div className="flex-1 overflow-hidden group-data-[collapsible=icon]:hidden">
                 <p className="truncate text-sm font-semibold text-sidebar-accent-foreground">Admin User</p>
-                <p className="truncate text-xs text-muted-foreground">admin@arenaace.com</p>
+                <p className="truncate text-xs text-muted-foreground">admin@gamezonepro.com</p>
             </div>
            </div>
-           <Link href="/admin/login" className="w-full">
+           <Link href="/login" className="w-full">
             <Button variant="ghost" className="w-full justify-start gap-2 p-2">
              <LogOut />
              <span className="group-data-[collapsible=icon]:hidden">Logout</span>
