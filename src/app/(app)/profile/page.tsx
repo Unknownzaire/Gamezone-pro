@@ -419,27 +419,6 @@ export default function ProfilePage() {
                       </div>
                   )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="youtubeUrl">YouTube URL</Label>
-                <div className="relative">
-                  <Youtube className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="youtubeUrl" value={youtubeUrl} onChange={(e) => setYoutubeUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://youtube.com/yourchannel" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="instagramUrl">Instagram URL</Label>
-                 <div className="relative">
-                  <Instagram className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input id="instagramUrl" value={instagramUrl} onChange={(e) => setInstagramUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://instagram.com/yourprofile" />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="discordUrl">Discord URL</Label>
-                 <div className="relative flex items-center">
-                  <DiscordIcon />
-                  <Input id="discordUrl" value={discordUrl} onChange={(e) => setDiscordUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://discord.gg/yourserver" />
-                </div>
-              </div>
               <Button onClick={handleUpdateProfile} className="w-full">
                 {isEditing ? 'Save Profile' : 'Edit Profile'}
               </Button>
@@ -534,3 +513,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
