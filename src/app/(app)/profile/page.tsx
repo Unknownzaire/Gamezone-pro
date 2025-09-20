@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -402,6 +402,13 @@ export default function ProfilePage() {
                     <div className="flex flex-col">
                         <span className="text-sm text-muted-foreground">Support Email</span>
                         <a href="mailto:support@arenaace.com" className="text-base font-medium hover:underline">support@arenaace.com</a>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col">
+                        <span className="text-sm text-muted-foreground">Text Message</span>
+                        <a href="sms:+911234567890" className="text-base font-medium hover:underline">Send us a message</a>
                     </div>
                 </div>
             </CardContent>
