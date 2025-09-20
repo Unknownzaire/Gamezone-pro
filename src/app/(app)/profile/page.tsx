@@ -8,14 +8,50 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Youtube, Instagram, Link as LinkIcon } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
-import type { User } from '@/lib/types';
+import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
+
+
+const SocialIcon = ({ icon, url }: { icon: SocialLink['icon']; url: string }) => {
+    const iconProps = { className: "h-6 w-6 text-foreground" };
+    let socialIcon;
+    switch (icon) {
+        case 'youtube':
+            socialIcon = <Youtube {...iconProps} />;
+            break;
+        case 'instagram':
+            socialIcon = <Instagram {...iconProps} />;
+            break;
+        case 'discord':
+            socialIcon = (
+                <svg {...iconProps} viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.317 4.36981C18.7915 3.74616 17.1868 3.28496 15.5312 3C15.3323 3.49692 15.068 4.1959 14.8516 4.67016C12.8335 4.34182 10.8441 4.34182 8.85468 4.67016C8.63829 4.1959 8.37392 3.49692 8.17503 3C6.51838 3.28496 4.91477 3.74616 3.39028 4.36981C0.37521 9.38536 -0.425482 14.3001 0.177204 19.1627C1.94498 20.3341 3.8214 21.054 5.76171 21.5C6.16164 20.9768 6.51037 20.413 6.80789 19.8198C6.1585 19.5312 5.54101 19.176 4.96541 18.7554C5.07466 18.7011 5.18282 18.6457 5.28989 18.5892C8.63628 20.413 12.433 20.413 15.7793 18.5892C15.8864 18.6457 15.9946 18.7011 16.1038 18.7554C15.5282 19.176 14.9107 19.5312 14.2613 19.8198C14.5588 20.413 14.9076 20.9768 15.3075 21.5C17.2478 21.054 19.1242 20.3341 20.892 19.1627C21.5831 13.6335 20.9453 8.71151 20.317 4.36981ZM8.02194 15.6444C6.8376 15.6444 5.86877 14.6186 5.86877 13.3644C5.86877 12.1102 6.80997 11.0844 8.02194 11.0844C9.23391 11.0844 10.1751 12.1102 10.1475 13.3644C10.1475 14.6186 9.23391 15.6444 8.02194 15.6444ZM13.6809 15.6444C12.4965 15.6444 11.5277 14.6186 11.5277 13.3644C11.5277 12.1102 12.4689 11.0844 13.6809 11.0844C14.8929 11.0844 15.8341 12.1102 15.8065 13.3644C15.8065 14.6186 14.8929 15.6444 13.6809 15.6444Z"/>
+                </svg>
+            );
+            break;
+        case 'telegram':
+             socialIcon = (
+                <svg {...iconProps} viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.78-1.57 7.33c-.22.95-1.22 1.21-1.93.75l-2.4-1.76-1.15 1.1c-.2.2-.4.4-.78.4L8.5 15.8c.3-.3.32-.5.35-.7l.7-3.46 4.96-4.5c.34-.3-.04-.47-.5-.16l-6.1 3.83-3.23-1.01c-.96-.3-1 .15-.22.46l8.03 5.92c.67.5 1.2.23 1.4-.64l2.2-10.23c.2-.95-.53-1.3-1.2-.84z"/>
+                </svg>
+            );
+            break;
+        default:
+            socialIcon = <LinkIcon {...iconProps} />;
+    }
+    return (
+        <a href={url} target="_blank" rel="noopener noreferrer" className="rounded-full bg-muted p-3 hover:bg-muted/80 transition-colors">
+            {socialIcon}
+            <span className="sr-only">{icon}</span>
+        </a>
+    );
+};
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -52,6 +88,7 @@ export default function ProfilePage() {
         helplineNumber: '+911234567890',
         supportEmail: 'support@gamezonepro.com',
     });
+    const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
 
   useEffect(() => {
     if (currentUser) {
@@ -64,6 +101,10 @@ export default function ProfilePage() {
      const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
     if (storedHelpSettings) {
         setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
+    }
+    const storedSocialLinks = localStorage.getItem('socialMediaLinks');
+    if (storedSocialLinks) {
+        setSocialMediaLinks(JSON.parse(storedSocialLinks));
     }
   }, [currentUser]);
   
@@ -396,6 +437,22 @@ export default function ProfilePage() {
           </CardContent>
         </Card>
         
+        {socialMediaLinks.length > 0 && (
+          <Card>
+              <CardHeader>
+                  <CardTitle className="font-headline text-xl font-semibold">Join Our Community</CardTitle>
+                  <CardDescription>Follow us on social media for updates and announcements.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="flex justify-center gap-4">
+                      {socialMediaLinks.map(link => (
+                          <SocialIcon key={link.id} icon={link.icon} url={link.url} />
+                      ))}
+                  </div>
+              </CardContent>
+          </Card>
+        )}
+
         <Card>
             <CardHeader>
                 <CardTitle className="font-headline text-xl font-semibold">Help &amp; Support</CardTitle>
@@ -447,3 +504,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
