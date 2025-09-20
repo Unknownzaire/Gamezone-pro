@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { PromotionalAd, Tournament } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 
 export default function EditPromotionalAdPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id } = params;
+  const id = params.id;
   const { toast } = useToast();
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
 
@@ -40,11 +40,11 @@ export default function EditPromotionalAdPage({ params }: { params: { id: string
       setTimeout(() => {
         const adToEdit = promotionalAds.find(a => a.id === id);
         if (!adToEdit) {
-          notFound();
+            router.push('/admin/promotional-ads');
         }
       }, 1000);
     }
-  }, [id, promotionalAds]);
+  }, [id, promotionalAds, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;

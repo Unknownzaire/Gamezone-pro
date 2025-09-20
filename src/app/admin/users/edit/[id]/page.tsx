@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { User, Transaction } from '@/lib/types';
 import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 export default function EditUserPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id } = params;
+  const id = params.id;
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
@@ -45,9 +45,9 @@ export default function EditUserPage({ params }: { params: { id: string } }) {
       setTotalReferrals(referrals);
 
     } else {
-      notFound();
+      router.push('/admin/users');
     }
-  }, [id]);
+  }, [id, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;

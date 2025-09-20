@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Tournament, PrizeDistribution } from '@/lib/types';
 import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import { DateTimePicker } from '@/components/ui/datetime-picker';
 
 export default function EditTournamentPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id } = params;
+  const id = params.id;
   const { toast } = useToast();
 
   const [tournament, setTournament] = useState<Tournament | null>(null);
@@ -60,9 +60,9 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
           { rank: '4-10', percentage: 10 },
       ]);
     } else {
-      notFound();
+      router.push('/admin/tournaments');
     }
-  }, [id]);
+  }, [id, router]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;

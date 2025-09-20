@@ -2,7 +2,7 @@
 'use client';
 
 import { mockUsers, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { notFound } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +22,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function ManageTournamentPage({ params }: { params: { id: string } }) {
   const { toast } = useToast();
-  const { id } = params;
+  const id = params.id;
+  const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
 
@@ -48,13 +49,13 @@ export default function ManageTournamentPage({ params }: { params: { id: string 
         setRoomId(currentTournament.roomId || '');
         setRoomPassword(currentTournament.roomPassword || '');
     } else {
-        notFound();
+        router.push('/admin/tournaments');
     }
-  }, [id]);
+  }, [id, router]);
 
 
   if (!tournament) {
-    return <div>Loading...</div>; // Or notFound() if you prefer
+    return <div>Loading...</div>; // Or a skeleton loader
   }
 
   const updateAndSaveTournaments = (updatedTournaments: Tournament[]) => {

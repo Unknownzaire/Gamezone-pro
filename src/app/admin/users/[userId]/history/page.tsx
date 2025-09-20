@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User, Tournament, Participant, Transaction } from '@/lib/types';
 import { mockTournaments, mockUsers, mockTransactions } from '@/lib/mock-data';
@@ -24,7 +24,8 @@ type UserMatchHistory = {
 
 export default function UserHistoryPage({ params }: { params: { userId: string } }) {
   const searchParams = useSearchParams();
-  const { userId } = params;
+  const userId = params.userId;
+  const router = useRouter();
   const initialTab = searchParams.get('tab') || 'matches';
 
   const [user, setUser] = useState<User | null>(null);
@@ -60,17 +61,20 @@ export default function UserHistoryPage({ params }: { params: { userId: string }
       const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : mockTransactions;
       setTransactions(allTransactions.filter(tx => tx.userId === userId));
 
+    } else {
+        router.push('/admin/users');
     }
     
     setLoading(false);
-  }, [userId]);
+  }, [userId, router]);
 
   if (loading) {
     return <div>Loading...</div>; // Or a skeleton loader
   }
 
   if (!user) {
-    notFound();
+    // This will be brief as the useEffect will redirect.
+    return <div>User not found. Redirecting...</div>;
   }
 
   const sortedTransactions = [...transactions].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
