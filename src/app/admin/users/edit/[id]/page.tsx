@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, notFound, useParams } from 'next/navigation';
+import { useRouter, notFound } from 'next/navigation';
 import { User, Transaction } from '@/lib/types';
 import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -13,10 +13,9 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditUserPage() {
+export default function EditUserPage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = params;
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);

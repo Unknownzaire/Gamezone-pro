@@ -46,7 +46,9 @@ export default function UserHistoryPage({ params }: { params: { userId: string }
       setUser(foundUser);
       
       const history: UserMatchHistory[] = [];
-      mockTournaments.forEach(tournament => {
+      const storedTournaments = localStorage.getItem('allTournaments');
+      const allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+      allTournaments.forEach(tournament => {
         const participantRecord = tournament.participants.find(p => p.user.id === userId);
         if (participantRecord) {
           history.push({ tournament, participant: participantRecord });

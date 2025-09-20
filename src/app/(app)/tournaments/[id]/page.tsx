@@ -1,7 +1,7 @@
 
 'use client';
 
-import { notFound, useRouter, useParams } from 'next/navigation';
+import { notFound, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
@@ -37,9 +37,8 @@ import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
-export default function TournamentDetailsPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, tournaments, joinTournament } = useUser();
@@ -406,3 +405,4 @@ export default function TournamentDetailsPage() {
     
 
     
+

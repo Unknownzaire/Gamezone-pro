@@ -2,7 +2,7 @@
 'use client';
 
 import { mockUsers, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { notFound, useParams } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,10 +20,9 @@ import { Tournament } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 
-export default function ManageTournamentPage() {
+export default function ManageTournamentPage({ params }: { params: { id: string } }) {
   const { toast } = useToast();
-  const params = useParams();
-  const id = params.id as string;
+  const { id } = params;
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
 
