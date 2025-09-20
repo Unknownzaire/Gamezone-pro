@@ -6,10 +6,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { SocialLink } from '@/lib/types';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export interface WalletSettings {
     minWithdrawal: number;
@@ -21,12 +23,6 @@ export interface WalletSettings {
 export interface ReferralSettings {
     referralBonus: number;
     newUserBonus: number;
-}
-
-export interface SocialMediaSettings {
-    youtubeUrl: string;
-    instagramUrl: string;
-    discordUrl: string;
 }
 
 export default function AdminSettingsPage() {
@@ -44,11 +40,11 @@ export default function AdminSettingsPage() {
         referralBonus: 25,
         newUserBonus: 25,
     });
-    const [socialMediaSettings, setSocialMediaSettings] = useState<SocialMediaSettings>({
-        youtubeUrl: 'https://youtube.com',
-        instagramUrl: 'https://instagram.com',
-        discordUrl: 'https://discord.com',
-    });
+    const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([
+        { id: '1', name: 'YouTube', url: 'https://youtube.com', icon: 'youtube' },
+        { id: '2', name: 'Instagram', url: 'https://instagram.com', icon: 'instagram' },
+        { id: '3', name: 'Discord', url: 'https://discord.com', icon: 'discord' },
+    ]);
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
 
     useEffect(() => {
@@ -60,9 +56,9 @@ export default function AdminSettingsPage() {
         if (storedReferralSettings) {
             setReferralSettings(JSON.parse(storedReferralSettings));
         }
-        const storedSocialMediaSettings = localStorage.getItem('socialMediaSettings');
+        const storedSocialMediaSettings = localStorage.getItem('socialMediaLinks');
         if (storedSocialMediaSettings) {
-            setSocialMediaSettings(JSON.parse(storedSocialMediaSettings));
+            setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
         }
     }, []);
 
@@ -110,7 +106,7 @@ export default function AdminSettingsPage() {
 
     const handleSocialMediaUpdate = (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('socialMediaSettings', JSON.stringify(socialMediaSettings));
+        localStorage.setItem('socialMediaLinks', JSON.stringify(socialMediaLinks));
         toast({
             title: "Social Media Links Updated",
             description: "The app's social media links have been saved."
@@ -132,14 +128,20 @@ export default function AdminSettingsPage() {
             [id]: Number(value),
         }));
     }
+    
+    const handleSocialLinkChange = (id: string, field: 'name' | 'url' | 'icon', value: string) => {
+        setSocialMediaLinks(prev => prev.map(link => 
+            link.id === id ? { ...link, [field]: value } : link
+        ));
+    };
 
-    const handleSocialMediaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { id, value } = e.target;
-        setSocialMediaSettings(prev => ({
-            ...prev,
-            [id]: value,
-        }));
-    }
+    const addSocialLink = () => {
+        setSocialMediaLinks(prev => [...prev, { id: Date.now().toString(), name: '', url: '', icon: 'link' }]);
+    };
+
+    const removeSocialLink = (id: string) => {
+        setSocialMediaLinks(prev => prev.filter(link => link.id !== id));
+    };
 
      const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -261,19 +263,41 @@ export default function AdminSettingsPage() {
                         </CardHeader>
                         <form onSubmit={handleSocialMediaUpdate}>
                             <CardContent className="pt-6 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="youtubeUrl">YouTube URL</Label>
-                                    <Input id="youtubeUrl" value={socialMediaSettings.youtubeUrl} onChange={handleSocialMediaInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="instagramUrl">Instagram URL</Label>
-                                    <Input id="instagramUrl" value={socialMediaSettings.instagramUrl} onChange={handleSocialMediaInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="discordUrl">Discord URL</Label>
-                                    <Input id="discordUrl" value={socialMediaSettings.discordUrl} onChange={handleSocialMediaInputChange} />
-                                </div>
-                                <div className="flex justify-end">
+                                {socialMediaLinks.map((link) => (
+                                    <div key={link.id} className="flex items-end gap-2">
+                                        <div className="grid w-full grid-cols-[1fr,1fr,auto] gap-2">
+                                            <div className="space-y-1">
+                                                <Label htmlFor={`name-${link.id}`} className="text-xs">Name</Label>
+                                                <Input id={`name-${link.id}`} value={link.name} onChange={(e) => handleSocialLinkChange(link.id, 'name', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor={`url-${link.id}`} className="text-xs">URL</Label>
+                                                <Input id={`url-${link.id}`} value={link.url} onChange={(e) => handleSocialLinkChange(link.id, 'url', e.target.value)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label htmlFor={`icon-${link.id}`} className="text-xs">Icon</Label>
+                                                <Select value={link.icon} onValueChange={(value) => handleSocialLinkChange(link.id, 'icon', value)}>
+                                                    <SelectTrigger id={`icon-${link.id}`} className="w-28">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="youtube">YouTube</SelectItem>
+                                                        <SelectItem value="instagram">Instagram</SelectItem>
+                                                        <SelectItem value="discord">Discord</SelectItem>
+                                                        <SelectItem value="link">Generic</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => removeSocialLink(link.id)} type="button">
+                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                        </Button>
+                                    </div>
+                                ))}
+                                <Button variant="outline" size="sm" onClick={addSocialLink} type="button">
+                                    <Plus className="mr-2 h-4 w-4" /> Add Link
+                                </Button>
+                                <div className="flex justify-end pt-4">
                                     <Button type="submit">Save Social Media Links</Button>
                                 </div>
                             </CardContent>

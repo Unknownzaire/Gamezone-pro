@@ -95,4 +95,11 @@ export type User = {
   instagramUrl?: string;
   discordUrl?: string;
 };
+
+export type SocialLink = {
+  id: string;
+  name: string;
+  url: string;
+  icon: 'youtube' | 'instagram' | 'discord' | 'link';
+};
       
