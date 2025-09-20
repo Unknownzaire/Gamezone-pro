@@ -38,7 +38,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 
 export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+  const id = params.id;
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, tournaments, joinTournament } = useUser();
@@ -405,4 +405,3 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     
 
     
-
