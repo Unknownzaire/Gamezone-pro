@@ -78,8 +78,8 @@ export default function ReferEarnPage() {
   const handleShare = () => {
     if (navigator.share && referralUrl) {
       navigator.share({
-        title: 'Join me on Arena Ace!',
-        text: `Join me on Arena Ace and start competing in BGMI tournaments. Use my referral link to get started!`,
+        title: 'Join me on Gamezone Pro!',
+        text: `Join me on Gamezone Pro and start competing in BGMI tournaments. Use my referral link to get started!`,
         url: referralUrl,
       }).catch((error) => console.log('Error sharing', error));
     } else {

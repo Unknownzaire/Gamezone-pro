@@ -30,7 +30,7 @@ const prompt = ai.definePrompt({
   name: 'helpAgentPrompt',
   input: {schema: AskHelpAgentInputSchema},
   output: {schema: AskHelpAgentOutputSchema},
-  prompt: `You are a friendly and knowledgeable AI support agent for "Arena Ace", a mobile app for BGMI (Battlegrounds Mobile India) tournaments.
+  prompt: `You are a friendly and knowledgeable AI support agent for "Gamezone Pro", a mobile app for BGMI (Battlegrounds Mobile India) tournaments.
 
 Your goal is to answer user questions clearly and concisely.
 

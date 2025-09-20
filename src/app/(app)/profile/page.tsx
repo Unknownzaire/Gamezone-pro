@@ -413,7 +413,7 @@ export default function ProfilePage() {
                     <Mail className="h-5 w-5 text-primary" />
                     <div className="flex flex-col">
                         <span className="text-sm text-muted-foreground">Support Email</span>
-                        <a href="mailto:support@arenaace.com" className="text-base font-medium hover:underline">support@arenaace.com</a>
+                        <a href="mailto:support@gamezonepro.com" className="text-base font-medium hover:underline">support@gamezonepro.com</a>
                     </div>
                 </div>
                 <div className="flex items-center gap-4">

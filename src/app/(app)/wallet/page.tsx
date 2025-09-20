@@ -159,7 +159,7 @@ export default function WalletPage() {
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
     maxWithdrawal: 5000,
-    depositUpiId: 'arenaace@upi',
+    depositUpiId: 'gamezonepro@upi',
   });
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank'>('upi');
@@ -277,7 +277,7 @@ export default function WalletPage() {
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
   
-  const payeeName = 'Arena Ace';
+  const payeeName = 'Gamezone Pro';
   const qrCodeUrl = walletSettings.qrCodeImageUrl
     ? walletSettings.qrCodeImageUrl
     : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${encodeURIComponent(payeeName)}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;

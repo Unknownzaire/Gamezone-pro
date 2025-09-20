@@ -254,7 +254,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     toast({
       title: 'Sign Up Successful',
-      description: 'Welcome to Arena Ace! Please log in to continue.',
+      description: 'Welcome to Gamezone Pro! Please log in to continue.',
     });
     
     return 'success';

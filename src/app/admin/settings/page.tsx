@@ -31,7 +31,7 @@ export default function AdminSettingsPage() {
     const [walletSettings, setWalletSettings] = useState<WalletSettings>({
         minWithdrawal: 100,
         maxWithdrawal: 5000,
-        depositUpiId: 'arenaace@upi',
+        depositUpiId: 'gamezonepro@upi',
         qrCodeImageUrl: '',
     });
     const [referralSettings, setReferralSettings] = useState<ReferralSettings>({
