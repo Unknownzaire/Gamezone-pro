@@ -9,16 +9,20 @@ import { SupportTicket, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal } from 'lucide-react';
+import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal, Send } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 export default function AdminSupportPage() {
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
   const { toast } = useToast();
 
   const loadData = useCallback(() => {
@@ -28,7 +32,7 @@ export default function AdminSupportPage() {
       
       const storedTickets = localStorage.getItem('supportTickets');
       const allTickets: SupportTicket[] = storedTickets 
-        ? JSON.parse(storedTickets).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) 
+        ? JSON.parse(storedTickets).map((t: any) => ({...t, createdAt: new Date(t.createdAt), repliedAt: t.repliedAt ? new Date(t.repliedAt) : undefined})) 
         : [];
       
       setTickets(allTickets.sort((a,b) => {
@@ -63,9 +67,32 @@ export default function AdminSupportPage() {
       return t;
     });
     localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    setTickets(updatedTickets);
+    loadData();
     toast({ title: 'Ticket status updated' });
   };
+
+  const handleSendReply = () => {
+    if (!activeTicket || !replyMessage.trim()) return;
+
+    const updatedTickets = tickets.map(t => {
+      if (t.id === activeTicket.id) {
+        return { 
+          ...t, 
+          reply: replyMessage,
+          repliedAt: new Date(),
+          status: 'closed' as const
+        };
+      }
+      return t;
+    });
+    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    loadData();
+    
+    toast({ title: 'Reply Sent', description: 'The user has been notified.' });
+    setReplyMessage('');
+    setActiveTicket(null);
+  };
+
 
   const getUserForTicket = (userId: string) => users.find(u => u.id === userId);
 
@@ -127,7 +154,15 @@ export default function AdminSupportPage() {
               {tickets.map((ticket) => {
                 const user = getUserForTicket(ticket.userId);
                 return (
-                 <Dialog key={ticket.id}>
+                 <Dialog key={ticket.id} onOpenChange={(isOpen) => {
+                   if (isOpen) {
+                     setActiveTicket(ticket);
+                     setReplyMessage(ticket.reply || '');
+                   } else {
+                     setActiveTicket(null);
+                     setReplyMessage('');
+                   }
+                 }}>
                     <TableRow className={ticket.status === 'closed' ? 'bg-muted/50' : ''}>
                       <DialogTrigger asChild>
                         <TableCell className="cursor-pointer">
@@ -169,7 +204,7 @@ export default function AdminSupportPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                              <DialogTrigger asChild>
-                                <DropdownMenuItem>View Message</DropdownMenuItem>
+                                <DropdownMenuItem>View/Reply</DropdownMenuItem>
                             </DialogTrigger>
                             <DropdownMenuItem onClick={() => handleToggleStatus(ticket.id)}>
                                 {ticket.status === 'open' ? 'Mark as Closed' : 'Re-open Ticket'}
@@ -188,28 +223,48 @@ export default function AdminSupportPage() {
                     </TableRow>
                      <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Support Message</DialogTitle>
-                            {user && (
-                            <DialogDescription>
-                                From: {user.username} ({user.email}) on {format(ticket.createdAt, 'PPp')}
+                            <DialogTitle>Support Ticket</DialogTitle>
+                             <DialogDescription>
+                                From: {user?.username} ({user?.email}) on {format(ticket.createdAt, 'PPp')}
                             </DialogDescription>
-                            )}
                         </DialogHeader>
-                        <div className="my-4 rounded-md border bg-muted p-4 text-sm">
-                            {ticket.message}
+                        <div className="space-y-4">
+                           <div>
+                              <Label className="font-semibold">User's Message</Label>
+                              <div className="mt-2 rounded-md border bg-muted p-4 text-sm">
+                                  {ticket.message}
+                              </div>
+                           </div>
+                           {ticket.reply && (
+                             <div>
+                               <Label className="font-semibold">Your Reply</Label>
+                                <div className="mt-2 rounded-md border bg-primary/10 p-4 text-sm">
+                                    <p className="font-semibold text-primary">Replied on {format(new Date(ticket.repliedAt!), 'PPp')}</p>
+                                    <p>{ticket.reply}</p>
+                                </div>
+                             </div>
+                           )}
+                           <div className="space-y-2">
+                             <Label htmlFor="reply-message" className="font-semibold">
+                               {ticket.reply ? 'Update Reply' : 'Send Reply'}
+                             </Label>
+                             <Textarea
+                               id="reply-message"
+                               placeholder="Type your response here..."
+                               value={replyMessage}
+                               onChange={(e) => setReplyMessage(e.target.value)}
+                               rows={4}
+                             />
+                           </div>
                         </div>
-                        <DialogFooter className="sm:justify-between">
+                        <DialogFooter>
                             <DialogClose asChild>
-                                <Button variant="outline">Close</Button>
+                                <Button variant="outline">Cancel</Button>
                             </DialogClose>
-                            {user && (
-                               <a href={`mailto:${user.email}?subject=Re: Support Ticket ${ticket.id}`}>
-                                  <Button>
-                                    <Mail className="mr-2 h-4 w-4" />
-                                    Reply via Email
-                                  </Button>
-                                </a>
-                            )}
+                            <Button onClick={handleSendReply}>
+                                <Send className="mr-2 h-4 w-4" />
+                                Send Reply
+                            </Button>
                         </DialogFooter>
                     </DialogContent>
                  </Dialog>

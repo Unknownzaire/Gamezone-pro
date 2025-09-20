@@ -19,6 +19,8 @@ export type SupportTicket = {
   message: string;
   status: 'open' | 'closed';
   createdAt: Date;
+  reply?: string;
+  repliedAt?: Date;
 };
 
 
@@ -41,7 +43,7 @@ export type Tournament = {
 };
 
 export type Participant = {
-  id: string;
+  id:string;
   user: User;
   tournamentId: string;
   result: 'Winner' | `Rank #${number}` | 'Participated' | null;
