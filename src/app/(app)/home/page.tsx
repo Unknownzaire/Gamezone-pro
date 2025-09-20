@@ -2,7 +2,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Tournament } from "@/lib/types";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
@@ -17,58 +17,52 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
     <Card key={tournament.id} className="overflow-hidden">
-        <div className="relative h-40 w-full">
-            <Link href={`/tournaments/${tournament.id}`}>
-            <Image
-                src={tournament.imageUrl}
-                alt={tournament.title}
-                fill
-                className="object-cover"
-                data-ai-hint={tournament.imageHint}
-            />
-            </Link>
-            <Badge
-            variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-            className="absolute right-2 top-2"
-            >
-            {tournament.status}
-            </Badge>
-        </div>
-        <CardHeader>
-            <CardTitle className="font-headline">{tournament.title}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-            <Trophy className="h-4 w-4 text-primary" />
-            <span>Prize Pool: ₹{tournament.prizePool.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2">
-            <Users className="h-4 w-4 text-primary" />
-            <span>Entry: ₹{tournament.entryFee}</span>
-            </div>
-            <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-primary" />
-            <span>{format(new Date(tournament.matchTime), "PPp")}</span>
-            </div>
-            {tournament.status !== 'Completed' && (
-                <div className="space-y-2 pt-2">
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                        <span>Players Joined</span>
-                        <span>{tournament.participants.length} / 100</span>
-                    </div>
-                    <Progress value={tournament.participants.length} />
-                </div>
-            )}
-        </CardContent>
-        <CardFooter>
-            <Link href={`/tournaments/${tournament.id}`} className="w-full">
-                <Button
-                    className="w-full"
+        <div className="flex">
+            <div className="relative h-32 w-32 flex-shrink-0">
+                <Link href={`/tournaments/${tournament.id}`}>
+                    <Image
+                        src={tournament.imageUrl}
+                        alt={tournament.title}
+                        fill
+                        className="object-cover"
+                        data-ai-hint={tournament.imageHint}
+                    />
+                </Link>
+                <Badge
+                    variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                    className="absolute right-1 top-1"
                 >
-                    View Details
-                </Button>
-            </Link>
-        </CardFooter>
+                    {tournament.status}
+                </Badge>
+            </div>
+            <div className="flex-1 p-4 flex flex-col justify-between">
+                <div>
+                    <h3 className="font-headline font-semibold">{tournament.title}</h3>
+                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                            <Trophy className="h-3 w-3 text-primary" />
+                            <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Users className="h-3 w-3 text-primary" />
+                            <span>Entry: ₹{tournament.entryFee}</span>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-primary" />
+                            <span>{format(new Date(tournament.matchTime), "PPp")}</span>
+                        </div>
+                    </div>
+                </div>
+                 {tournament.status !== 'Completed' && (
+                    <div className="mt-2 space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{tournament.participants.length} / 100</span>
+                        </div>
+                        <Progress value={tournament.participants.length} className="h-2" />
+                    </div>
+                )}
+            </div>
+        </div>
     </Card>
 );
 
