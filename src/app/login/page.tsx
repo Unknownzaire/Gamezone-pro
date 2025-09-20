@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, CheckCircle } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,6 +43,21 @@ export default function LoginPage() {
   });
 
   const [showPassword, setShowPassword] = useState(false);
+  
+  // OTP State
+  const [emailOtp, setEmailOtp] = useState('');
+  const [mobileOtp, setMobileOtp] = useState('');
+  const [emailOtpInput, setEmailOtpInput] = useState('');
+  const [mobileOtpInput, setMobileOtpInput] = useState('');
+
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [mobileOtpSent, setMobileOtpSent] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [mobileVerified, setMobileVerified] = useState(false);
+  
+  const [emailCountdown, setEmailCountdown] = useState(0);
+  const [mobileCountdown, setMobileCountdown] = useState(0);
+
 
   const usernameRef = useRef<HTMLInputElement>(null);
   const bgmiUsernameRef = useRef<HTMLInputElement>(null);
@@ -58,6 +73,22 @@ export default function LoginPage() {
       router.push('/home');
     }
   }, [user, router]);
+  
+  useEffect(() => {
+    let emailTimer: NodeJS.Timeout;
+    if (emailCountdown > 0) {
+      emailTimer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
+    }
+    return () => clearTimeout(emailTimer);
+  }, [emailCountdown]);
+
+  useEffect(() => {
+    let mobileTimer: NodeJS.Timeout;
+    if (mobileCountdown > 0) {
+      mobileTimer = setTimeout(() => setMobileCountdown(mobileCountdown - 1), 1000);
+    }
+    return () => clearTimeout(mobileTimer);
+  }, [mobileCountdown]);
 
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
@@ -79,10 +110,20 @@ export default function LoginPage() {
   };
 
   const handleSignupChange = (e: ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
       setSignupForm({
           ...signupForm,
-          [e.target.name]: e.target.value
+          [name]: value
       });
+
+      if (name === 'email') {
+          setEmailVerified(false);
+          setEmailOtpSent(false);
+      }
+      if (name === 'mobile') {
+          setMobileVerified(false);
+          setMobileOtpSent(false);
+      }
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -113,6 +154,15 @@ export default function LoginPage() {
   const handleSignUp = (e: React.FormEvent) => {
     e.preventDefault();
 
+     if (!emailVerified) {
+        toast({ variant: 'destructive', title: "Email Not Verified", description: "Please verify your email address before signing up." });
+        return;
+      }
+       if (!mobileVerified) {
+        toast({ variant: 'destructive', title: "Mobile Not Verified", description: "Please verify your mobile number before signing up." });
+        return;
+      }
+
     const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl'> = {
         username: signupForm.username,
         email: signupForm.email,
@@ -136,6 +186,46 @@ export default function LoginPage() {
           password: '',
           referralCode: '',
       });
+    }
+  };
+
+  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+  const handleSendEmailOtp = () => {
+    if(!signupForm.email) return;
+    const newOtp = generateOtp();
+    setEmailOtp(newOtp);
+    setEmailOtpSent(true);
+    setEmailCountdown(30);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
+  };
+
+  const handleVerifyEmailOtp = () => {
+    if(emailOtpInput === emailOtp) {
+      setEmailVerified(true);
+      setEmailOtpSent(false);
+      toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
+    } else {
+      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
+    }
+  };
+  
+  const handleSendMobileOtp = () => {
+    if(!signupForm.mobile) return;
+    const newOtp = generateOtp();
+    setMobileOtp(newOtp);
+    setMobileOtpSent(true);
+    setMobileCountdown(30);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
+  };
+
+  const handleVerifyMobileOtp = () => {
+     if(mobileOtpInput === mobileOtp) {
+      setMobileVerified(true);
+      setMobileOtpSent(false);
+      toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
+    } else {
+      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
     }
   };
 
@@ -210,13 +300,41 @@ export default function LoginPage() {
                         <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
                         <Input id="signup-bgmiId" name="bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
                     </div>
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
-                        <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
+                        <div className="flex items-center gap-2">
+                              <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} disabled={mobileVerified}/>
+                              {!mobileVerified && (
+                                  <Button type="button" onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || !signupForm.mobile}>
+                                    {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
+                                  </Button>
+                              )}
+                              {mobileVerified && <CheckCircle className="text-green-500" />}
+                        </div>
+                         {mobileOtpSent && !mobileVerified && (
+                            <div className="flex items-center gap-2 pt-2">
+                                <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
+                                <Button type="button" onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
+                            </div>
+                        )}
                     </div>
-                    <div className="space-y-2">
+                     <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
-                        <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
+                         <div className="flex items-center gap-2">
+                            <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} disabled={emailVerified} />
+                            {!emailVerified && (
+                                <Button type="button" onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0 || !signupForm.email}>
+                                    {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
+                                </Button>
+                            )}
+                            {emailVerified && <CheckCircle className="text-green-500" />}
+                        </div>
+                        {emailOtpSent && !emailVerified && (
+                            <div className="flex items-center gap-2 pt-2">
+                                <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
+                                <Button type="button" onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
+                            </div>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
@@ -226,7 +344,7 @@ export default function LoginPage() {
                         <Label htmlFor="signup-referralCode">Referral Code (Optional)</Label>
                         <Input id="signup-referralCode" name="referralCode" placeholder="Enter referral code" onChange={handleSignupChange} value={signupForm.referralCode} ref={referralCodeRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
-                    <Button type="submit" className="w-full" ref={signupButtonRef}>Sign Up</Button>
+                    <Button type="submit" className="w-full" ref={signupButtonRef} disabled={!emailVerified || !mobileVerified}>Sign Up</Button>
                 </form>
               </CardContent>
             </Card>
