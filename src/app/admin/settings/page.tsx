@@ -23,6 +23,12 @@ export interface ReferralSettings {
     newUserBonus: number;
 }
 
+export interface SocialMediaSettings {
+    youtubeUrl: string;
+    instagramUrl: string;
+    discordUrl: string;
+}
+
 export default function AdminSettingsPage() {
     const { toast } = useToast();
     const searchParams = useSearchParams();
@@ -38,6 +44,11 @@ export default function AdminSettingsPage() {
         referralBonus: 25,
         newUserBonus: 25,
     });
+    const [socialMediaSettings, setSocialMediaSettings] = useState<SocialMediaSettings>({
+        youtubeUrl: 'https://youtube.com',
+        instagramUrl: 'https://instagram.com',
+        discordUrl: 'https://discord.com',
+    });
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
 
     useEffect(() => {
@@ -48,6 +59,10 @@ export default function AdminSettingsPage() {
         const storedReferralSettings = localStorage.getItem('referralSettings');
         if (storedReferralSettings) {
             setReferralSettings(JSON.parse(storedReferralSettings));
+        }
+        const storedSocialMediaSettings = localStorage.getItem('socialMediaSettings');
+        if (storedSocialMediaSettings) {
+            setSocialMediaSettings(JSON.parse(storedSocialMediaSettings));
         }
     }, []);
 
@@ -93,6 +108,15 @@ export default function AdminSettingsPage() {
         });
     }
 
+    const handleSocialMediaUpdate = (e: React.FormEvent) => {
+        e.preventDefault();
+        localStorage.setItem('socialMediaSettings', JSON.stringify(socialMediaSettings));
+        toast({
+            title: "Social Media Links Updated",
+            description: "The app's social media links have been saved."
+        });
+    }
+
     const handleWalletInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { id, value, type } = e.target;
         setWalletSettings(prev => ({
@@ -106,6 +130,14 @@ export default function AdminSettingsPage() {
         setReferralSettings(prev => ({
             ...prev,
             [id]: Number(value),
+        }));
+    }
+
+    const handleSocialMediaInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const { id, value } = e.target;
+        setSocialMediaSettings(prev => ({
+            ...prev,
+            [id]: value,
         }));
     }
 
@@ -194,7 +226,7 @@ export default function AdminSettingsPage() {
                  )}
 
                 {(!showOnly || showOnly === 'referrals') && (
-                    <Card className="lg:col-span-2">
+                    <Card>
                         <CardHeader>
                             <CardTitle>Referral Settings</CardTitle>
                             <CardDescription>Configure bonuses for the user referral program.</CardDescription>
@@ -220,6 +252,34 @@ export default function AdminSettingsPage() {
                         </form>
                     </Card>
                 )}
+
+                 {(!showOnly || showOnly === 'social') && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Social Media Links</CardTitle>
+                            <CardDescription>Set the URLs for your community social media pages.</CardDescription>
+                        </CardHeader>
+                        <form onSubmit={handleSocialMediaUpdate}>
+                            <CardContent className="pt-6 space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="youtubeUrl">YouTube URL</Label>
+                                    <Input id="youtubeUrl" value={socialMediaSettings.youtubeUrl} onChange={handleSocialMediaInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="instagramUrl">Instagram URL</Label>
+                                    <Input id="instagramUrl" value={socialMediaSettings.instagramUrl} onChange={handleSocialMediaInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="discordUrl">Discord URL</Label>
+                                    <Input id="discordUrl" value={socialMediaSettings.discordUrl} onChange={handleSocialMediaInputChange} />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button type="submit">Save Social Media Links</Button>
+                                </div>
+                            </CardContent>
+                        </form>
+                    </Card>
+                 )}
             </div>
         </div>
     );

@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Youtube, Instagram, Sigma } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Youtube, Instagram } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
 import Image from 'next/image';
 import type { User } from '@/lib/types';
 import Link from 'next/link';
+import type { SocialMediaSettings } from '@/app/admin/settings/page';
 
 const DiscordIcon = () => (
     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -56,6 +57,12 @@ export default function ProfilePage() {
 
   const [isEditing, setIsEditing] = useState(false);
 
+  const [socialMediaSettings, setSocialMediaSettings] = useState<SocialMediaSettings>({
+    youtubeUrl: 'https://youtube.com',
+    instagramUrl: 'https://instagram.com',
+    discordUrl: 'https://discord.com',
+  });
+
   useEffect(() => {
     if (currentUser) {
       setUsername(currentUser.username || '');
@@ -66,6 +73,10 @@ export default function ProfilePage() {
       setYoutubeUrl(currentUser.youtubeUrl || '');
       setInstagramUrl(currentUser.instagramUrl || '');
       setDiscordUrl(currentUser.discordUrl || '');
+    }
+     const storedSocialMediaSettings = localStorage.getItem('socialMediaSettings');
+    if (storedSocialMediaSettings) {
+      setSocialMediaSettings(JSON.parse(storedSocialMediaSettings));
     }
   }, [currentUser]);
   
@@ -406,7 +417,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="discordUrl">Discord URL</Label>
-                 <div className="relative">
+                 <div className="relative flex items-center">
                   <DiscordIcon />
                   <Input id="discordUrl" value={discordUrl} onChange={(e) => setDiscordUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://discord.gg/yourserver" />
                 </div>
@@ -443,20 +454,20 @@ export default function ProfilePage() {
                 <CardDescription>Follow us on social media for updates and events.</CardDescription>
             </CardHeader>
             <CardContent className="grid grid-cols-3 gap-4">
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+                <a href={socialMediaSettings.youtubeUrl} target="_blank" rel="noopener noreferrer">
                     <Button variant="outline" className="w-full">
                         <Youtube className="mr-2 h-5 w-5 text-red-500" />
                         YouTube
                     </Button>
                 </a>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                <a href={socialMediaSettings.instagramUrl} target="_blank" rel="noopener noreferrer">
                     <Button variant="outline" className="w-full">
                         <Instagram className="mr-2 h-5 w-5 text-pink-500" />
                         Instagram
                     </Button>
                 </a>
-                 <a href="https://discord.com" target="_blank" rel="noopener noreferrer">
-                    <Button variant="outline" className="w-full">
+                 <a href={socialMediaSettings.discordUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full flex items-center gap-2">
                         <DiscordIcon />
                         Discord
                     </Button>
@@ -515,7 +526,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
-
-    
