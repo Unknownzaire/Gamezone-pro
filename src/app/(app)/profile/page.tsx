@@ -16,6 +16,12 @@ import Image from 'next/image';
 import type { User } from '@/lib/types';
 import Link from 'next/link';
 
+const DiscordIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M20.317 4.3698C18.699 3.5048 16.942 2.9618 15.122 2.7568C14.993 3.0038 14.851 3.2628 14.718 3.5158C12.592 3.2988 10.478 3.2988 8.36 3.5158C8.227 3.2628 8.085 3.0038 7.956 2.7568C6.136 2.9618 4.379 3.5048 2.762 4.3698C0.395 7.9468 -0.323 11.4318 0.106 14.8528C1.832 16.2918 3.612 17.2628 5.438 17.9178C5.866 17.4818 6.273 17.0148 6.654 16.5208C6.108 16.2518 5.582 15.9558 5.076 15.6338C5.028 15.6668 4.982 15.6988 4.935 15.7298C3.593 14.5098 2.617 12.9838 2.128 11.2728C2.179 11.2298 2.231 11.1858 2.282 11.1438C4.522 10.3708 6.559 10.3348 8.5 10.7428C8.843 11.4588 9.389 12.4808 10.16 13.6278C11.393 13.4148 12.637 13.4148 13.86 13.6278C14.631 12.4808 15.177 11.4588 15.52 10.7428C17.461 10.3348 19.498 10.3708 21.738 11.1438C21.789 11.1858 21.841 11.2298 21.892 11.2728C21.403 12.9838 20.427 14.5098 19.085 15.7298C19.038 15.6988 18.992 15.6668 18.944 15.6338C18.438 15.9558 17.912 16.2518 17.366 16.5208C17.747 17.0148 18.154 17.4818 18.582 17.9178C20.408 17.2628 22.188 16.2918 23.914 14.8528C24.403 10.9998 23.32 7.4788 20.317 4.3698ZM8.02 12.3118C7.031 12.3118 6.223 11.4928 6.223 10.4938C6.223 9.4938 7.02 8.6868 8.02 8.6868C9.02 8.6868 9.828 9.4938 9.817 10.4938C9.817 11.4928 9.02 12.3118 8.02 12.3118ZM16.02 12.3118C15.031 12.3118 14.223 11.4928 14.223 10.4938C14.223 9.4938 15.02 8.6868 16.02 8.6868C17.02 8.6868 17.828 9.4938 17.817 10.4938C17.817 11.4928 17.02 12.3118 16.02 12.3118Z"/>
+    </svg>
+  );
+
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -306,7 +312,24 @@ export default function ProfilePage() {
                 </DialogContent>
               </Dialog>
               <div className="text-center">
-                <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
+                 <div className="flex items-center gap-2 justify-center">
+                    <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
+                    {currentUser.youtubeUrl && (
+                        <a href={currentUser.youtubeUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-red-500">
+                            <Youtube />
+                        </a>
+                    )}
+                    {currentUser.instagramUrl && (
+                        <a href={currentUser.instagramUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-pink-500">
+                            <Instagram />
+                        </a>
+                    )}
+                    {currentUser.discordUrl && (
+                         <a href={currentUser.discordUrl} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-indigo-400">
+                            <DiscordIcon />
+                        </a>
+                    )}
+                 </div>
                 <p className="text-muted-foreground">{currentUser.email}</p>
               </div>
             </div>
@@ -384,7 +407,7 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="discordUrl">Discord URL</Label>
                  <div className="relative">
-                  <Sigma className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <DiscordIcon />
                   <Input id="discordUrl" value={discordUrl} onChange={(e) => setDiscordUrl(e.target.value)} disabled={!isEditing} className="pl-9" placeholder="https://discord.gg/yourserver" />
                 </div>
               </div>
@@ -465,3 +488,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
