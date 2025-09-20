@@ -436,6 +436,33 @@ export default function ProfilePage() {
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
           </CardContent>
         </Card>
+        
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-xl font-semibold">Join Our Community</CardTitle>
+                <CardDescription>Follow us on social media for updates and events.</CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-3 gap-4">
+                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full">
+                        <Youtube className="mr-2 h-5 w-5 text-red-500" />
+                        YouTube
+                    </Button>
+                </a>
+                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full">
+                        <Instagram className="mr-2 h-5 w-5 text-pink-500" />
+                        Instagram
+                    </Button>
+                </a>
+                 <a href="https://discord.com" target="_blank" rel="noopener noreferrer">
+                    <Button variant="outline" className="w-full">
+                        <DiscordIcon />
+                        Discord
+                    </Button>
+                </a>
+            </CardContent>
+        </Card>
 
         <Card>
             <CardHeader>
@@ -488,5 +515,7 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
 
     
