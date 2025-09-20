@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { LifeBuoy, Send } from 'lucide-react';
+import { LifeBuoy, Send, MessageCircle } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 
@@ -72,7 +72,7 @@ function AppContent({ children }: { children: React.ReactNode }) {
             size="icon"
             className="fixed bottom-20 right-4 h-14 w-14 rounded-full shadow-lg"
             >
-            <LifeBuoy className="h-6 w-6" />
+            <MessageCircle className="h-6 w-6" />
             <span className="sr-only">Help & Support</span>
             </Button>
         </DialogTrigger>
