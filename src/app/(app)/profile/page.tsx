@@ -3,12 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2 } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -382,6 +382,29 @@ export default function ProfilePage() {
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
           </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader>
+                <CardTitle className="font-headline text-xl font-semibold">Help &amp; Support</CardTitle>
+                <CardDescription>Contact us if you need any assistance.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                <div className="flex items-center gap-4">
+                    <Phone className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col">
+                        <span className="text-sm text-muted-foreground">Helpline Number</span>
+                        <a href="tel:+911234567890" className="text-base font-medium hover:underline">+91 12345 67890</a>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4">
+                    <Mail className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col">
+                        <span className="text-sm text-muted-foreground">Support Email</span>
+                        <a href="mailto:support@arenaace.com" className="text-base font-medium hover:underline">support@arenaace.com</a>
+                    </div>
+                </div>
+            </CardContent>
         </Card>
         
         <div className="pt-4">
