@@ -7,7 +7,7 @@ import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments 
 import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
-import { ReferralSettings } from '@/app/admin/settings/page';
+import type { ReferralSettings } from '@/app/admin/settings/page';
 
 // Let's create a very simple global state for our user
 // In a real app, you'd use a more robust state management library or React Context with more features
