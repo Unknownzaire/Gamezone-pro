@@ -1,4 +1,5 @@
 
+
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
@@ -10,6 +11,14 @@ export type PromotionalAd = {
   imageUrl: string;
   link: string; // URL to a tournament or external page
   status: 'active' | 'inactive';
+};
+
+export type SupportTicket = {
+  id: string;
+  userId: string;
+  message: string;
+  status: 'open' | 'closed';
+  createdAt: Date;
 };
 
 

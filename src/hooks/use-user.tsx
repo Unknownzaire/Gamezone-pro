@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd, Participant } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import { ReferralSettings } from '@/app/admin/settings/page';
@@ -35,6 +35,7 @@ interface UserContextType {
   toast: ReturnType<typeof useToast>['toast'];
   hasUserJoinedTournament: (userId: string) => boolean;
   moveReferralBonusToWallet: () => void;
+  addSupportTicket: (message: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -95,6 +96,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             localStorage.setItem('promotionalAds', JSON.stringify([]));
             setPromotionalAds([]);
         }
+        
+        // Initialize support tickets if not present
+        if (!localStorage.getItem('supportTickets')) {
+            localStorage.setItem('supportTickets', JSON.stringify([]));
+        }
+
 
     } catch(e) {
         console.error("Error loading data from localStorage", e);
@@ -116,7 +123,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
       // Check if the change is one we care about
-      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings'].includes(event.key || '')) {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets'].includes(event.key || '')) {
         reload();
       }
     };
@@ -459,10 +466,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       status: 'completed'
     });
   }
+  
+  const addSupportTicket = (message: string) => {
+    if (!user) return;
+    const newTicket: SupportTicket = {
+      id: generateUniqueId('ticket', user.id),
+      userId: user.id,
+      message,
+      status: 'open',
+      createdAt: new Date(),
+    };
+
+    const storedTickets = localStorage.getItem('supportTickets');
+    const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
+    const updatedTickets = [newTicket, ...allTickets];
+    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+  };
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket }}>
       {!loading && children}
     </UserContext.Provider>
   );
@@ -476,13 +499,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-
-    
-
-
-
-
-
-
-
