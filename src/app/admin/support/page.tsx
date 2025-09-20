@@ -169,7 +169,10 @@ export default function AdminSupportPage() {
                 return (
                  <Dialog key={ticket.id} onOpenChange={(isOpen) => {
                    if (isOpen) setActiveTicket(ticket);
-                   else setActiveTicket(null);
+                   else {
+                    setActiveTicket(null);
+                    setReplyMessage('');
+                   }
                  }}>
                     <TableRow className={ticket.status === 'closed' ? 'bg-muted/50' : ''}>
                       <DialogTrigger asChild>
@@ -189,7 +192,7 @@ export default function AdminSupportPage() {
                         </TableCell>
                       </DialogTrigger>
                        <DialogTrigger asChild>
-                        <TableCell className="max-w-xs truncate cursor-pointer">{ticket.subject}</TableCell>
+                        <TableCell className="max-w-xs truncate cursor-pointer font-medium">{ticket.subject}</TableCell>
                        </DialogTrigger>
                        <DialogTrigger asChild>
                         <TableCell className="cursor-pointer">{format(lastMessage.createdAt, 'PPp')}</TableCell>
@@ -289,3 +292,5 @@ export default function AdminSupportPage() {
     </div>
   );
 }
+
+    
