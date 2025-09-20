@@ -198,10 +198,18 @@ export default function AdminSupportPage() {
                         <div className="my-4 rounded-md border bg-muted p-4 text-sm">
                             {ticket.message}
                         </div>
-                        <DialogFooter>
+                        <DialogFooter className="sm:justify-between">
                             <DialogClose asChild>
-                            <Button variant="outline">Close</Button>
+                                <Button variant="outline">Close</Button>
                             </DialogClose>
+                            {user && (
+                               <a href={`mailto:${user.email}?subject=Re: Support Ticket ${ticket.id}`}>
+                                  <Button>
+                                    <Mail className="mr-2 h-4 w-4" />
+                                    Reply via Email
+                                  </Button>
+                                </a>
+                            )}
                         </DialogFooter>
                     </DialogContent>
                  </Dialog>
