@@ -13,9 +13,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EditUserPage({ params }: { params: { id: string } }) {
+export default function EditUserPage({ params: { id } }: { params: { id: string } }) {
   const router = useRouter();
-  const id = params.id;
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);

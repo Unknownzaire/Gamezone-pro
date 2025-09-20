@@ -37,8 +37,7 @@ import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 
 
-export default function TournamentDetailsPage({ params }: { params: { id: string } }) {
-  const id = params.id;
+export default function TournamentDetailsPage({ params: { id } }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, tournaments, joinTournament } = useUser();
@@ -405,4 +404,3 @@ export default function TournamentDetailsPage({ params }: { params: { id: string
     
 
     
-
