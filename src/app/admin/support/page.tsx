@@ -31,7 +31,11 @@ export default function AdminSupportPage() {
         ? JSON.parse(storedTickets).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) 
         : [];
       
-      setTickets(allTickets.sort((a,b) => a.status === 'open' ? -1 : 1));
+      setTickets(allTickets.sort((a,b) => {
+        if (a.status === 'open' && b.status !== 'open') return -1;
+        if (a.status !== 'open' && b.status === 'open') return 1;
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      }));
 
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
@@ -123,30 +127,38 @@ export default function AdminSupportPage() {
               {tickets.map((ticket) => {
                 const user = getUserForTicket(ticket.userId);
                 return (
-                  <TableRow key={ticket.id} className={ticket.status === 'closed' ? 'bg-muted/50' : ''}>
-                    <TableCell>
-                      {user ? (
-                         <div className="flex items-center gap-3">
-                          <Avatar className="h-8 w-8">
-                            <AvatarImage src={user.avatarUrl} alt={user.username} />
-                            <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                          </Avatar>
-                          <div className="font-medium">
-                            <p>{user.username}</p>
-                            <p className="text-sm text-muted-foreground">{user.email}</p>
-                          </div>
-                        </div>
-                      ) : 'Unknown User'}
-                    </TableCell>
-                    <TableCell className="max-w-xs truncate">{ticket.message}</TableCell>
-                    <TableCell>{format(ticket.createdAt, 'PPp')}</TableCell>
-                    <TableCell>
-                      <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>
-                        {ticket.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                       <Dialog>
+                 <Dialog key={ticket.id}>
+                    <TableRow className={ticket.status === 'closed' ? 'bg-muted/50' : ''}>
+                      <DialogTrigger asChild>
+                        <TableCell className="cursor-pointer">
+                          {user ? (
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-8 w-8">
+                                <AvatarImage src={user.avatarUrl} alt={user.username} />
+                                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="font-medium">
+                                <p>{user.username}</p>
+                                <p className="text-sm text-muted-foreground">{user.email}</p>
+                              </div>
+                            </div>
+                          ) : 'Unknown User'}
+                        </TableCell>
+                      </DialogTrigger>
+                       <DialogTrigger asChild>
+                        <TableCell className="max-w-xs truncate cursor-pointer">{ticket.message}</TableCell>
+                       </DialogTrigger>
+                       <DialogTrigger asChild>
+                        <TableCell className="cursor-pointer">{format(ticket.createdAt, 'PPp')}</TableCell>
+                       </DialogTrigger>
+                       <DialogTrigger asChild>
+                        <TableCell className="cursor-pointer">
+                          <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>
+                            {ticket.status}
+                          </Badge>
+                        </TableCell>
+                       </DialogTrigger>
+                      <TableCell className="text-right">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -156,10 +168,10 @@ export default function AdminSupportPage() {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DialogTrigger asChild>
+                             <DialogTrigger asChild>
                                 <DropdownMenuItem>View Message</DropdownMenuItem>
                             </DialogTrigger>
-                             <DropdownMenuItem onClick={() => handleToggleStatus(ticket.id)}>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(ticket.id)}>
                                 {ticket.status === 'open' ? 'Mark as Closed' : 'Re-open Ticket'}
                             </DropdownMenuItem>
                             {user && (
@@ -172,27 +184,27 @@ export default function AdminSupportPage() {
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                         <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Support Message</DialogTitle>
-                                {user && (
-                                <DialogDescription>
-                                    From: {user.username} ({user.email}) on {format(ticket.createdAt, 'PPp')}
-                                </DialogDescription>
-                                )}
-                            </DialogHeader>
-                            <div className="my-4 rounded-md border bg-muted p-4 text-sm">
-                                {ticket.message}
-                            </div>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                <Button variant="outline">Close</Button>
-                                </DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                       </Dialog>
-                    </TableCell>
-                  </TableRow>
+                      </TableCell>
+                    </TableRow>
+                     <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Support Message</DialogTitle>
+                            {user && (
+                            <DialogDescription>
+                                From: {user.username} ({user.email}) on {format(ticket.createdAt, 'PPp')}
+                            </DialogDescription>
+                            )}
+                        </DialogHeader>
+                        <div className="my-4 rounded-md border bg-muted p-4 text-sm">
+                            {ticket.message}
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild>
+                            <Button variant="outline">Close</Button>
+                            </DialogClose>
+                        </DialogFooter>
+                    </DialogContent>
+                 </Dialog>
                 )
               })}
             </TableBody>
