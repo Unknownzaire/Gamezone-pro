@@ -163,7 +163,7 @@ export default function LoginPage() {
         return;
       }
 
-    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl'> = {
+    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,
