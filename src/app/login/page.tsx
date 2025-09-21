@@ -42,7 +42,8 @@ export default function LoginPage() {
       referralCode: referralCodeFromUrl || '',
   });
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showLoginPassword, setShowLoginPassword] = useState(false);
+  const [showSignupPassword, setShowSignupPassword] = useState(false);
   
   // OTP State
   const [emailOtp, setEmailOtp] = useState('');
@@ -111,9 +112,16 @@ export default function LoginPage() {
 
   const handleSignupChange = (e: ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
+      
+      let processedValue = value;
+      if (name === 'mobile') {
+        processedValue = value.replace(/[^0-9]/g, '');
+        if (processedValue.length > 10) return;
+      }
+      
       setSignupForm({
           ...signupForm,
-          [name]: value
+          [name]: processedValue
       });
 
       if (name === 'email') {
@@ -255,17 +263,17 @@ export default function LoginPage() {
                   <div className="space-y-2">
                     <Label htmlFor="login-password">Password</Label>
                     <div className="relative">
-                      <Input id="login-password" name="password" type={showPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} />
+                      <Input id="login-password" name="password" type={showLoginPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} />
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
                         className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
-                        onClick={() => setShowPassword(!showPassword)}
+                        onClick={() => setShowLoginPassword(!showLoginPassword)}
                       >
-                        {showPassword ? <EyeOff /> : <Eye />}
+                        {showLoginPassword ? <EyeOff /> : <Eye />}
                         <span className="sr-only">
-                          {showPassword ? "Hide password" : "Show password"}
+                          {showLoginPassword ? "Hide password" : "Show password"}
                         </span>
                       </Button>
                     </div>
@@ -292,20 +300,22 @@ export default function LoginPage() {
                         <Label htmlFor="signup-username">Username</Label>
                         <Input id="signup-username" name="username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} ref={usernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiUsernameRef)} />
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
-                        <Input id="signup-bgmiUsername" name="bgmiUsername" placeholder="Your in-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} ref={bgmiUsernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiIdRef)} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
-                        <Input id="signup-bgmiId" name="bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
+                     <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
+                            <Input id="signup-bgmiUsername" name="bgmiUsername" placeholder="In-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} ref={bgmiUsernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiIdRef)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
+                            <Input id="signup-bgmiId" name="bgmiId" placeholder="Numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
+                        </div>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
                         <div className="flex items-center gap-2">
-                              <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} disabled={mobileVerified}/>
+                              <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} disabled={mobileVerified}/>
                               {!mobileVerified && (
-                                  <Button type="button" onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || !signupForm.mobile}>
+                                  <Button type="button" onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || signupForm.mobile.length !== 10}>
                                     {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                                   </Button>
                               )}
@@ -338,7 +348,21 @@ export default function LoginPage() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
-                        <Input id="signup-password" name="password" type="password" required onChange={handleSignupChange} value={signupForm.password} ref={passwordRef} onKeyDown={(e) => handleKeyDown(e, referralCodeRef)} />
+                         <div className="relative">
+                            <Input id="signup-password" name="password" type={showSignupPassword ? "text" : "password"} required onChange={handleSignupChange} value={signupForm.password} ref={passwordRef} onKeyDown={(e) => handleKeyDown(e, referralCodeRef)} />
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2 text-muted-foreground"
+                                onClick={() => setShowSignupPassword(!showSignupPassword)}
+                            >
+                                {showSignupPassword ? <EyeOff /> : <Eye />}
+                                <span className="sr-only">
+                                {showSignupPassword ? "Hide password" : "Show password"}
+                                </span>
+                            </Button>
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-referralCode">Referral Code (Optional)</Label>
@@ -354,3 +378,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
