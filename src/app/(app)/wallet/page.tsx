@@ -348,8 +348,8 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex flex-col sm:flex-row items-start justify-between gap-6 rounded-lg bg-card p-4">
-                        <div className="w-full sm:w-1/2 space-y-4">
+                     <div className="flex flex-col sm:flex-row items-start justify-between gap-6 rounded-lg bg-card p-4">
+                        <div className="w-full space-y-4">
                              <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
                                 <Input 
@@ -375,7 +375,7 @@ export default function WalletPage() {
                                     ))}
                                 </div>
                             </div>
-                            <div className="space-y-2">
+                             <div className="space-y-2">
                                 <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
                                 <Input 
                                 id="upi-ref" 
@@ -391,10 +391,10 @@ export default function WalletPage() {
                             </div>
                         </div>
                         <div className="w-full sm:w-auto flex flex-col items-center justify-center space-y-2">
-                            <Label>Scan and Pay</Label>
-                            <div className="flex flex-col items-center gap-2 rounded-lg bg-white p-2">
-                            <Image src={qrCodeUrl} alt="UPI QR Code" width={128} height={128} unoptimized/>
-                            <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
+                             <Label>Scan and Pay</Label>
+                             <div className="flex flex-col items-center gap-2 rounded-lg bg-white p-2">
+                               <Image src={qrCodeUrl} alt="UPI QR Code" width={128} height={128} unoptimized/>
+                               <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
                             </div>
                         </div>
                     </div>
@@ -540,9 +540,3 @@ export default function WalletPage() {
     </div>
   );
 }
-
-    
-
-    
-
-    
