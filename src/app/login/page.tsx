@@ -206,7 +206,23 @@ export default function LoginPage() {
     setEmailOtp(newOtp);
     setEmailOtpSent(true);
     setEmailCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
+
+    const templateParams = {
+        to_email: signupForm.email,
+        to_name: signupForm.username,
+        otp: newOtp,
+    };
+
+    emailjs.send('service_s6505pj', 'template_5c142br', templateParams, 'rN-G4XmN-sIjx3K1l')
+      .then((response) => {
+         console.log('SUCCESS!', response.status, response.text);
+         toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}.`});
+      }, (err) => {
+         console.log('FAILED...', err);
+         toast({ variant: 'destructive', title: "OTP Failed", description: "Could not send OTP. Please try again." });
+         setEmailOtpSent(false);
+         setEmailCountdown(0);
+      });
   };
 
   const handleVerifyEmailOtp = () => {
