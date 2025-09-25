@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import type { WalletSettings } from "@/app/admin/settings/page";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Slider } from "@/components/ui/slider";
 
 function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
@@ -169,9 +170,9 @@ export default function WalletPage() {
   const [ifscCode, setIfscCode] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
 
-  const [addAmount, setAddAmount] = useState('');
+  const [addAmount, setAddAmount] = useState('500');
   const [upiRef, setUpiRef] = useState('');
-  const quickAmounts = [1000, 500, 200, 100, 50];
+  const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -348,7 +349,7 @@ export default function WalletPage() {
                     </DialogHeader>
                     <div className="flex flex-col sm:flex-row gap-6 rounded-lg bg-card p-4">
                         <div className="w-full sm:w-2/3 space-y-4">
-                            <div className="space-y-2">
+                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
                                 <Input 
                                 id="add-amount" 
@@ -359,18 +360,16 @@ export default function WalletPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <Label>Quick Add</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {quickAmounts.map(amount => (
-                                        <Button 
-                                            key={amount} 
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => setAddAmount(amount.toString())}
-                                        >
-                                            ₹{amount}
-                                        </Button>
-                                    ))}
+                                <Label>Select Amount</Label>
+                                <Slider
+                                    value={[parseFloat(addAmount) || 0]}
+                                    onValueChange={(value) => setAddAmount(value[0].toString())}
+                                    max={5000}
+                                    step={50}
+                                />
+                                 <div className="flex justify-between text-xs text-muted-foreground">
+                                    <span>₹0</span>
+                                    <span>₹5000</span>
                                 </div>
                             </div>
                             <div className="space-y-2">
