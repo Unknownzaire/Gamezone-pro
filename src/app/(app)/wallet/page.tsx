@@ -173,7 +173,7 @@ export default function WalletPage() {
   const [addAmount, setAddAmount] = useState('500');
   const [upiRef, setUpiRef] = useState('');
   const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
-  const quickAddAmounts = [50, 100, 200, 500, 1000];
+  const quickAddAmounts = [50, 100, 500, 1000];
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -348,7 +348,7 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                     <div className="flex flex-col sm:flex-row items-start justify-between gap-6 rounded-lg bg-card p-4">
+                     <div className="flex flex-col sm:flex-row items-center justify-center gap-6 rounded-lg bg-card p-4">
                         <div className="w-full space-y-4">
                              <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
