@@ -208,14 +208,13 @@ export default function LoginPage() {
     const templateParams = {
         to_email: signupForm.email,
         otp: newOtp,
-        admin_email: 'gamezonepro94@gmail.com'
     };
 
     emailjs.send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+        'service_h9r9b7n',
+        'template_9c95wfr',
         templateParams,
-        process.env.NEXT_PUBLIC_EMAILJS_USER_ID!
+        'HRH01YSCf6sY898Vg'
     ).then((response) => {
         console.log('SUCCESS!', response.status, response.text);
         setEmailOtpSent(true);
