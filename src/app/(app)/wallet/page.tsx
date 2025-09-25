@@ -346,7 +346,14 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex flex-col gap-6 rounded-lg bg-card p-4 sm:flex-row">
+                    <div className="flex flex-col-reverse gap-6 rounded-lg bg-card p-4 sm:flex-col">
+                        <div className="flex w-full flex-col items-center justify-center space-y-2 sm:w-auto">
+                            <Label>Scan and Pay</Label>
+                            <div className="flex flex-col items-center gap-2 rounded-lg bg-white p-2">
+                            <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} unoptimized/>
+                            <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
+                            </div>
+                        </div>
                         <div className="w-full space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
@@ -386,13 +393,6 @@ export default function WalletPage() {
                                     }
                                 }}
                                 />
-                            </div>
-                        </div>
-                        <div className="flex w-full flex-col items-center justify-center space-y-2 sm:w-auto">
-                            <Label>Scan and Pay</Label>
-                            <div className="flex flex-col items-center gap-2 rounded-lg bg-white p-2">
-                            <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} unoptimized/>
-                            <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
                             </div>
                         </div>
                     </div>
