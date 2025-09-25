@@ -367,7 +367,7 @@ export default function WalletPage() {
                                     max={5000}
                                     step={50}
                                 />
-                                 <div className="flex justify-between text-xs text-muted-foreground">
+                                 <div className="text-xs text-muted-foreground space-y-1">
                                     <span>₹0</span>
                                     <span>₹5000</span>
                                 </div>
@@ -537,3 +537,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
