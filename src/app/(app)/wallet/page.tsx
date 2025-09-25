@@ -360,21 +360,6 @@ export default function WalletPage() {
                                 onChange={(e) => setAddAmount(e.target.value)} 
                                 />
                             </div>
-                            <div className="space-y-2">
-                                <Label>Select Amount</Label>
-                                <div className="flex flex-col space-y-2">
-                                    {quickAddAmounts.map(amount => (
-                                        <Button 
-                                            key={amount} 
-                                            variant={addAmount === amount.toString() ? 'default' : 'outline'}
-                                            onClick={() => setAddAmount(amount.toString())}
-                                            size="sm"
-                                        >
-                                            ₹{amount}
-                                        </Button>
-                                    ))}
-                                </div>
-                            </div>
                              <div className="space-y-2">
                                 <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
                                 <Input 
