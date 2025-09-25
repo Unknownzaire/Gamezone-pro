@@ -1,4 +1,4 @@
-# **App Name**: Arena Ace
+# **App Name**: Gamezone Pro
 
 ## Core Features:
 

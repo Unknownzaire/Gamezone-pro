@@ -346,7 +346,7 @@ export default function WalletPage() {
                         <DialogTitle>Add Money</DialogTitle>
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
-                    <div className="flex flex-col-reverse sm:flex-row gap-6 rounded-lg bg-card p-4">
+                    <div className="flex flex-col sm:flex-row gap-6 rounded-lg bg-card p-4">
                         <div className="w-full sm:w-1/2 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
@@ -538,3 +538,5 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
