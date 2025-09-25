@@ -347,7 +347,7 @@ export default function WalletPage() {
                         <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
                     </DialogHeader>
                     <div className="flex flex-col sm:flex-row items-start justify-between gap-6 rounded-lg bg-card p-4">
-                        <div className="w-full sm:w-1/2 space-y-4">
+                        <div className="flex-1 space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="add-amount">Amount (₹)</Label>
                                 <Input 
@@ -388,7 +388,7 @@ export default function WalletPage() {
                                 />
                             </div>
                         </div>
-                        <div className="w-full sm:w-auto space-y-2 flex flex-col items-center">
+                        <div className="w-auto space-y-2 flex flex-col items-center">
                             <Label>Scan and Pay</Label>
                             <div className="flex flex-col items-center gap-2 p-2 bg-white rounded-lg">
                             <Image src={qrCodeUrl} alt="UPI QR Code" width={160} height={160} unoptimized/>
@@ -540,4 +540,5 @@ export default function WalletPage() {
 }
 
     
+
 
