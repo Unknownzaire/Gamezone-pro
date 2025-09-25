@@ -15,6 +15,7 @@ import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import emailjs from 'emailjs-com';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -203,9 +204,27 @@ export default function LoginPage() {
     if(!signupForm.email) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
-    setEmailOtpSent(true);
-    setEmailCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
+
+    const templateParams = {
+        to_email: signupForm.email,
+        otp: newOtp,
+        admin_email: 'gamezonepro94@gmail.com'
+    };
+
+    emailjs.send(
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE_ID!,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE_ID!,
+        templateParams,
+        process.env.NEXT_PUBLIC_EMAILJS_USER_ID!
+    ).then((response) => {
+        console.log('SUCCESS!', response.status, response.text);
+        setEmailOtpSent(true);
+        setEmailCountdown(30);
+        toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. Please check your inbox.`});
+    }, (err) => {
+        console.log('FAILED...', err);
+        toast({ variant: 'destructive', title: "Failed to send OTP", description: "Could not send OTP. Please try again later." });
+    });
   };
 
   const handleVerifyEmailOtp = () => {
