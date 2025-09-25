@@ -173,6 +173,7 @@ export default function WalletPage() {
   const [addAmount, setAddAmount] = useState('500');
   const [upiRef, setUpiRef] = useState('');
   const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
+  const quickAddAmounts = [50, 100, 200, 500, 1000];
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
@@ -361,15 +362,16 @@ export default function WalletPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label>Select Amount</Label>
-                                <Slider
-                                    value={[parseFloat(addAmount) || 0]}
-                                    onValueChange={(value) => setAddAmount(value[0].toString())}
-                                    max={5000}
-                                    step={50}
-                                />
-                                 <div className="text-xs text-muted-foreground space-y-1">
-                                    <span>₹0</span>
-                                    <span>₹5000</span>
+                                <div className="flex flex-col space-y-2">
+                                    {quickAddAmounts.map(amount => (
+                                        <Button 
+                                            key={amount} 
+                                            variant={addAmount === amount.toString() ? 'default' : 'outline'}
+                                            onClick={() => setAddAmount(amount.toString())}
+                                        >
+                                            ₹{amount}
+                                        </Button>
+                                    ))}
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -537,5 +539,7 @@ export default function WalletPage() {
     </div>
   );
 }
+
+    
 
     
