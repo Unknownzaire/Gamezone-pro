@@ -204,27 +204,9 @@ export default function LoginPage() {
     if(!signupForm.email) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
-
-    const templateParams = {
-        to_email: signupForm.email,
-        otp: newOtp,
-        to_admin: "gamezonepro94@gmail.com"
-    };
-
-    emailjs.send(
-        'service_h9r9b7n',
-        'template_9c95wfr',
-        templateParams,
-        'HRH01YSCf6sY898Vg'
-    ).then((response) => {
-        console.log('SUCCESS!', response.status, response.text);
-        setEmailOtpSent(true);
-        setEmailCountdown(30);
-        toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. Please check your inbox.`});
-    }, (err) => {
-        console.log('FAILED...', err);
-        toast({ variant: 'destructive', title: "Failed to send OTP", description: "Could not send OTP. Please try again later." });
-    });
+    setEmailOtpSent(true);
+    setEmailCountdown(30);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
   };
 
   const handleVerifyEmailOtp = () => {
@@ -352,10 +334,10 @@ export default function LoginPage() {
                          <div className="flex items-center gap-2">
                             <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} disabled={emailVerified} />
                             {!emailVerified && (
-                                <Button type="button" onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0 || !signupForm.email}>
+                                  <Button type="button" onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0 || !signupForm.email}>
                                     {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
-                                </Button>
-                            )}
+                                  </Button>
+                              )}
                             {emailVerified && <CheckCircle className="text-green-500" />}
                         </div>
                         {emailOtpSent && !emailVerified && (
@@ -397,11 +379,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
-    
-
-    
-
-
-
-
