@@ -20,7 +20,8 @@ import { Tournament } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 
-export default function ManageTournamentPage({ params: { id } }: { params: { id: string } }) {
+export default function ManageTournamentPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const { toast } = useToast();
   const router = useRouter();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);

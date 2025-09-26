@@ -14,7 +14,8 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 
-export default function EditTournamentPage({ params: { id } }: { params: { id: string } }) {
+export default function EditTournamentPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const router = useRouter();
   const { toast } = useToast();
 

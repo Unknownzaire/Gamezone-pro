@@ -22,7 +22,8 @@ type UserMatchHistory = {
   participant: Participant;
 };
 
-export default function UserHistoryPage({ params: { userId } }: { params: { userId: string } }) {
+export default function UserHistoryPage({ params }: { params: { userId: string } }) {
+  const { userId } = params;
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTab = searchParams.get('tab') || 'matches';
