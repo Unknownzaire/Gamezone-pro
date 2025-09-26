@@ -15,7 +15,6 @@ import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
-import emailjs from 'emailjs-com';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -57,10 +56,6 @@ export default function LoginPage() {
   const [emailVerified, setEmailVerified] = useState(false);
   const [mobileVerified, setMobileVerified] = useState(false);
   
-  const [emailCountdown, setEmailCountdown] = useState(0);
-  const [mobileCountdown, setMobileCountdown] = useState(0);
-
-
   const usernameRef = useRef<HTMLInputElement>(null);
   const bgmiUsernameRef = useRef<HTMLInputElement>(null);
   const bgmiIdRef = useRef<HTMLInputElement>(null);
@@ -75,22 +70,6 @@ export default function LoginPage() {
       router.push('/home');
     }
   }, [user, router]);
-  
-  useEffect(() => {
-    let emailTimer: NodeJS.Timeout;
-    if (emailCountdown > 0) {
-      emailTimer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
-    }
-    return () => clearTimeout(emailTimer);
-  }, [emailCountdown]);
-
-  useEffect(() => {
-    let mobileTimer: NodeJS.Timeout;
-    if (mobileCountdown > 0) {
-      mobileTimer = setTimeout(() => setMobileCountdown(mobileCountdown - 1), 1000);
-    }
-    return () => clearTimeout(mobileTimer);
-  }, [mobileCountdown]);
 
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
@@ -205,24 +184,7 @@ export default function LoginPage() {
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailOtpSent(true);
-    setEmailCountdown(30);
-
-    const templateParams = {
-        to_email: signupForm.email,
-        to_name: signupForm.username,
-        otp: newOtp,
-    };
-
-    emailjs.send('service_s6505pj', 'template_5c142br', templateParams, 'rN-G4XmN-sIjx3K1l')
-      .then((response) => {
-         console.log('SUCCESS!', response.status, response.text);
-         toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}.`});
-      }, (err) => {
-         console.log('FAILED...', err);
-         toast({ variant: 'destructive', title: "OTP Failed", description: "Could not send OTP. Please try again." });
-         setEmailOtpSent(false);
-         setEmailCountdown(0);
-      });
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
   };
 
   const handleVerifyEmailOtp = () => {
@@ -240,7 +202,6 @@ export default function LoginPage() {
     const newOtp = generateOtp();
     setMobileOtp(newOtp);
     setMobileOtpSent(true);
-    setMobileCountdown(30);
     toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
   };
 
@@ -332,8 +293,8 @@ export default function LoginPage() {
                         <div className="flex items-center gap-2">
                               <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} disabled={mobileVerified}/>
                               {!mobileVerified && (
-                                  <Button type="button" onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0 || signupForm.mobile.length !== 10}>
-                                    {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
+                                  <Button type="button" onClick={handleSendMobileOtp} className="w-48" disabled={signupForm.mobile.length !== 10}>
+                                    {mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
                                   </Button>
                               )}
                               {mobileVerified && <CheckCircle className="text-green-500" />}
@@ -350,8 +311,8 @@ export default function LoginPage() {
                          <div className="flex items-center gap-2">
                             <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} disabled={emailVerified} />
                             {!emailVerified && (
-                                  <Button type="button" onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0 || !signupForm.email}>
-                                    {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
+                                  <Button type="button" onClick={handleSendEmailOtp} className="w-48" disabled={!signupForm.email}>
+                                    {emailOtpSent ? 'Resend OTP' : 'Send OTP'}
                                   </Button>
                               )}
                             {emailVerified && <CheckCircle className="text-green-500" />}
