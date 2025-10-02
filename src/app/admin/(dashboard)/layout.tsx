@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
-          <Logo />
+          <Logo className="group-data-[collapsible=icon]:w-fit" />
         </SidebarHeader>
         <SidebarContent>
           <SidebarMenu>
