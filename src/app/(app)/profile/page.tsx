@@ -19,59 +19,35 @@ import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
-    const iconProps = { className: "h-6 w-6" };
+    const iconProps = { className: "h-6 w-6 text-muted-foreground group-hover:text-foreground transition-colors" };
     let socialIcon;
     switch (icon) {
         case 'youtube':
             socialIcon = (
                 <svg {...iconProps} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M27.5 7.28s-.28-1.98-1.14-2.84c-.99-.99-2.1-.99-2.61-.99C19.75 3.45 14 3.45 14 3.45s-5.75 0-9.75.45c-.51 0-1.62 0-2.61.99C.78 5.3.5 7.28.5 7.28S.25 9.45.25 11.62v2.76c0 2.17.25 4.34.25 4.34s.28 1.98 1.14 2.84c.99.99 2.25.96 2.86.99 2.4.21 9.5.45 9.5.45s5.75 0 9.75-.45c.51 0 1.62 0 2.61-.99c.86-.86 1.14-2.84 1.14-2.84s.25-2.17.25-4.34v-2.76c0-2.17-.25-4.34-.25-4.34Z" fill="#FF0000"></path>
-                    <path d="M11.5 16.24V8.76l6.5 3.74-6.5 3.74Z" fill="white"></path>
+                    <path d="M27.5 7.28s-.28-1.98-1.14-2.84c-.99-.99-2.1-.99-2.61-.99C19.75 3.45 14 3.45 14 3.45s-5.75 0-9.75.45c-.51 0-1.62 0-2.61.99C.78 5.3.5 7.28.5 7.28S.25 9.45.25 11.62v2.76c0 2.17.25 4.34.25 4.34s.28 1.98 1.14 2.84c.99.99 2.25.96 2.86.99 2.4.21 9.5.45 9.5.45s5.75 0 9.75-.45c.51 0 1.62 0 2.61-.99c.86-.86 1.14-2.84 1.14-2.84s.25-2.17.25-4.34v-2.76c0-2.17-.25-4.34-.25-4.34Z" fill="currentColor"></path>
+                    <path d="M11.5 16.24V8.76l6.5 3.74-6.5 3.74Z" fill="var(--background)"></path>
                 </svg>
             );
             break;
         case 'instagram':
-             socialIcon = (
-                <svg {...iconProps} viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="ig-grad-b" cx="19.38" cy="41.25" r="44.86" gradientUnits="userSpaceOnUse">
-                            <stop offset=".001" stop-color="#fd5"/>
-                            <stop offset=".16" stop-color="#fd5"/>
-                            <stop offset=".3" stop-color="#ff543e"/>
-                            <stop offset=".38" stop-color="#ff543e"/>
-                            <stop offset=".61" stop-color="#c837ab"/>
-                            <stop offset=".72" stop-color="#c837ab"/>
-                            <stop offset=".9" stop-color="#4c6cb3"/>
-                            <stop offset="1" stop-color="#4c6cb3"/>
-                        </radialGradient>
-                    </defs>
-                    <path d="M23,0H9C4.037,0,0,4.037,0,9v14c0,4.963,4.037,9,9,9h14c4.963,0,9-4.037,9-9V9C32,4.037,27.963,0,23,0z M27,23c0,2.206-1.794,4-4,4H9c-2.206,0-4-1.794-4-4V9c0-2.206,1.794-4,4-4h14c2.206,0,4,1.794,4,4V23z" fill="url(#ig-grad-b)"/>
-                    <path d="M16,7.91c-4.471,0-8.09,3.619-8.09,8.09s3.619,8.09,8.09,8.09s8.09-3.619,8.09-8.09S20.471,7.91,16,7.91z M16,21.09c-2.805,0-5.09-2.285-5.09-5.09s2.285-5.09,5.09-5.09s5.09,2.285,5.09,5.09S18.805,21.09,16,21.09z" fill="url(#ig-grad-b)"/>
-                    <circle cx="24.31" cy="7.69" r="1.875" fill="url(#ig-grad-b)"/>
-                </svg>
-            );
+             socialIcon = <LinkIcon {...iconProps} />;
             break;
         case 'discord':
-            socialIcon = (
-                 <svg {...iconProps} fill="#5865F2" viewBox="0 0 28 21"><path d="M23.021 1.684A18.33 18.33 0 0 0 17.732.12c-.316.54-.58 1.14-.784 1.74A15.145 15.145 0 0 0 14 1.56a15.145 15.145 0 0 0-2.948.3c-.204-.6-.468-1.2-.784-1.74A18.33 18.33 0 0 0 4.979 1.684C1.575 6.432.553 11.14.931 15.736a15.266 15.266 0 0 0 5.253 3.612c.42-.588.768-1.212 1.056-1.872a12.56 12.56 0 0 1-1.824-.864c.144-.06.288-.132.42-.204a18.536 18.536 0 0 0 8.352 0c.132.072.276.144.42.204a12.56 12.56 0 0 1-1.824.864c.288.66.636 1.284 1.056 1.872a15.266 15.266 0 0 0 5.253-3.612c.504-4.824-.516-9.528-3.92-14.052ZM9.49 12.94A1.91 1.91 0 0 1 7.579 11a1.91 1.91 0 0 1 1.911-1.944A1.91 1.91 0 0 1 11.4 11a1.91 1.91 0 0 1-1.91 1.944Zm7.02 0a1.91 1.91 0 0 1-1.91-1.944A1.91 1.91 0 0 1 16.51 9.06a1.91 1.91 0 0 1 1.91 1.944A1.91 1.91 0 0 1 16.51 12.94Z"></path></svg>
-            );
+            socialIcon = <LinkIcon {...iconProps} />;
             break;
         case 'telegram':
-             socialIcon = (
-                <svg {...iconProps} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 24C18.6274 24 24 18.6274 24 12C24 5.37258 18.6274 0 12 0C5.37258 0 0 5.37258 0 12C0 18.6274 5.37258 24 12 24Z" fill="#2AABEE"/><path d="M9.417 15.181L9.02 20.765C9.588 20.765 9.834 20.521 10.129 20.226L12.792 17.681L18.31 21.722C19.322 22.286 20.035 21.989 20.308 20.78L23.93 4.80801L23.931 4.80701C24.252 3.31101 23.38 2.72601 22.394 3.09901L1.104 11.25C-0.349 11.814 -0.327 12.624 0.857 12.991L6.3 14.684L19.806 6.837C20.401 6.443 20.942 6.661 20.502 7.034L9.417 15.181Z" fill="white"/></svg>
-            );
+             socialIcon = <LinkIcon {...iconProps} />;
             break;
         case 'whatsapp':
-            socialIcon = (
-                <svg {...iconProps} fill="#25D366" viewBox="0 0 24 24"><path d="M12.04 2.016c-5.52 0-9.996 4.476-9.996 9.996 0 1.776.468 3.456 1.32 4.908L2.016 22.4l5.652-1.476c1.404.78 3.024 1.212 4.716 1.212h.012c5.52 0 9.996-4.476 9.996-9.996s-4.476-9.996-9.996-9.996zM17.89 15.9a.468.468 0 0 1-.684.156c-.228-.12-.864-.42-1.008-.468-.144-.06-.252-.084-.372.084-.12.156-1.008 1.164-1.236 1.404-.216.24-.42.264-.78.156-.372-.108-1.56-.576-2.964-1.824-1.092-.972-1.824-2.172-2.04-2.532-.228-.36-.012-.564.072-.66.072-.084.156-.228.24-.324.072-.108.12-.192.18-.324.06-.12.036-.24 0-.36-.036-.12-.372-.888-.504-1.212-.144-.324-.288-.276-.408-.276-.108 0-.252-.012-.372-.012s-.324.048-.492.24c-.168.192-.648.624-.648 1.524 0 .9.672 1.764.768 1.884.096.12 1.308 2.004 3.168 2.808.432.192.768.312 1.032.408.42.144.804.12 1.104.072.324-.048.972-.396 1.116-.768.144-.372.144-.696.108-.768-.024-.072-.144-.12-.3-.216z"></path></svg>
-            );
+            socialIcon = <LinkIcon {...iconProps} />;
             break;
         default:
-            socialIcon = <LinkIcon {...iconProps} className="h-6 w-6 text-foreground" />;
+            socialIcon = <LinkIcon {...iconProps} />;
     }
     return (
         <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 text-center group">
-            <div className="rounded-full p-3 group-hover:bg-muted/10 transition-colors">
+            <div className="rounded-full bg-muted p-3 group-hover:bg-muted/80 transition-colors">
               {socialIcon}
             </div>
             <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{name}</span>
@@ -537,6 +513,8 @@ export default function ProfilePage() {
 
 
 
+
+    
 
     
 
