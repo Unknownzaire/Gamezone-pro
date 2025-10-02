@@ -35,7 +35,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
             break;
         case 'telegram':
              socialIcon = (
-                <svg {...iconProps} fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.78-1.57 7.33c-.22.95-1.22 1.21-1.93.75l-2.4-1.76-1.15 1.1c-.2.2-.4.4-.78.4L8.5 15.8c.3-.3.32-.5.35-.7l.7-3.46 4.96-4.5c.34-.3-.04-.47-.5-.16l-6.1 3.83-3.23-1.01c-.96-.3-1 .15-.22.46l8.03 5.92c.67.5 1.2.23 1.4-.64l2.2-10.23c.2-.95-.53-1.3-1.2-.84z"></path></svg>
+                <svg {...iconProps} fill="currentColor" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1"><path d="m9.417 15.181-.397 5.584c.568 0 .814-.244 1.109-.537l2.663-2.545 5.518 4.041c1.012.564 1.725.267 1.998-.931l3.622-16.972.001-.001c.321-1.496-.541-2.081-1.527-1.714l-21.29 8.151c-1.453.564-1.431 1.374-.247 1.741l5.443 1.693L18.953 5.78c.595-.394 1.136-.176.691.218z"></path></svg>
             );
             break;
         case 'whatsapp':
@@ -511,4 +511,5 @@ export default function ProfilePage() {
     
 
     
+
 
