@@ -19,35 +19,62 @@ import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
-    const iconProps = { className: "h-6 w-6 text-muted-foreground group-hover:text-foreground transition-colors" };
+    const iconProps = { className: "h-6 w-6" };
     let socialIcon;
     switch (icon) {
         case 'youtube':
             socialIcon = (
-                <svg {...iconProps} viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M27.5 7.28s-.28-1.98-1.14-2.84c-.99-.99-2.1-.99-2.61-.99C19.75 3.45 14 3.45 14 3.45s-5.75 0-9.75.45c-.51 0-1.62 0-2.61.99C.78 5.3.5 7.28.5 7.28S.25 9.45.25 11.62v2.76c0 2.17.25 4.34.25 4.34s.28 1.98 1.14 2.84c.99.99 2.25.96 2.86.99 2.4.21 9.5.45 9.5.45s5.75 0 9.75-.45c.51 0 1.62 0 2.61-.99c.86-.86 1.14-2.84 1.14-2.84s.25-2.17.25-4.34v-2.76c0-2.17-.25-4.34-.25-4.34Z" fill="currentColor"></path>
-                    <path d="M11.5 16.24V8.76l6.5 3.74-6.5 3.74Z" fill="var(--background)"></path>
+                <svg {...iconProps} viewBox="0 0 28 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M27.5 5.5s-0.25-1.75-1-2.5C25.5 2 24.5 2 24 2c-4-0.5-8-0.5-8-0.5s-4 0-8 0.5c-0.5 0-1.5 0-2.5 1C4.75 3.75 4.5 5.5 4.5 5.5S4.25 7.25 4.25 9v2s0 1.75 0.25 3.5c0.25 1.75 1 2.5 1 2.5s1 0.75 2.5 0.75c4 0.5 8 0.5 8 0.5s4 0 8-0.5c0.5 0 1.5 0 2.5-1s1-2.5 1-2.5c0.25-1.75 0.25-3.5 0.25-3.5v-2s0-1.75-0.25-3.5Z" fill="#FF0000"/>
+                    <path d="M12.5 12.5v-7l6 3.5-6 3.5Z" fill="#fff"/>
                 </svg>
             );
             break;
         case 'instagram':
-             socialIcon = <LinkIcon {...iconProps} />;
+             socialIcon = (
+                <svg {...iconProps} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <radialGradient id="ig-gradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(18.5 4.5) rotate(120.983) scale(22.258 21.321)">
+                        <stop stop-color="#FFC107"/>
+                        <stop offset=".5" stop-color="#F44336"/>
+                        <stop offset="1" stop-color="#9C27B0"/>
+                        </radialGradient>
+                    </defs>
+                    <path d="M12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z" fill="url(#ig-gradient)"/>
+                    <path d="M3 16V8a5 5 0 0 1 5-5h8a5 5 0 0 1 5 5v8a5 5 0 0 1-5 5H8a5 5 0 0 1-5-5Zm2 0a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3H8a3 3 0 0 0-3 3v8Z" fill="url(#ig-gradient)"/>
+                    <path d="M17.5 7.5a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" fill="url(#ig-gradient)"/>
+                </svg>
+             );
             break;
         case 'discord':
-            socialIcon = <LinkIcon {...iconProps} />;
+            socialIcon = (
+                <svg {...iconProps} fill="#5865F2" viewBox="0 0 28 21">
+                    <path d="M23.021 1.684a.34.34 0 0 1 .37.342V16.34a.34.34 0 0 1-.37.342H5.05a.34.34 0 0 1-.37-.342V2.026c0-.188.164-.342.37-.342h17.971Zm-10.15 6.425a1.481 1.481 0 0 0-1.488 1.472c0 .813.666 1.471 1.488 1.471a1.481 1.481 0 0 0 1.489-1.471c0-.813-.666-1.472-1.489-1.472Zm4.572 0a1.481 1.481 0 0 0-1.488 1.472c0 .813.666 1.471 1.488 1.471a1.481 1.481 0 0 0 1.488-1.471c0-.813-.665-1.472-1.488-1.472Z"/><path d="M26.477.001H1.523C.682.001 0 .674 0 1.503v15.303c0 .828.682 1.502 1.523 1.502h18.633l-1.483-1.393 1.442 1.258 4.673 4.131V1.503C28 .674 27.318.001 26.477.001Zm-3.456 16.681H5.05V2.026h17.97v14.656Z"/>
+                </svg>
+            );
             break;
         case 'telegram':
-             socialIcon = <LinkIcon {...iconProps} />;
+             socialIcon = (
+                <svg {...iconProps} fill="#2AABEE" viewBox="0 0 24 24">
+                    <path d="M12 24c6.627 0 12-5.373 12-12S18.627 0 12 0 0 5.373 0 12s5.373 12 12 12Z"/>
+                    <path d="m9.417 15.181-.397 5.584c.568 0 .814-.244 1.109-.537l2.663-2.545 5.518 4.041c1.012.564 1.725.267 1.998-.931L23.456 3.99c.345-1.625-.8-2.28-2.027-1.77l-19.5 7.498c-1.584.59-1.584 1.449-.283 1.816l4.984 1.569 11.392-6.924c.546-.333 1.033-.15 0.589.193L9.417 15.18Z" fill="#fff"/>
+                </svg>
+             );
             break;
         case 'whatsapp':
-            socialIcon = <LinkIcon {...iconProps} />;
+            socialIcon = (
+                <svg {...iconProps} fill="#25D366" viewBox="0 0 24 24">
+                    <path d="M12 24C5.372 24 0 18.628 0 12S5.372 0 12 0s12 5.372 12 12-5.372 12-12 12Zm0-2a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" fill-rule="evenodd" clip-rule="evenodd"/>
+                    <path d="M17.228 14.475c-.21-.104-.756-.372-1.077-.492-.32-.12-.583-.168-.845.168-.263.336-.504.672-.665.816-.16.144-.342.168-.583.06-.24-.108-1.02-.372-1.944-1.2-.72-.648-1.2-1.44-1.34-1.68-.14-.24-.01-.372.09-.492.09-.108.21-.264.31-.396.1-.132.14-.228.21-.372.07-.144.03-.264-.03-.372-.06-.108-.551-1.32-.756-1.824-.2-.504-.41-.432-.55-.432-.14 0-.3 0-.46.012-.16 0-.42.06-.64.312-.22.252-.86.84-.86 2.064s.88 2.388 1 2.556c.12.168.683 1.139 2.063 1.955.336.205.6.325.816.42.504.228.84.192.984.12.168-.072.504-.204.6-.396.1-.192.1-.36.07-.396-.03-.036-.18-.084-.39-.192Z" fill="#fff"/>
+                </svg>
+            );
             break;
         default:
-            socialIcon = <LinkIcon {...iconProps} />;
+            socialIcon = <LinkIcon className="h-6 w-6 text-muted-foreground" />;
     }
     return (
         <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 text-center group">
-            <div className="rounded-full bg-muted p-3 group-hover:bg-muted/80 transition-colors">
+            <div className="rounded-full p-3 transition-colors">
               {socialIcon}
             </div>
             <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{name}</span>
@@ -513,6 +540,8 @@ export default function ProfilePage() {
 
 
 
+
+    
 
     
 
