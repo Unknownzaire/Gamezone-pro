@@ -9,9 +9,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
 
-// Let's create a very simple global state for our user
-// In a real app, you'd use a more robust state management library or React Context with more features
-
 type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | false;
 
 
