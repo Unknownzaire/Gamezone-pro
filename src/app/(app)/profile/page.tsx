@@ -38,7 +38,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
                         <stop offset=".5" stop-color="#ff543e"></stop>
                         <stop offset="1" stop-color="#c837ab"></stop>
                     </radialGradient>
-                    <path fill="url(#ig-grad)" d="M23,0H9C4.037,0,0,4.037,0,9v14c0,4.963,4.037,9,9,9h14c4.963,0,9-4.037,9-9V9C32,4.037,27.963,0,23,0z M27,23c0,2.206-1.794,4-4,4H9c-2.206,0-4-1.794-4-4V9c0-2.206,1.794-4,4-4h14c2.206,0,4,1.794,4,4V23z"></path>
+                    <path fill="url(#ig-grad)" d="M23,0H9C4.037,0,0,4.037,0,9v14c0,4.963,4.037,9,9,9h14c4.963,0,9-4.037,9-9V9C32,4.037,27.963,0,23,0z M27,23c0,2.206-1.794,4-4,4H9c-2.206,0-4-1.794,4-4V9c0-2.206,1.794-4,4-4h14c2.206,0,4,1.794,4,4V23z"></path>
                     <path fill="url(#ig-grad)" d="M16,7.91c-4.471,0-8.09,3.619-8.09,8.09s3.619,8.09,8.09,8.09s8.09-3.619,8.09-8.09S20.471,7.91,16,7.91z M16,21.09c-2.805,0-5.09-2.285-5.09-5.09s2.285-5.09,5.09-5.09s5.09,2.285,5.09,5.09S18.805,21.09,16,21.09z"></path><circle fill="url(#ig-grad)" cx="24.31" cy="7.69" r="1.875"></circle>
                  </svg>
             );
@@ -63,7 +63,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
     }
     return (
         <a href={url} target="_blank" rel="noopener noreferrer" className="flex flex-col items-center gap-2 text-center group">
-            <div className="rounded-full bg-muted p-3 group-hover:bg-muted/80 transition-colors">
+            <div className="rounded-full p-3 group-hover:bg-muted/10 transition-colors">
               {socialIcon}
             </div>
             <span className="text-xs text-muted-foreground group-hover:text-foreground transition-colors">{name}</span>
@@ -529,5 +529,7 @@ export default function ProfilePage() {
 
 
 
+
+    
 
     
