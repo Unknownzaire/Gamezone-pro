@@ -77,19 +77,9 @@ export default function ProfilePage() {
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
 
-  const [emailOtp, setEmailOtp] = useState('');
-  const [mobileOtp, setMobileOtp] = useState('');
-  const [emailOtpInput, setEmailOtpInput] = useState('');
-  const [mobileOtpInput, setMobileOtpInput] = useState('');
-
-  const [emailOtpSent, setEmailOtpSent] = useState(false);
-  const [mobileOtpSent, setMobileOtpSent] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [mobileVerified, setMobileVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(true);
+  const [mobileVerified, setMobileVerified] = useState(true);
   
-  const [emailCountdown, setEmailCountdown] = useState(0);
-  const [mobileCountdown, setMobileCountdown] = useState(0);
-
   const [isEditing, setIsEditing] = useState(false);
 
    const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
@@ -105,6 +95,8 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
+      setEmailVerified(currentUser.emailVerified || false);
+      setMobileVerified(currentUser.mobileVerified || false);
     }
      const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
     if (storedHelpSettings) {
@@ -116,21 +108,6 @@ export default function ProfilePage() {
     }
   }, [currentUser]);
   
-  useEffect(() => {
-    let emailTimer: NodeJS.Timeout;
-    if (emailCountdown > 0) {
-      emailTimer = setTimeout(() => setEmailCountdown(emailCountdown - 1), 1000);
-    }
-    return () => clearTimeout(emailTimer);
-  }, [emailCountdown]);
-
-  useEffect(() => {
-    let mobileTimer: NodeJS.Timeout;
-    if (mobileCountdown > 0) {
-      mobileTimer = setTimeout(() => setMobileCountdown(mobileCountdown - 1), 1000);
-    }
-    return () => clearTimeout(mobileTimer);
-  }, [mobileCountdown]);
 
   const handleUpdateProfile = () => {
     if (!isEditing) {
@@ -161,10 +138,6 @@ export default function ProfilePage() {
       updateUser(updatedFields);
       toast({ title: "Profile Updated", description: "Your profile information has been saved." });
       setIsEditing(false);
-      setEmailVerified(false);
-      setMobileVerified(false);
-      setEmailOtpSent(false);
-      setMobileOtpSent(false);
     }
   };
 
@@ -231,56 +204,6 @@ export default function ProfilePage() {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
   
-  const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
-
-  const handleSendEmailOtp = () => {
-    if (!currentUser || !email) return;
-    if (!email.endsWith('@gmail.com')) {
-      toast({
-        variant: 'destructive',
-        title: 'Invalid Email Domain',
-        description: 'Please use a Gmail address (@gmail.com).',
-      });
-      return;
-    }
-    const newOtp = generateOtp();
-    setEmailOtp(newOtp);
-    setEmailCountdown(30);
-    setEmailOtpSent(true);
-    updateUser({ otp: newOtp });
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}. (OTP: ${newOtp})` });
-  };
-
-  const handleVerifyEmailOtp = () => {
-    if(emailOtpInput === emailOtp) {
-      setEmailVerified(true);
-      setEmailOtpSent(false);
-      updateUser({ otp: undefined });
-      toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
-    } else {
-      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
-    }
-  };
-  
-  const handleSendMobileOtp = () => {
-    const newOtp = generateOtp();
-    setMobileOtp(newOtp);
-    setMobileOtpSent(true);
-    setMobileCountdown(30);
-    updateUser({ otp: newOtp });
-    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
-  };
-
-  const handleVerifyMobileOtp = () => {
-     if(mobileOtpInput === mobileOtp) {
-      setMobileVerified(true);
-      setMobileOtpSent(false);
-      updateUser({ otp: undefined });
-      toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
-    } else {
-      toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
-    }
-  };
 
   if (!currentUser) {
     return (
@@ -399,37 +322,15 @@ export default function ProfilePage() {
                 <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
                       <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
-                      {isEditing && currentUser && email !== currentUser.email && !emailVerified && (
-                          <Button onClick={handleSendEmailOtp} className="w-48" disabled={emailCountdown > 0}>
-                              {emailCountdown > 0 ? `Resend in ${emailCountdown}s` : emailOtpSent ? 'Resend OTP' : 'Send OTP'}
-                          </Button>
-                      )}
                       {emailVerified && <CheckCircle className="text-green-500" />}
                   </div>
-                  {isEditing && emailOtpSent && !emailVerified && (
-                      <div className="flex items-center gap-2 pt-2">
-                          <Input placeholder="Enter OTP" value={emailOtpInput} onChange={(e) => setEmailOtpInput(e.target.value)} />
-                          <Button onClick={handleVerifyEmailOtp} className="w-40">Verify</Button>
-                      </div>
-                  )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="mobile">Mobile Number</Label>
                 <div className="flex items-center gap-2">
                       <Input id="mobile" type="tel" value={mobile} onChange={(e) => setMobile(e.target.value)} disabled={!isEditing} />
-                      {isEditing && currentUser && mobile !== currentUser.mobile && !mobileVerified && (
-                          <Button onClick={handleSendMobileOtp} className="w-48" disabled={mobileCountdown > 0}>
-                            {mobileCountdown > 0 ? `Resend in ${mobileCountdown}s` : mobileOtpSent ? 'Resend OTP' : 'Send OTP'}
-                          </Button>
-                      )}
                       {mobileVerified && <CheckCircle className="text-green-500" />}
                   </div>
-                  {isEditing && mobileOtpSent && !mobileVerified && (
-                      <div className="flex items-center gap-2 pt-2">
-                          <Input placeholder="Enter OTP" value={mobileOtpInput} onChange={(e) => setMobileOtpInput(e.target.value)} />
-                          <Button onClick={handleVerifyMobileOtp} className="w-40">Verify</Button>
-                      </div>
-                  )}
               </div>
               <Button onClick={handleUpdateProfile} className="w-full">
                 {isEditing ? 'Save Profile' : 'Edit Profile'}
