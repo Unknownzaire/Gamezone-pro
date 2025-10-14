@@ -17,7 +17,7 @@ import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 
 declare global {
@@ -87,6 +87,9 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   
   const [isEditing, setIsEditing] = useState(false);
+  
+  const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
+  const [emailReauthPassword, setEmailReauthPassword] = useState('');
 
    const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
         helplineNumber: '+911234567890',
@@ -125,6 +128,13 @@ export default function ProfilePage() {
         setIsEditing(true);
         return;
     }
+    
+    if (email !== currentUser?.email) {
+        setIsEmailChangeOpen(true);
+        // Don't proceed with other updates until email is handled.
+        return;
+    }
+
     if (currentUser) {
       const updatedFields: Partial<User> = {
         username,
@@ -132,10 +142,6 @@ export default function ProfilePage() {
         bgmiId,
       };
 
-      if (email !== currentUser.email) {
-        updatedFields.email = email;
-      }
-      
       if (mobile !== currentUser.mobile) {
         updatedFields.mobile = mobile;
       }
@@ -145,6 +151,46 @@ export default function ProfilePage() {
       setIsEditing(false);
     }
   };
+
+  const handleEmailChange = async () => {
+    if (!firebaseUser || !currentUser || !currentUser.email) return;
+
+    if (!emailReauthPassword) {
+      toast({ variant: 'destructive', title: "Password Required", description: "Please enter your current password to change your email." });
+      return;
+    }
+
+    try {
+      const credential = EmailAuthProvider.credential(currentUser.email, emailReauthPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updateEmail(firebaseUser, email);
+
+      const updatedFields: Partial<User> = {
+          username,
+          bgmiUsername,
+          bgmiId,
+          mobile,
+          email,
+          emailVerified: false,
+      };
+      
+      updateUser(updatedFields);
+      toast({ title: "Profile & Email Updated", description: "Your profile information has been saved. A verification email has been sent to your new address." });
+      setIsEditing(false);
+      setIsEmailChangeOpen(false);
+      setEmailReauthPassword('');
+
+    } catch (error: any) {
+        let description = "An error occurred while updating your email.";
+        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+            description = "The password you entered is incorrect.";
+        } else if (error.code === 'auth/email-already-in-use') {
+            description = "This email address is already in use by another account.";
+        }
+        toast({ variant: 'destructive', title: "Email Change Failed", description });
+    }
+  };
+
 
   const handleAvatarUpdate = () => {
     if (currentUser && avatarFile) {
@@ -363,6 +409,31 @@ export default function ProfilePage() {
               </Button>
           </CardContent>
         </Card>
+        
+        <Dialog open={isEmailChangeOpen} onOpenChange={setIsEmailChangeOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Confirm Email Change</DialogTitle>
+                    <DialogDescription>
+                        To change your email address, please re-enter your current password for security.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-2">
+                    <Label htmlFor="email-reauth-password">Current Password</Label>
+                    <Input
+                        id="email-reauth-password"
+                        type="password"
+                        value={emailReauthPassword}
+                        onChange={(e) => setEmailReauthPassword(e.target.value)}
+                    />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                    <Button onClick={handleEmailChange}>Confirm & Change Email</Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+
 
         <Card>
           <CardContent className="pt-6 space-y-4">
