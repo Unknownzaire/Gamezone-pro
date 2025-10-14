@@ -15,6 +15,7 @@ import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { sendOtpEmail } from "@/lib/email";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -179,12 +180,18 @@ export default function LoginPage() {
 
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-  const handleSendEmailOtp = () => {
-    if(!signupForm.email) return;
+  const handleSendEmailOtp = async () => {
+    if (!signupForm.email) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
-    setEmailOtpSent(true);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})`});
+
+    try {
+      await sendOtpEmail(signupForm.email, newOtp);
+      setEmailOtpSent(true);
+      toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}.` });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Failed to Send OTP", description: "Could not send OTP. Please try again later." });
+    }
   };
 
   const handleVerifyEmailOtp = () => {

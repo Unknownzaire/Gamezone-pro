@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -16,6 +17,7 @@ import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
+import { sendOtpEmail } from '@/lib/email';
 
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
@@ -37,7 +39,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
                         <stop offset="0.9" stopColor="#8134AF"/>
                         </radialGradient>
                     </defs>
-                    <path fill="url(#insta-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.07-1.645-.07-4.85s.012-3.584.07-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0 1.441c-3.116 0-3.485.011-4.69.068-2.88.131-4.018 1.244-4.148 4.148-.057 1.206-.068 1.575-.068 4.69s.011 3.485.068 4.69c.13 2.88 1.244 4.018 4.148 4.148 1.206.057 1.575.068 4.69.068s3.485-.011 4.69-.068c2.88-.131 4.018-1.244 4.148-4.148.057-1.206.068-1.575.068-4.69s-.011-3.485-.068-4.69c-.13-2.88-1.244-4.018-4.148-4.148-1.206-.057-1.575-.068-4.69-.068zm0 3.838c-2.937 0-5.312 2.375-5.312 5.312s2.375 5.312 5.312 5.312 5.312-2.375 5.312-5.312-2.375-5.312-5.312-5.312zm0 8.625c-1.815 0-3.312-1.497-3.312-3.312s1.497-3.312 3.312-3.312 3.312 1.497 3.312 3.312-1.497 3.312-3.312 3.312zm4.688-9.438c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25z"/>
+                    <path fill="url(#insta-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.07-1.645-.07-4.85s.012-3.584.07-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0 1.441c-3.116 0-3.485.011-4.69.068-2.88.131-4.018 1.244-4.148 4.148-.057 1.206-.068 1.575-.068 4.69s.011 3.485.068 4.69c.13 2.88 1.244 4.018 4.148 4.148 1.206.057 1.575.068 4.69.068s3.485-.011 4.69-.068c2.88-.131 4.018-1.244-4.148-4.148.057-1.206.068-1.575.068-4.69s-.011-3.485-.068-4.69c-.13-2.88-1.244-4.018-4.148-4.148-1.206-.057-1.575-.068-4.69-.068zm0 3.838c-2.937 0-5.312 2.375-5.312 5.312s2.375 5.312 5.312 5.312 5.312-2.375 5.312-5.312-2.375-5.312-5.312-5.312zm0 8.625c-1.815 0-3.312-1.497-3.312-3.312s1.497-3.312 3.312-3.312 3.312 1.497 3.312 3.312-1.497 3.312-3.312 3.312zm4.688-9.438c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25z"/>
                 </svg>
              );
             break;
@@ -241,13 +243,19 @@ export default function ProfilePage() {
   
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-  const handleSendEmailOtp = () => {
-    if(!currentUser) return;
+  const handleSendEmailOtp = async () => {
+    if (!currentUser || !email) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
-    setEmailOtpSent(true);
     setEmailCountdown(30);
-    toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}. (OTP: ${newOtp})`});
+
+    try {
+      await sendOtpEmail(email, newOtp);
+      setEmailOtpSent(true);
+      toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}.` });
+    } catch (error) {
+      toast({ variant: 'destructive', title: "Failed to Send OTP", description: "Could not send OTP. Please try again later." });
+    }
   };
 
   const handleVerifyEmailOtp = () => {
@@ -520,5 +528,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
