@@ -124,6 +124,10 @@ export default function ProfilePage() {
         return;
       }
       if (email !== currentUser.email) {
+        if (!email.endsWith('@gmail.com')) {
+          toast({ variant: 'destructive', title: 'Invalid Email', description: 'Only @gmail.com addresses are allowed.' });
+          return;
+        }
         updatedFields.email = email;
       }
       

@@ -165,9 +165,18 @@ export default function LoginPage() {
       setConfirmationResult(confirmation);
       setIsOtpDialogOpen(true);
       toast({ title: 'OTP Sent', description: 'An OTP has been sent to your mobile number.' });
-    } catch (error) {
-      console.error("Error sending OTP:", error);
-      toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please try again.' });
+    } catch (error: any) {
+        console.error("Error sending OTP:", error);
+        if (error.code === 'auth/billing-not-enabled') {
+            toast({
+                variant: 'destructive',
+                title: 'Billing Not Enabled',
+                description: "Phone authentication requires a billing account. Please enable billing in your Firebase project console to continue.",
+                duration: 10000,
+            });
+        } else {
+            toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please try again.' });
+        }
     }
   };
 
@@ -459,3 +468,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
