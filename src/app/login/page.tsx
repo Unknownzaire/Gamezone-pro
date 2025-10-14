@@ -339,6 +339,20 @@ export default function LoginPage() {
                         <Input id="signup-referralCode" name="referralCode" placeholder="Enter referral code" onChange={handleSignupChange} value={signupForm.referralCode} ref={referralCodeRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
                     <Button type="submit" className="w-full" ref={signupButtonRef}>Sign Up</Button>
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                          <span className="w-full border-t" />
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                          <span className="bg-background px-2 text-muted-foreground">
+                          Or continue with
+                          </span>
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+                        <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
+                        Sign up with Google
+                    </Button>
                 </form>
               </CardContent>
             </Card>
