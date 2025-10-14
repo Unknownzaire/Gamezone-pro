@@ -94,6 +94,7 @@ export type User = {
   emailVerified?: boolean;
   mobileVerified?: boolean;
   otp?: string;
+  googleId?: string;
 };
 
 export type SocialLink = {
