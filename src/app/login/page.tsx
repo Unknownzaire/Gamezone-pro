@@ -194,22 +194,17 @@ export default function LoginPage() {
           });
         }
       } else {
-        // New user, sign them up
-        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
-          username: googleUser.displayName || googleUser.email!.split('@')[0],
-          email: googleUser.email!,
-          googleId: googleUser.uid,
-          referralCode: '',
-        };
-        
-        const signupResult = signup(newUserDetails, undefined, true, false, referralCodeFromUrl || undefined);
-        
-        if (signupResult === 'success') {
-          // Now log them in
-          if (login(newUserDetails.email, '')) {
-            router.push('/home');
-          }
-        }
+        // New user, pre-fill the form
+        setSignupForm(prev => ({
+          ...prev,
+          username: googleUser.displayName || '',
+          email: googleUser.email || '',
+        }));
+        setActiveTab('signup');
+        toast({
+          title: 'Welcome!',
+          description: 'Please complete your registration details below.',
+        });
       }
     } catch (error) {
       console.error("Google Sign-In Error: ", error);
