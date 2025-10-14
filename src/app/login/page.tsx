@@ -16,7 +16,7 @@ import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useFirebase } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -117,32 +117,41 @@ export default function LoginPage() {
       }
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const loggedIn = login(loginForm.email, loginForm.password);
-    if(loggedIn === true) {
+    try {
+      await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
+      const loggedIn = login(loginForm.email, loginForm.password);
+      if (loggedIn === true) {
         toast({
-            title: 'Login Successful',
-            description: 'Welcome back!',
+          title: 'Login Successful',
+          description: 'Welcome back!',
         });
         router.push('/home');
-    } else if (loggedIn === 'blocked') {
+      } else if (loggedIn === 'blocked') {
         toast({
-            variant: 'destructive',
-            title: 'Account Blocked',
-            description: 'Your account has been blocked. Please contact support.',
+          variant: 'destructive',
+          title: 'Account Blocked',
+          description: 'Your account has been blocked. Please contact support.',
         });
-    }
-    else {
+      } else {
         toast({
-            variant: 'destructive',
-            title: 'Login Failed',
-            description: 'Invalid email or password. Please try again.',
+          variant: 'destructive',
+          title: 'Login Failed',
+          description: 'Invalid email or password. Please try again.',
         });
+      }
+    } catch (error) {
+      console.error("Firebase login error:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Login Failed',
+        description: 'An error occurred during login. Please check your credentials.',
+      });
     }
   };
 
-  const handleSignUp = (e: React.FormEvent) => {
+  const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
 
      if (!emailVerified) {
@@ -154,28 +163,40 @@ export default function LoginPage() {
         return;
       }
 
-    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
-        username: signupForm.username,
-        email: signupForm.email,
-        mobile: signupForm.mobile,
-        bgmiUsername: signupForm.bgmiUsername,
-        bgmiId: signupForm.bgmiId,
-        referralCode: signupForm.referralCode,
-    };
-    
-    const result = signup(newUserDetails, signupForm.password, emailVerified, mobileVerified, signupForm.referralCode);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
+      
+      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+          username: signupForm.username,
+          email: signupForm.email,
+          mobile: signupForm.mobile,
+          bgmiUsername: signupForm.bgmiUsername,
+          bgmiId: signupForm.bgmiId,
+          referralCode: signupForm.referralCode,
+          googleId: userCredential.user.uid,
+      };
+      
+      const result = signup(newUserDetails, signupForm.password, emailVerified, mobileVerified, signupForm.referralCode);
 
-    if (result === 'success') {
-      setActiveTab('login');
-      setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
-      setSignupForm({
-          username: '',
-          bgmiUsername: '',
-          bgmiId: '',
-          mobile: '',
-          email: '',
-          password: '',
-          referralCode: '',
+      if (result === 'success') {
+        setActiveTab('login');
+        setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
+        setSignupForm({
+            username: '',
+            bgmiUsername: '',
+            bgmiId: '',
+            mobile: '',
+            email: '',
+            password: '',
+            referralCode: '',
+        });
+      }
+    } catch (error) {
+      console.error("Firebase signup error:", error);
+      toast({
+        variant: 'destructive',
+        title: 'Sign Up Failed',
+        description: 'An error occurred during sign up. The email may already be in use.',
       });
     }
   };
@@ -433,3 +454,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    

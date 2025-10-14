@@ -8,6 +8,7 @@ import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicke
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
+import { useFirebase } from '@/firebase';
 
 type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | false;
 
@@ -45,6 +46,7 @@ const generateUniqueId = (prefix: string, userId: string) => {
 
 // Let's create a provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
+  const { user: firebaseUser, isUserLoading } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -149,8 +151,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
 
-  const login = (email: string, password: string): boolean | 'blocked' => {
-    const userToLogin = allUsers.find(u => u.email === email && u.password === password);
+  const login = (email: string, password?: string): boolean | 'blocked' => {
+    const userToLogin = password 
+      ? allUsers.find(u => u.email === email && u.password === password)
+      : allUsers.find(u => u.email === email);
     
     if (!userToLogin) {
       return false; 
@@ -176,7 +180,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
         return 'error';
     }
-    if (allUsers.some(u => u.mobile === userDetails.mobile)) {
+    if (userDetails.mobile && allUsers.some(u => u.mobile === userDetails.mobile)) {
         toast({ variant: 'destructive', title: 'Mobile Number Exists', description: 'An account with this mobile number already exists.' });
         return 'error';
     }
@@ -218,7 +222,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return newCode!;
     };
     
-    const newUserId = generateUniqueId('user', '');
+    const newUserId = userDetails.googleId || generateUniqueId('user', '');
     const newUser: User = {
         ...userDetails,
         password: password,
@@ -295,31 +299,26 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   useEffect(() => {
-    if (loading) return;
+    if (isUserLoading || loading) return;
 
-    try {
-        const storedUser = sessionStorage.getItem('currentUser');
-        if (storedUser) {
-            const loggedInUser: User = JSON.parse(storedUser);
-            const liveUserData = allUsers.find(u => u.id === loggedInUser.id);
-            if(liveUserData) {
-                 if (JSON.stringify(liveUserData) !== JSON.stringify(user) || transactions.length !== allTransactions.filter(tx => tx.userId === liveUserData.id).length || allUsers.filter(u => u.referredBy === liveUserData.id).length !== referredUsers.length) {
-                    loadUserContext(loggedInUser.id, allUsers, allTransactions);
-                }
-            } else {
-                logout();
-            }
-        } else {
-            const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
-             if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
-                logout();
-            }
+    if (firebaseUser) {
+      const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email);
+      if (liveUserData) {
+        if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
+          loadUserContext(liveUserData.id, allUsers, allTransactions);
         }
-    } catch(e) {
-        console.error("Error loading user from sessionStorage", e);
-        logout();
+      } else {
+        // This case can be for a new Google Sign-in user who needs to be added to the local mock data
+        // This logic is mostly handled in login page, but as a fallback:
+        console.log("Firebase user found but no matching local user. Consider signup flow.");
+      }
+    } else {
+       const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+       if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
+           logout();
+       }
     }
-  }, [allUsers, allTransactions, loading, pathname, user, transactions.length, loadUserContext, logout, referredUsers.length]);
+  }, [firebaseUser, isUserLoading, allUsers, allTransactions, loading, pathname, user, loadUserContext, logout]);
 
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
@@ -537,3 +536,5 @@ export const useUser = () => {
   }
   return context;
 };
+
+    
