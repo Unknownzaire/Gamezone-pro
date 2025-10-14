@@ -17,7 +17,7 @@ import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
@@ -66,7 +66,7 @@ export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const { user: currentUser, updateUser, logout } = useUser();
-  const { auth } = useFirebase();
+  const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -169,22 +169,38 @@ export default function ProfilePage() {
     }
   };
 
-  const handleChangePassword = () => {
-    if (!currentUser) return;
+  const handleChangePassword = async () => {
+    if (!firebaseUser || !firebaseUser.email) {
+      toast({ variant: 'destructive', title: "Error", description: "You must be logged in to change your password." });
+      return;
+    }
 
     if (!currentPassword || !newPassword) {
       toast({ variant: 'destructive', title: "Fields Required", description: "Please enter both your current and new password." });
       return;
     }
-    if (currentUser.password !== currentPassword) {
-      toast({ variant: 'destructive', title: "Incorrect Password", description: "The current password you entered is incorrect." });
-      return;
-    }
 
-    updateUser({ password: newPassword });
-    toast({ title: "Password Changed", description: "Your password has been successfully updated." });
-    setCurrentPassword('');
-    setNewPassword('');
+    try {
+      const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
+      await reauthenticateWithCredential(firebaseUser, credential);
+      await updatePassword(firebaseUser, newPassword);
+
+      // Also update the local mock data if you need it for non-auth purposes
+      updateUser({ password: newPassword });
+
+      toast({ title: "Password Changed", description: "Your password has been successfully updated." });
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (error: any) {
+      let description = "An unexpected error occurred.";
+      if (error.code === 'auth/wrong-password') {
+        description = "The current password you entered is incorrect.";
+      } else if (error.code === 'auth/weak-password') {
+        description = "The new password is too weak. It must be at least 6 characters long.";
+      }
+      console.error("Password change error:", error);
+      toast({ variant: 'destructive', title: "Password Change Failed", description });
+    }
   };
 
   const handleLogout = () => {
