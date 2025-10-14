@@ -181,6 +181,14 @@ export default function LoginPage() {
 
   const handleSendEmailOtp = () => {
     if (!signupForm.email) return;
+    if (!signupForm.email.endsWith('@gmail.com')) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Email Domain',
+        description: 'Please use a Gmail address (@gmail.com).',
+      });
+      return;
+    }
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailOtpSent(true);

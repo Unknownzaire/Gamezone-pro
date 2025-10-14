@@ -235,6 +235,14 @@ export default function ProfilePage() {
 
   const handleSendEmailOtp = () => {
     if (!currentUser || !email) return;
+    if (!email.endsWith('@gmail.com')) {
+      toast({
+        variant: 'destructive',
+        title: 'Invalid Email Domain',
+        description: 'Please use a Gmail address (@gmail.com).',
+      });
+      return;
+    }
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailCountdown(30);
