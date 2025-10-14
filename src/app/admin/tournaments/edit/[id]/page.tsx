@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import { Tournament, PrizeDistribution } from '@/lib/types';
 import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -14,8 +14,9 @@ import { ArrowLeft, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 
-export default function EditTournamentPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditTournamentPage() {
+  const params = useParams();
+  const id = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
 
@@ -346,7 +347,3 @@ export default function EditTournamentPage({ params }: { params: { id: string } 
     </div>
   );
 }
-
-    
-
-    
