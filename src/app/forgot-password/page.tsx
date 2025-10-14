@@ -10,7 +10,7 @@ import Logo from "@/components/Logo";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { useState } from "react";
-import { useFirebase } from "@/firebase";
+import { useFirebase } from '@/firebase';
 import { sendPasswordResetEmail } from "firebase/auth";
 
 export default function ForgotPasswordPage() {
@@ -29,6 +29,16 @@ export default function ForgotPasswordPage() {
       });
       return;
     }
+    
+    if (!auth) {
+        toast({
+            variant: 'destructive',
+            title: 'Authentication service not ready',
+            description: 'Please wait a moment and try again.',
+        });
+        return;
+    }
+
     setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, emailInput);
@@ -39,7 +49,7 @@ export default function ForgotPasswordPage() {
     } catch (error: any) {
       // We show a generic message even on error to prevent user enumeration
       console.error("Password reset error:", error);
-      toast({
+       toast({
         title: 'Password Reset Email Sent',
         description: 'If an account exists for this email, a password reset link has been sent. Please check your inbox.',
       });
