@@ -16,7 +16,7 @@ import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, CheckCircle } from "lucide-react";
 import { useFirebase } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,6 +58,9 @@ export default function LoginPage() {
   const [mobileOtpSent, setMobileOtpSent] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
   const [mobileVerified, setMobileVerified] = useState(false);
+
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+
   
   const usernameRef = useRef<HTMLInputElement>(null);
   const bgmiUsernameRef = useRef<HTMLInputElement>(null);
@@ -278,29 +281,50 @@ export default function LoginPage() {
     }
   };
   
-  const handleSendMobileOtp = () => {
-    if(!signupForm.mobile) return;
-    const newOtp = generateOtp();
-    setMobileOtp(newOtp);
-    setMobileOtpSent(true);
-    // This is a temporary way to show OTP to admin. In a real app this would be handled differently.
-    updateUser({ otp: newOtp });
-    toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
+  const setupRecaptcha = () => {
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response: any) => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        },
+      });
+    }
+    return window.recaptchaVerifier;
   };
 
-  const handleVerifyMobileOtp = () => {
-     if(mobileOtpInput === mobileOtp) {
+  const handleSendMobileOtp = async () => {
+    if (!signupForm.mobile) return;
+    try {
+      const verifier = setupRecaptcha();
+      const phoneNumber = `+91${signupForm.mobile}`;
+      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, verifier);
+      setConfirmationResult(confirmation);
+      setMobileOtpSent(true);
+      toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number.` });
+    } catch (error) {
+      console.error("SMS OTP error:", error);
+      toast({ variant: 'destructive', title: 'Failed to send OTP', description: 'Please try again.' });
+    }
+  };
+
+
+  const handleVerifyMobileOtp = async () => {
+    if (!confirmationResult || !mobileOtpInput) return;
+    try {
+      await confirmationResult.confirm(mobileOtpInput);
       setMobileVerified(true);
       setMobileOtpSent(false);
-      updateUser({ otp: undefined });
       toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
-    } else {
+    } catch (error) {
+      console.error("Mobile verification error:", error);
       toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
     }
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div id="recaptcha-container"></div>
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
             <Logo />

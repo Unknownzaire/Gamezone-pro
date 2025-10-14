@@ -95,6 +95,7 @@ export type User = {
   mobileVerified?: boolean;
   otp?: string;
   googleId?: string;
+  phoneNumber?: string;
 };
 
 export type SocialLink = {
@@ -104,3 +105,4 @@ export type SocialLink = {
   icon: 'youtube' | 'instagram' | 'discord' | 'telegram' | 'whatsapp' | 'link';
 };
       
+    
