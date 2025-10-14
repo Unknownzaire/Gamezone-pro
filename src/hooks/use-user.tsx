@@ -9,6 +9,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
 import { useFirebase } from '@/firebase';
+import { signOut } from 'firebase/auth';
 
 type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | false;
 
@@ -46,7 +47,7 @@ const generateUniqueId = (prefix: string, userId: string) => {
 
 // Let's create a provider component
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const { user: firebaseUser, isUserLoading } = useFirebase();
+  const { user: firebaseUser, isUserLoading, auth } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -264,15 +265,24 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = useCallback(() => {
-    sessionStorage.removeItem('currentUser');
-    setUser(null);
-    setTransactions([]);
-    setReferredUsers([]);
-    const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
-    if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
-        router.push('/login');
-    }
-  }, [pathname, router]);
+    signOut(auth).then(() => {
+      sessionStorage.removeItem('currentUser');
+      setUser(null);
+      setTransactions([]);
+      setReferredUsers([]);
+      const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+      if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
+          router.push('/login');
+      }
+    }).catch((error) => {
+        console.error("Logout Error: ", error);
+        toast({
+            variant: 'destructive',
+            title: 'Logout Failed',
+            description: 'An error occurred during logout. Please try again.',
+        });
+    });
+  }, [auth, pathname, router, toast]);
 
   const loadUserContext = useCallback((userId: string, currentAllUsers: User[], currentAllTransactions: Transaction[]) => {
     const liveUserData = currentAllUsers.find(u => u.id === userId);
