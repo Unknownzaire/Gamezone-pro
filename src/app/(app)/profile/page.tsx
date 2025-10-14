@@ -20,12 +20,6 @@ import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-  }
-}
-
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
     let socialIcon;
@@ -111,17 +105,6 @@ export default function ProfilePage() {
     }
   }, [currentUser]);
   
-  useEffect(() => {
-    return () => {
-      // Cleanup the recaptcha verifier when the component unmounts
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = undefined;
-      }
-    };
-  }, []);
-  
-
   const handleUpdateProfile = () => {
     if (!isEditing) {
         setIsEditing(true);
@@ -133,10 +116,6 @@ export default function ProfilePage() {
       };
 
       if (email !== currentUser.email) {
-        if (!email.endsWith('@gmail.com')) {
-          toast({ variant: 'destructive', title: 'Invalid Email', description: 'Only @gmail.com addresses are allowed.' });
-          return;
-        }
         updatedFields.email = email;
       }
       
@@ -235,7 +214,6 @@ export default function ProfilePage() {
 
   return (
     <div className="space-y-6">
-      <div id="recaptcha-container"></div>
       <h1 className="font-headline text-3xl font-bold px-4">My Profile</h1>
 
       <div className="-mx-4">

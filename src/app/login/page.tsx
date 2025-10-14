@@ -14,16 +14,9 @@ import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
-import { Eye, EyeOff, CheckCircle } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useFirebase } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-
-declare global {
-  interface Window {
-    recaptchaVerifier?: RecaptchaVerifier;
-  }
-}
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,7 +27,7 @@ export default function LoginPage() {
   const initialTab = referralCodeFromUrl ? 'signup' : 'login';
   
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { login, signup, user, allUsers, updateUser } = useUser();
+  const { login, signup, user, allUsers } = useUser();
   const { auth } = useFirebase();
   
   const [loginForm, setLoginForm] = useState({
@@ -70,17 +63,6 @@ export default function LoginPage() {
     }
   }, [user, router]);
   
-  useEffect(() => {
-    // This effect ensures the verifier is cleared when the component unmounts.
-    return () => {
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = undefined;
-      }
-    };
-  }, []);
-
-
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -154,11 +136,6 @@ export default function LoginPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!signupForm.email.endsWith('@gmail.com')) {
-      toast({ variant: 'destructive', title: 'Invalid Email', description: 'Only @gmail.com addresses are allowed.' });
-      return;
-    }
-    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
@@ -204,12 +181,6 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
-      if (googleUser.email && !googleUser.email.endsWith('@gmail.com')) {
-        await auth.signOut();
-        toast({ variant: 'destructive', title: 'Invalid Email', description: 'Only @gmail.com addresses are allowed for Google Sign-In.' });
-        return;
-      }
-
       const existingUser = allUsers.find(u => u.email === googleUser.email);
 
       if (existingUser) {
@@ -252,7 +223,6 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <div id="recaptcha-container"></div>
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
             <Logo />
@@ -340,15 +310,11 @@ export default function LoginPage() {
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
-                        <div className="flex items-center gap-2">
-                            <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
-                        </div>
+                        <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
-                         <div className="flex items-center gap-2">
-                            <Input id="signup-email" name="email" type="email" placeholder="you@gmail.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
-                        </div>
+                        <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
