@@ -340,7 +340,7 @@ export default function ProfilePage() {
                 <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || bgmiDetailsSet} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
                       <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
                       {currentUser.emailVerified && <CheckCircle className="text-green-500" />}
