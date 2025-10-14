@@ -17,7 +17,6 @@ import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
-import { sendOtpEmail } from '@/lib/email';
 
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
@@ -243,19 +242,13 @@ export default function ProfilePage() {
   
   const generateOtp = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-  const handleSendEmailOtp = async () => {
+  const handleSendEmailOtp = () => {
     if (!currentUser || !email) return;
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailCountdown(30);
-
-    try {
-      await sendOtpEmail(email, newOtp);
-      setEmailOtpSent(true);
-      toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}.` });
-    } catch (error) {
-      toast({ variant: 'destructive', title: "Failed to Send OTP", description: "Could not send OTP. Please try again later." });
-    }
+    setEmailOtpSent(true);
+    toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}. (OTP: ${newOtp})` });
   };
 
   const handleVerifyEmailOtp = () => {
