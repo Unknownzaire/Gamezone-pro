@@ -201,7 +201,7 @@ export default function AdminUsersPage() {
                 <TableHead>Available Balance</TableHead>
                 <TableHead>Total Balance</TableHead>
                 <TableHead>Total Deposits</TableHead>
-                <TableHead>OTP Authentication</TableHead>
+                <TableHead>User OTP</TableHead>
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Referred By</TableHead>
@@ -339,4 +339,5 @@ export default function AdminUsersPage() {
     </div>
   );
 }
+
 
