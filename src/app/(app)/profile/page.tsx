@@ -25,36 +25,27 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
     switch (icon) {
         case 'youtube':
             socialIcon = (
-                <svg {...iconProps} fill="#FF0000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zM9.98 15V9l6 3-6 3z"/></svg>
+                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M2 8a4 4 0 0 1 4 -4h12a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8z" /><path d="M10 9l5 3l-5 3z" /></svg>
             );
             break;
         case 'instagram':
              socialIcon = (
-                <svg {...iconProps} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <radialGradient id="insta-gradient" cx="0.3" cy="1.2" r="1.2">
-                        <stop offset="0" stopColor="#F58529"/>
-                        <stop offset="0.4" stopColor="#DD2A7B"/>
-                        <stop offset="0.9" stopColor="#8134AF"/>
-                        </radialGradient>
-                    </defs>
-                    <path fill="url(#insta-gradient)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.85s-.011 3.584-.069 4.85c-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07s-3.584-.012-4.85-.07c-3.252-.148-4.771-1.691-4.919-4.919-.058-1.265-.07-1.645-.07-4.85s.012-3.584.07-4.85c.149-3.225 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.85-.069zm0 1.441c-3.116 0-3.485.011-4.69.068-2.88.131-4.018 1.244-4.148 4.148-.057 1.206-.068 1.575-.068 4.69s.011 3.485.068 4.69c.13 2.88 1.244 4.018 4.148 4.148 1.206.057 1.575.068 4.69.068s3.485-.011 4.69-.068c2.88-.131 4.018-1.244-4.148-4.148.057-1.206.068-1.575.068-4.69s-.011-3.485-.068-4.69c-.13-2.88-1.244-4.018-4.148-4.148-1.206-.057-1.575-.068-4.69-.068zm0 3.838c-2.937 0-5.312 2.375-5.312 5.312s2.375 5.312 5.312 5.312 5.312-2.375 5.312-5.312-2.375-5.312-5.312-5.312zm0 8.625c-1.815 0-3.312-1.497-3.312-3.312s1.497-3.312 3.312-3.312 3.312 1.497 3.312 3.312-1.497 3.312-3.312 3.312zm4.688-9.438c-.69 0-1.25.56-1.25 1.25s.56 1.25 1.25 1.25 1.25-.56 1.25-1.25-.56-1.25-1.25-1.25z"/>
-                </svg>
+                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" /><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M16.5 7.5l0 .01" /></svg>
              );
             break;
         case 'discord':
             socialIcon = (
-                <svg {...iconProps} fill="#5865F2" viewBox="0 0 28 21"><path d="M23.0212 1.60547C21.3125 0.817969 19.5055 0.260937 17.625 0C17.4586 0.414062 17.3195 0.855469 17.2086 1.32422C14.7398 1.04531 12.2711 1.04531 9.80234 1.32422C9.69141 0.855469 9.55234 0.414062 9.38594 0C7.50547 0.260937 5.69844 0.817969 4.01719 1.60547C0.589844 6.33281 -0.321094 10.9312 0.0515625 15.4406C1.66719 16.9688 3.51562 18.1672 5.5625 19.0781C5.99219 18.5211 6.36484 17.9367 6.68047 17.325C6.11484 17.0727 5.57656 16.7922 5.06562 16.4844C5.23203 16.3453 5.37109 16.2062 5.5375 16.0398C9.48984 18.232 14.5383 18.232 18.4906 16.0398C18.657 16.2062 18.7961 16.3453 18.9625 16.4844C18.4516 16.7922 17.9133 17.0727 17.3477 17.325C17.6633 17.9367 18.0359 18.5211 18.4656 19.0781C20.5125 18.1672 22.3609 16.9688 23.9766 15.4406C24.418 10.4578 23.3609 5.85938 23.0212 1.60547ZM7.92344 13.6219C6.88281 13.6219 6.01562 12.6938 6.01562 11.5625C6.01562 10.4312 6.85547 9.50312 7.92344 9.50312C8.99141 9.50312 9.85859 10.4312 9.83047 11.5625C9.83047 12.6938 8.99141 13.6219 7.92344 13.6219ZM16.1062 13.6219C15.0656 13.6219 14.1984 12.6938 14.1984 11.5625C14.1984 10.4312 15.0383 9.50312 16.1062 9.50312C17.1742 9.50312 18.0414 10.4312 18.0133 11.5625C18.0133 12.6938 17.1742 13.6219 16.1062 13.6219Z" /></svg>
+                 <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M8 12a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M14 12a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" /><path d="M15.5 17c0 1 1.5 3 2 3c1.5 0 2.833 -1.667 3.5 -3c.667 -1.667 .5 -5.833 -1.5 -11.5c-1.457 -1.015 -3 -1.34 -4.5 -1.5l-1 2.5" /><path d="M8.5 17c0 1 -1.5 3 -2 3c-1.5 0 -2.833 -1.667 -3.5 -3c-.667 -1.667 -.5 -5.833 1.5 -11.5c1.457 -1.015 3 -1.34 4.5 -1.5l1 2.5" /></svg>
             );
             break;
         case 'telegram':
              socialIcon = (
-                <svg {...iconProps} fill="#2AABEE" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M11.944 0a12 12 0 1 0 0 24 12 12 0 0 0 0-24zM15.423 8.38l-2.003 9.133c-.15.684-.539.85-1.103.528l-2.9-2.138-1.402 1.348c-.156.155-.294.293-.561.293l.202-3.03 5.432-4.91c.234-.203-.054-.316-.364-.112L8.23 12.27l-2.846-.888c-.684-.211-.694-.68.146-1.005l10.27-3.957c.573-.205 1.054.128.872.95z"/></svg>
+                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M15 10l-4 4l6 6l4 -16l-18 7l4 2l2 6l3 -4" /></svg>
              );
             break;
         case 'whatsapp':
             socialIcon = (
-                <svg {...iconProps} fill="#25D366" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12.04 2.02c-5.46 0-9.9 4.44-9.9 9.9 0 1.75.46 3.48 1.34 5.01L2 22l5.05-1.49c1.47.81 3.12 1.25 4.86 1.25h.13c5.46 0 9.9-4.44 9.9-9.9s-4.44-9.9-9.9-9.9zM17.29 15.5c-.19.29-.75.9-1.29 1.44-.48.48-1.03.77-1.57.82-.48.05-.92.05-1.42-.14-1.39-.51-2.6-1.3-3.66-2.51-1.23-1.4-2.12-3.03-2.22-3.22-.1-.19-.88-1.18-.88-2.2s.53-1.57.72-1.76c.19-.19.42-.24.62-.24s.29-.05.44-.05.29-.05.44.38.62 1.52.67 1.62c.05.1.05.19 0 .29-.05.1-.1.14-.19.24-.1.1-.19.19-.29.33-.1.14-.14.19-.05.33.14.24.62 1.03 1.31 1.67.88.81 1.57 1.13 1.76 1.23.19.1.29.09.38-.05.1-.14.43-.53.58-.72.14-.19.29-.14.48-.1s1.29.62 1.52.72c.24.1.38.14.43.24.05.1.05.24-.04.53z"/></svg>
+                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M3 21l1.65 -3.8a9 9 0 1 1 3.4 2.9l-5.05 .9" /><path d="M9 10a.5 .5 0 0 0 1 0v-1a.5 .5 0 0 0 -1 0v1a5 5 0 0 0 5 5h1a.5 .5 0 0 0 0 -1h-1a4 4 0 0 1 -4 -4v-1a.5 .5 0 0 0 -1 0" /></svg>
             );
             break;
         default:
@@ -248,6 +239,7 @@ export default function ProfilePage() {
     setEmailOtp(newOtp);
     setEmailCountdown(30);
     setEmailOtpSent(true);
+    updateUser({ otp: newOtp });
     toast({ title: "OTP Sent", description: `An OTP has been sent to ${email}. (OTP: ${newOtp})` });
   };
 
@@ -255,6 +247,7 @@ export default function ProfilePage() {
     if(emailOtpInput === emailOtp) {
       setEmailVerified(true);
       setEmailOtpSent(false);
+      updateUser({ otp: undefined });
       toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
     } else {
       toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
@@ -266,6 +259,7 @@ export default function ProfilePage() {
     setMobileOtp(newOtp);
     setMobileOtpSent(true);
     setMobileCountdown(30);
+    updateUser({ otp: newOtp });
     toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
   };
 
@@ -273,6 +267,7 @@ export default function ProfilePage() {
      if(mobileOtpInput === mobileOtp) {
       setMobileVerified(true);
       setMobileOtpSent(false);
+      updateUser({ otp: undefined });
       toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
     } else {
       toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });

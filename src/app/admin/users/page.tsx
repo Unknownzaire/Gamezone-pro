@@ -202,6 +202,7 @@ export default function AdminUsersPage() {
                 <TableHead>Total Balance</TableHead>
                 <TableHead>Total Deposits</TableHead>
                 <TableHead>User OTP</TableHead>
+                <TableHead>OTP Authentication</TableHead>
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Referred By</TableHead>
@@ -232,6 +233,7 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell>{user.otp}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                        {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}

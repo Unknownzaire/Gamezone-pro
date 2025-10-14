@@ -93,6 +93,7 @@ export type User = {
   referralCode: string;
   emailVerified?: boolean;
   mobileVerified?: boolean;
+  otp?: string;
 };
 
 export type SocialLink = {

@@ -25,7 +25,7 @@ export default function LoginPage() {
   const initialTab = referralCodeFromUrl ? 'signup' : 'login';
   
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { login, signup, user } = useUser();
+  const { login, signup, user, updateUser } = useUser();
   
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -184,6 +184,8 @@ export default function LoginPage() {
     const newOtp = generateOtp();
     setEmailOtp(newOtp);
     setEmailOtpSent(true);
+    // This is a temporary way to show OTP to admin. In a real app this would be handled differently.
+    updateUser({ otp: newOtp });
     toast({ title: "OTP Sent", description: `An OTP has been sent to ${signupForm.email}. (OTP: ${newOtp})` });
   };
 
@@ -191,6 +193,7 @@ export default function LoginPage() {
     if(emailOtpInput === emailOtp) {
       setEmailVerified(true);
       setEmailOtpSent(false);
+      updateUser({ otp: undefined });
       toast({ title: "Email Verified", description: "Your email address has been successfully verified." });
     } else {
       toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
@@ -202,6 +205,8 @@ export default function LoginPage() {
     const newOtp = generateOtp();
     setMobileOtp(newOtp);
     setMobileOtpSent(true);
+    // This is a temporary way to show OTP to admin. In a real app this would be handled differently.
+    updateUser({ otp: newOtp });
     toast({ title: "OTP Sent", description: `An OTP has been sent to your mobile number. (OTP: ${newOtp})`});
   };
 
@@ -209,6 +214,7 @@ export default function LoginPage() {
      if(mobileOtpInput === mobileOtp) {
       setMobileVerified(true);
       setMobileOtpSent(false);
+      updateUser({ otp: undefined });
       toast({ title: "Mobile Verified", description: "Your mobile number has been successfully verified." });
     } else {
       toast({ variant: 'destructive', title: "Invalid OTP", description: "The OTP you entered is incorrect." });
