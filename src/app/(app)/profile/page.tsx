@@ -256,7 +256,7 @@ export default function ProfilePage() {
       setNewPassword('');
     } catch (error: any) {
       let description = "An unexpected error occurred.";
-       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = "The current password you entered is incorrect.";
       } else if (error.code === 'auth/weak-password') {
         description = "The new password is too weak. It must be at least 6 characters long.";
@@ -522,5 +522,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
