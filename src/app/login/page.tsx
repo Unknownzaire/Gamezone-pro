@@ -78,10 +78,11 @@ export default function LoginPage() {
   }, [user, router]);
   
   useEffect(() => {
+    // This effect ensures the verifier is cleared when the component unmounts.
     return () => {
-      // Cleanup the recaptcha verifier when the component unmounts
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = undefined;
       }
     };
   }, []);

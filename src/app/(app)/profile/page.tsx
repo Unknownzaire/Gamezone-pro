@@ -125,6 +125,7 @@ export default function ProfilePage() {
       // Cleanup the recaptcha verifier when the component unmounts
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = undefined;
       }
     };
   }, []);
