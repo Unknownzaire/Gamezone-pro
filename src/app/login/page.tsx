@@ -19,6 +19,12 @@ import { useFirebase } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
+declare global {
+  interface Window {
+    recaptchaVerifier?: RecaptchaVerifier;
+  }
+}
+
 export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -70,6 +76,15 @@ export default function LoginPage() {
       router.push('/home');
     }
   }, [user, router]);
+  
+  useEffect(() => {
+    return () => {
+      // Cleanup the recaptcha verifier when the component unmounts
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+    };
+  }, []);
 
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
@@ -157,9 +172,12 @@ export default function LoginPage() {
     
     try {
       setVerificationType('mobile');
-      const recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-        'size': 'invisible',
-      });
+      if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+            'size': 'invisible',
+          });
+      }
+      const recaptchaVerifier = window.recaptchaVerifier;
       const phoneNumber = `+91${signupForm.mobile}`;
       const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
       setConfirmationResult(confirmation);
@@ -468,4 +486,3 @@ export default function LoginPage() {
     </div>
   );
 }
-
