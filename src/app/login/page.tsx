@@ -151,7 +151,7 @@ export default function LoginPage() {
         return;
       }
 
-    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl'> = {
+    const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
         username: signupForm.username,
         email: signupForm.email,
         mobile: signupForm.mobile,
@@ -160,7 +160,7 @@ export default function LoginPage() {
         referralCode: signupForm.referralCode,
     };
     
-    const result = signup(newUserDetails, signupForm.password, signupForm.referralCode);
+    const result = signup(newUserDetails, signupForm.password, emailVerified, mobileVerified, signupForm.referralCode);
 
     if (result === 'success') {
       setActiveTab('login');

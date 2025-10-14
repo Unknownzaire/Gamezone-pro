@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
-import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction } from "@/lib/types";
 import {
@@ -201,6 +201,7 @@ export default function AdminUsersPage() {
                 <TableHead>Available Balance</TableHead>
                 <TableHead>Total Balance</TableHead>
                 <TableHead>Total Deposits</TableHead>
+                <TableHead>OTP Authentication</TableHead>
                 <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Referred By</TableHead>
@@ -231,6 +232,12 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                       {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}
+                       {user.mobileVerified && <Phone className="h-4 w-4 text-green-500" title="Mobile Verified" />}
+                    </div>
+                  </TableCell>
                   <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
                   <TableCell>

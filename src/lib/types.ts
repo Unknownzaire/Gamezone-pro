@@ -91,6 +91,8 @@ export type User = {
   totalDeposits?: number;
   referredBy?: string; // ID of the user who referred this user
   referralCode: string;
+  emailVerified?: boolean;
+  mobileVerified?: boolean;
 };
 
 export type SocialLink = {
