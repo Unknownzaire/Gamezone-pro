@@ -14,8 +14,7 @@ import { ArrowLeft } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-export default function EditPromotionalAdPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function EditPromotionalAdPage({ params: { id } }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
