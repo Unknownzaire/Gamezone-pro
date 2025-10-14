@@ -181,19 +181,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
         return 'error';
     }
-    if (userDetails.mobile && allUsers.some(u => u.mobile === userDetails.mobile)) {
-        toast({ variant: 'destructive', title: 'Mobile Number Exists', description: 'An account with this mobile number already exists.' });
-        return 'error';
-    }
-    if (userDetails.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === userDetails.bgmiUsername!.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already linked to an account.' });
-        return 'error';
-    }
-    if (userDetails.bgmiId && allUsers.some(u => u.bgmiId === userDetails.bgmiId)) {
-        toast({ variant: 'destructive', title: 'BGMI ID Exists', description: 'This BGMI ID is already linked to an account.' });
-        return 'error';
-    }
-
+    
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
     let referrer: User | undefined;
@@ -546,5 +534,3 @@ export const useUser = () => {
   }
   return context;
 };
-
-    
