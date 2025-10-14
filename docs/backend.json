@@ -1,0 +1,313 @@
+{
+  "entities": {
+    "User": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "User",
+      "type": "object",
+      "description": "Represents a user within the Gamezone Pro application.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the user entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the user."
+        },
+        "email": {
+          "type": "string",
+          "description": "The email address of the user.",
+          "format": "email"
+        },
+        "password": {
+          "type": "string",
+          "description": "Hashed password of the user.  (Note:  It is assumed an external authentication system is being used, and this is purely for demonstration purposes)."
+        },
+        "walletBalance": {
+          "type": "number",
+          "description": "The current wallet balance of the user."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user account was created.",
+          "format": "date-time"
+        },
+        "googleId": {
+          "type": "string",
+          "description": "Google User ID from the Google Sign-In Service."
+        }
+      },
+      "required": [
+        "id",
+        "username",
+        "email",
+        "walletBalance",
+        "createdAt"
+      ]
+    },
+    "Admin": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Admin",
+      "type": "object",
+      "description": "Represents an administrator user with elevated privileges.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the admin entity."
+        },
+        "username": {
+          "type": "string",
+          "description": "The username of the administrator."
+        },
+        "password": {
+          "type": "string",
+          "description": "Hashed password of the administrator. (Note:  It is assumed an external authentication system is being used, and this is purely for demonstration purposes)."
+        }
+      },
+      "required": [
+        "id",
+        "username"
+      ]
+    },
+    "Tournament": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Tournament",
+      "type": "object",
+      "description": "Represents a BGMI tournament event.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the tournament entity."
+        },
+        "title": {
+          "type": "string",
+          "description": "The title of the tournament."
+        },
+        "gameName": {
+          "type": "string",
+          "description": "The name of the game being played in the tournament (e.g., BGMI)."
+        },
+        "entryFee": {
+          "type": "number",
+          "description": "The entry fee required to participate in the tournament."
+        },
+        "prizePool": {
+          "type": "number",
+          "description": "The total prize pool for the tournament."
+        },
+        "matchTime": {
+          "type": "string",
+          "description": "The date and time the tournament match will be held.",
+          "format": "date-time"
+        },
+        "roomId": {
+          "type": "string",
+          "description": "The ID of the room where the match will be played."
+        },
+        "roomPassword": {
+          "type": "string",
+          "description": "The password required to join the match room."
+        },
+        "status": {
+          "type": "string",
+          "description": "The current status of the tournament (e.g., Upcoming, Live, Completed)."
+        },
+        "commissionPercentage": {
+          "type": "number",
+          "description": "The percentage of the prize pool taken as commission."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the tournament was created.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "gameName",
+        "entryFee",
+        "prizePool",
+        "matchTime",
+        "status",
+        "commissionPercentage",
+        "createdAt"
+      ]
+    },
+    "Participant": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Participant",
+      "type": "object",
+      "description": "Represents a user's participation in a specific tournament.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the participant entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Participant)"
+        },
+        "tournamentId": {
+          "type": "string",
+          "description": "Reference to Tournament. (Relationship: Tournament 1:N Participant)"
+        },
+        "result": {
+          "type": "string",
+          "description": "The participant's result in the tournament (e.g., Winner, Participated)."
+        },
+        "joinedAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the user joined the tournament.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "tournamentId",
+        "joinedAt"
+      ]
+    },
+    "Transaction": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Transaction",
+      "type": "object",
+      "description": "Represents a financial transaction within the application (credit or debit).",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the transaction entity."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Reference to User. (Relationship: User 1:N Transaction)"
+        },
+        "amount": {
+          "type": "number",
+          "description": "The amount of the transaction."
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of transaction (e.g., credit, debit)."
+        },
+        "description": {
+          "type": "string",
+          "description": "A description of the transaction."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "Timestamp indicating when the transaction occurred.",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "amount",
+        "type",
+        "description",
+        "createdAt"
+      ]
+    }
+  },
+  "auth": {
+    "providers": [
+      "password",
+      "anonymous"
+    ]
+  },
+  "firestore": {
+    "structure": [
+      {
+        "path": "/users/{userId}",
+        "definition": {
+          "entityName": "User",
+          "schema": {
+            "$ref": "#/backend/entities/User"
+          },
+          "description": "Stores user profile information. Path-based ownership is enforced.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tournaments/{tournamentId}",
+        "definition": {
+          "entityName": "Tournament",
+          "schema": {
+            "$ref": "#/backend/entities/Tournament"
+          },
+          "description": "Stores tournament details.",
+          "params": [
+            {
+              "name": "tournamentId",
+              "description": "The unique identifier of the tournament."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/users/{userId}/transactions/{transactionId}",
+        "definition": {
+          "entityName": "Transaction",
+          "schema": {
+            "$ref": "#/backend/entities/Transaction"
+          },
+          "description": "Stores transaction history for each user. Path-based ownership enforced.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the user."
+            },
+            {
+              "name": "transactionId",
+              "description": "The unique identifier of the transaction."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/tournaments/{tournamentId}/participants/{participantId}",
+        "definition": {
+          "entityName": "Participant",
+          "schema": {
+            "$ref": "#/backend/entities/Participant"
+          },
+          "description": "Stores participant information for each tournament. Denormalization of tournament-related authorization data (e.g., moderator list) may be required here for authorization independence.",
+          "params": [
+            {
+              "name": "tournamentId",
+              "description": "The unique identifier of the tournament."
+            },
+            {
+              "name": "participantId",
+              "description": "The unique identifier of the participant."
+            }
+          ]
+        }
+      },
+      {
+        "path": "/roles_admin/{userId}",
+        "definition": {
+          "entityName": "Admin",
+          "schema": {
+            "$ref": "#/backend/entities/Admin"
+          },
+          "description": "Collection used to manage admin roles. The existence of a document with a specific user ID grants admin privileges.",
+          "params": [
+            {
+              "name": "userId",
+              "description": "The unique identifier of the admin user."
+            }
+          ]
+        }
+      }
+    ],
+    "reasoning": "The Firestore structure is designed to ensure security, scalability, and ease of debugging, adhering to the principles of Authorization Independence, Clarity of Intent, DBAC, and QAPs. The core strategy revolves around denormalization and structural segregation to simplify security rules and maintain data integrity.\n\n*   **Users Collection:** Stores user profiles. The structure follows path-based ownership for user-related data, enhancing security and rule simplicity.  Google Sign-in ID is stored as a property of the user document.\n*   **Tournaments Collection:** Stores tournament information. This collection is separate from user data to maintain a homogeneous security posture.  Admin access will be managed via a separate `/roles_admin/{uid}` collection.\n*   **Participants Subcollection:** Each tournament has a subcollection of participants. To ensure authorization independence, key authorization data (tournament owner or members) would need to be denormalized into each participant document. This is not currently needed for the provided entities but is included for future expansion.\n*   **Transactions Subcollection:** Each user has a subcollection to store their transactions. This uses path-based ownership.\n*   **Admin Roles Collection:** The presence of a document in `/roles_admin/{uid}` grants admin privileges. This existence-based check simplifies admin role management.\n\n**Authorization Independence (Denormalization):**  While the current schema doesn't necessitate complex denormalization, the structure is prepared for it.  For instance, if we were to add a feature where tournaments could have moderators, the `tournaments/{tournamentId}/participants/{participantId}` documents would need to denormalize the moderator list to allow participants to be added/modified securely without `get()` calls.\n\n**QAPs (Rules are not Filters):**\n\n*   The segregation of user data into `/users/{userId}` paths ensures that listing users is never required, avoiding the need to filter based on properties.\n*   Tournaments are stored in a flat `/tournaments` collection, allowing for simple `list` operations without complex filtering (though filtering by status might be needed, which is acceptable).  Admin roles are managed via existence checks in `/roles_admin/{uid}`, ensuring secure administrative access.\n\nThis design allows for clear, concise security rules focused on path-based ownership and role-based access control, minimizing the need for complex rule logic and `get()` calls, thus enhancing both security and performance."
+  }
+}
