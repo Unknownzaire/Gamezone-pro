@@ -20,6 +20,13 @@ import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult, EmailAuthProvider, reauthenticateWithCredential, updatePassword } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 
+declare global {
+    interface Window {
+        recaptchaVerifier?: RecaptchaVerifier;
+        confirmationResult?: ConfirmationResult;
+    }
+}
+
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
     let socialIcon;
@@ -86,6 +93,14 @@ export default function ProfilePage() {
         supportEmail: 'support@gamezonepro.com',
     });
     const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
+    
+  useEffect(() => {
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (currentUser) {
@@ -195,7 +210,7 @@ export default function ProfilePage() {
       setNewPassword('');
     } catch (error: any) {
       let description = "An unexpected error occurred.";
-      if (error.code === 'auth/wrong-password') {
+       if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
         description = "The current password you entered is incorrect.";
       } else if (error.code === 'auth/weak-password') {
         description = "The new password is too weak. It must be at least 6 characters long.";
