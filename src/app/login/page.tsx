@@ -117,8 +117,6 @@ export default function LoginPage() {
           description: 'Your account has been blocked. Please contact support.',
         });
       } else {
-        // This case might be redundant if Firebase auth is the source of truth,
-        // but it's a good fallback.
         toast({
           variant: 'destructive',
           title: 'Login Failed',
