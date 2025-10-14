@@ -94,9 +94,9 @@ export default function LoginPage() {
       const { name, value } = e.target;
       
       let processedValue = value;
-      if (name === 'mobile') {
+      if (name === 'mobile' || name === 'bgmiId') {
         processedValue = value.replace(/[^0-9]/g, '');
-        if (processedValue.length > 10) return;
+        if (name === 'mobile' && processedValue.length > 10) return;
       }
       
       setSignupForm({
