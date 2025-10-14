@@ -298,7 +298,7 @@ export default function LoginPage() {
                             <Input id="signup-bgmiUsername" name="bgmiUsername" placeholder="In-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} ref={bgmiUsernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiIdRef)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="signup-bgmiId">Game ID</Label>
+                            <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
                             <Input id="signup-bgmiId" name="bgmiId" placeholder="Numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
                         </div>
                     </div>
