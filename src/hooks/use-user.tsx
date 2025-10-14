@@ -177,10 +177,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return 'error';
     }
-    if (allUsers.some(u => u.email.toLowerCase() === userDetails.email.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
-        return 'error';
-    }
     
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;

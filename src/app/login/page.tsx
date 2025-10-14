@@ -117,24 +117,35 @@ export default function LoginPage() {
           description: 'Your account has been blocked. Please contact support.',
         });
       } else {
+        // This case might be redundant if Firebase auth is the source of truth,
+        // but it's a good fallback.
         toast({
           variant: 'destructive',
           title: 'Login Failed',
           description: 'Invalid email or password. Please try again.',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Firebase login error:", error);
+      let description = 'An error occurred during login. Please try again later.';
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+        description = 'Invalid email or password. Please try again.';
+      }
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'An error occurred during login. Please check your credentials.',
+        description: description,
       });
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (allUsers.some(u => u.email.toLowerCase() === signupForm.email.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
+        return;
+    }
     
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
@@ -165,12 +176,18 @@ export default function LoginPage() {
             referralCode: '',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Firebase signup error:", error);
+      let description = 'An error occurred during sign up.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'This email address is already in use by another account.';
+      } else if (error.code === 'auth/weak-password') {
+        description = 'The password is too weak. It must be at least 6 characters long.';
+      }
       toast({
         variant: 'destructive',
         title: 'Sign Up Failed',
-        description: 'An error occurred during sign up. The email may already be in use.',
+        description: description,
       });
     }
   };
