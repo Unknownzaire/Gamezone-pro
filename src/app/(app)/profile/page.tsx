@@ -84,15 +84,8 @@ export default function ProfilePage() {
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
-
-  const [emailVerified, setEmailVerified] = useState(true);
-  const [mobileVerified, setMobileVerified] = useState(true);
   
   const [isEditing, setIsEditing] = useState(false);
-
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
 
    const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
         helplineNumber: '+911234567890',
@@ -107,8 +100,6 @@ export default function ProfilePage() {
       setBgmiUsername(currentUser.bgmiUsername || '');
       setBgmiId(currentUser.bgmiId || '');
       setMobile(currentUser.mobile || '');
-      setEmailVerified(currentUser.emailVerified || false);
-      setMobileVerified(currentUser.mobileVerified || false);
     }
      const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
     if (storedHelpSettings) {
@@ -141,10 +132,6 @@ export default function ProfilePage() {
         username,
       };
 
-      if (email !== currentUser.email && !emailVerified) {
-        toast({ variant: 'destructive', title: "Email Not Verified", description: "Please verify your new email address before saving." });
-        return;
-      }
       if (email !== currentUser.email) {
         if (!email.endsWith('@gmail.com')) {
           toast({ variant: 'destructive', title: 'Invalid Email', description: 'Only @gmail.com addresses are allowed.' });
@@ -153,10 +140,6 @@ export default function ProfilePage() {
         updatedFields.email = email;
       }
       
-      if (mobile !== currentUser.mobile && !mobileVerified) {
-        toast({ variant: 'destructive', title: "Mobile Not Verified", description: "Please verify your new mobile number before saving." });
-        return;
-      }
       if (mobile !== currentUser.mobile) {
         updatedFields.mobile = mobile;
       }
@@ -230,54 +213,6 @@ export default function ProfilePage() {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
   
-  const onVerifyMobile = async () => {
-    if (mobile.length !== 10) {
-      toast({ variant: 'destructive', title: 'Invalid Mobile Number', description: 'Please enter a valid 10-digit mobile number.' });
-      return;
-    }
-    
-    try {
-      if (!window.recaptchaVerifier) {
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-        });
-      }
-      const recaptchaVerifier = window.recaptchaVerifier;
-      const phoneNumber = `+91${mobile}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-      setConfirmationResult(confirmation);
-      setIsOtpDialogOpen(true);
-      toast({ title: 'OTP Sent', description: 'An OTP has been sent to your mobile number.' });
-    } catch (error: any) {
-        console.error("Error sending OTP:", error);
-        if (error.code === 'auth/billing-not-enabled') {
-            toast({
-                variant: 'destructive',
-                title: 'Billing Not Enabled',
-                description: "Phone authentication requires a billing account. Please enable billing in your Firebase project console to continue.",
-                duration: 10000,
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please try again.' });
-        }
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp || !confirmationResult) return;
-    try {
-      await confirmationResult.confirm(otp);
-      setMobileVerified(true);
-      updateUser({ mobileVerified: true, mobile: mobile });
-      setIsOtpDialogOpen(false);
-      setOtp('');
-      toast({ title: 'Verification Successful', description: 'Your mobile number has been verified.' });
-    } catch (error) {
-      console.error("OTP verification error:", error);
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect.' });
-    }
-  };
-
   if (!currentUser) {
     return (
       <div className="space-y-6">
@@ -396,7 +331,7 @@ export default function ProfilePage() {
                 <Label htmlFor="email">Email</Label>
                   <div className="flex items-center gap-2">
                       <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
-                      {emailVerified && <CheckCircle className="text-green-500" />}
+                      {currentUser.emailVerified && <CheckCircle className="text-green-500" />}
                   </div>
               </div>
               <div className="space-y-2">
@@ -407,10 +342,8 @@ export default function ProfilePage() {
                           if (numericValue.length <= 10) {
                             setMobile(numericValue);
                           }
-                      }} disabled={!isEditing || mobileVerified} />
-                      {mobileVerified ? <CheckCircle className="text-green-500" /> : isEditing && (
-                        <Button type="button" size="sm" onClick={onVerifyMobile} disabled={mobile.length !== 10}>Send OTP</Button>
-                      )}
+                      }} disabled={!isEditing} />
+                      {currentUser.mobileVerified && <CheckCircle className="text-green-500" />}
                   </div>
               </div>
               <Button onClick={handleUpdateProfile} className="w-full">
@@ -503,35 +436,6 @@ export default function ProfilePage() {
           </Button>
         </div>
       </div>
-      <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                <DialogTitle>Verify Your Number</DialogTitle>
-                <DialogDescription>
-                    Enter the 6-digit OTP sent to your mobile number.
-                </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2">
-                <Label htmlFor="otp">OTP</Label>
-                <Input
-                    id="otp"
-                    type="text"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="123456"
-                />
-                </div>
-                <DialogFooter>
-                <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleVerifyOtp} disabled={otp.length !== 6}>
-                    Verify OTP
-                </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
     </div>
   );
 }

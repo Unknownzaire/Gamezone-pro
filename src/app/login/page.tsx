@@ -55,13 +55,6 @@ export default function LoginPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [mobileVerified, setMobileVerified] = useState(false);
-  const [otp, setOtp] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
-  const [isOtpDialogOpen, setIsOtpDialogOpen] = useState(false);
-  const [verificationType, setVerificationType] = useState<'email' | 'mobile' | null>(null);
-  
   const usernameRef = useRef<HTMLInputElement>(null);
   const bgmiUsernameRef = useRef<HTMLInputElement>(null);
   const bgmiIdRef = useRef<HTMLInputElement>(null);
@@ -122,13 +115,6 @@ export default function LoginPage() {
           ...signupForm,
           [name]: processedValue
       });
-
-      if (name === 'email') {
-          setEmailVerified(false);
-      }
-      if (name === 'mobile') {
-          setMobileVerified(false);
-      }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -165,58 +151,6 @@ export default function LoginPage() {
     }
   };
 
-  const onVerifyMobile = async () => {
-    if (signupForm.mobile.length !== 10) {
-      toast({ variant: 'destructive', title: 'Invalid Mobile Number', description: 'Please enter a valid 10-digit mobile number.' });
-      return;
-    }
-    
-    try {
-      setVerificationType('mobile');
-      if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-            'size': 'invisible',
-          });
-      }
-      const recaptchaVerifier = window.recaptchaVerifier;
-      const phoneNumber = `+91${signupForm.mobile}`;
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-      setConfirmationResult(confirmation);
-      setIsOtpDialogOpen(true);
-      toast({ title: 'OTP Sent', description: 'An OTP has been sent to your mobile number.' });
-    } catch (error: any) {
-        console.error("Error sending OTP:", error);
-        if (error.code === 'auth/billing-not-enabled') {
-            toast({
-                variant: 'destructive',
-                title: 'Billing Not Enabled',
-                description: "Phone authentication requires a billing account. Please enable billing in your Firebase project console to continue.",
-                duration: 10000,
-            });
-        } else {
-            toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please try again.' });
-        }
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otp || !confirmationResult) return;
-    try {
-      await confirmationResult.confirm(otp);
-      if (verificationType === 'mobile') {
-        setMobileVerified(true);
-        updateUser({ mobileVerified: true, mobile: signupForm.mobile });
-      }
-      setIsOtpDialogOpen(false);
-      setOtp('');
-      toast({ title: 'Verification Successful', description: `Your ${verificationType} has been verified.` });
-    } catch (error) {
-      console.error("OTP verification error:", error);
-      toast({ variant: 'destructive', title: 'Invalid OTP', description: 'The OTP you entered is incorrect.' });
-    }
-  };
-
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -225,11 +159,6 @@ export default function LoginPage() {
       return;
     }
     
-    if (!mobileVerified) {
-      toast({ variant: 'destructive', title: 'Mobile Not Verified', description: 'Please verify your mobile number before signing up.' });
-      return;
-    }
-
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
@@ -241,10 +170,10 @@ export default function LoginPage() {
           bgmiId: signupForm.bgmiId,
           referralCode: signupForm.referralCode,
           googleId: userCredential.user.uid,
-          otp: otp,
+          otp: '',
       };
       
-      const result = signup(newUserDetails, signupForm.password, true, mobileVerified, signupForm.referralCode);
+      const result = signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
 
       if (result === 'success') {
         setActiveTab('login');
@@ -412,18 +341,13 @@ export default function LoginPage() {
                      <div className="space-y-2">
                         <Label htmlFor="signup-mobile">Mobile Number</Label>
                         <div className="flex items-center gap-2">
-                            <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} disabled={mobileVerified}/>
-                            {mobileVerified ? (
-                              <CheckCircle className="h-5 w-5 text-green-500" />
-                            ) : (
-                              <Button type="button" size="sm" onClick={onVerifyMobile} disabled={signupForm.mobile.length !== 10}>Send OTP</Button>
-                            )}
+                            <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
                         </div>
                     </div>
                      <div className="space-y-2">
                         <Label htmlFor="signup-email">Email</Label>
                          <div className="flex items-center gap-2">
-                            <Input id="signup-email" name="email" type="email" placeholder="you@gmail.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} disabled={emailVerified} />
+                            <Input id="signup-email" name="email" type="email" placeholder="you@gmail.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
                         </div>
                     </div>
                     <div className="space-y-2">
@@ -454,35 +378,6 @@ export default function LoginPage() {
             </Card>
           </TabsContent>
         </Tabs>
-        <Dialog open={isOtpDialogOpen} onOpenChange={setIsOtpDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                <DialogTitle>Verify Your Number</DialogTitle>
-                <DialogDescription>
-                    Enter the 6-digit OTP sent to your mobile number.
-                </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2">
-                <Label htmlFor="otp">OTP</Label>
-                <Input
-                    id="otp"
-                    type="text"
-                    maxLength={6}
-                    value={otp}
-                    onChange={(e) => setOtp(e.target.value)}
-                    placeholder="123456"
-                />
-                </div>
-                <DialogFooter>
-                <DialogClose asChild>
-                    <Button variant="outline">Cancel</Button>
-                </DialogClose>
-                <Button onClick={handleVerifyOtp} disabled={otp.length !== 6}>
-                    Verify OTP
-                </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
       </div>
     </div>
   );
