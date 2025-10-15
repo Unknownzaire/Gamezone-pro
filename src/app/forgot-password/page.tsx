@@ -42,6 +42,7 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
     try {
       await sendPasswordResetEmail(auth, emailInput);
+      // For security reasons, don't reveal if the user was found or not.
       toast({
         title: 'Password Reset Email Sent',
         description: 'If an account exists for this email, a password reset link has been sent. Please check your inbox.',
