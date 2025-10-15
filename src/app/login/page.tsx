@@ -101,6 +101,10 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!auth) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+        return;
+    }
     try {
       await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
       const loggedIn = login(loginForm.email, loginForm.password);
@@ -139,6 +143,11 @@ export default function LoginPage() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!auth) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+        return;
+    }
     
     if (allUsers.some(u => u.email.toLowerCase() === signupForm.email.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
@@ -191,6 +200,10 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
+    if (!auth) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+        return;
+    }
     const provider = new GoogleAuthProvider();
     try {
       const result = await signInWithPopup(auth, provider);
@@ -209,17 +222,33 @@ export default function LoginPage() {
           });
         }
       } else {
-        // New user, pre-fill the form
-        setSignupForm(prev => ({
-          ...prev,
-          username: googleUser.displayName || '',
-          email: googleUser.email || '',
-        }));
-        setActiveTab('signup');
-        toast({
-          title: 'Welcome!',
-          description: 'Please complete your registration details below.',
-        });
+        // New user: auto-signup and login
+        const randomPassword = Math.random().toString(36).slice(-8);
+        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+            username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
+            email: googleUser.email!,
+            googleId: googleUser.uid,
+            otp: '',
+        };
+
+        const signupResult = signup(newUserDetails, randomPassword, true, false);
+
+        if (signupResult === 'success') {
+          const loginResult = login(googleUser.email!, randomPassword);
+          if (loginResult === true) {
+             toast({
+              title: 'Welcome!',
+              description: 'Your account has been created.',
+            });
+            router.push('/home');
+          }
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Sign Up Failed',
+                description: 'Could not create your account. Please try again.',
+            });
+        }
       }
     } catch (error) {
       console.error("Google Sign-In Error: ", error);
