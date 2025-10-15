@@ -75,9 +75,9 @@ export default function ForgotPasswordPage() {
             <form onSubmit={handleSendEmailResetLink} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} disabled={isLoading} />
+                <Input id="email" type="email" placeholder="you@example.com" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} disabled={isLoading || !auth} />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || !auth}>
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
               </Button>
             </form>
