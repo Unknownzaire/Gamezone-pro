@@ -60,12 +60,11 @@ function ResetPasswordComponent() {
           setIsLoading(false);
         });
     }
-
   }, [searchParams, auth, router, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!oobCode) return;
+    if (!oobCode || !auth) return;
 
     if (newPassword !== confirmPassword) {
       toast({
