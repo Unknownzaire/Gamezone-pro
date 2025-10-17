@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Logo from "@/components/Logo";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useFirebase } from '@/firebase';
 import { sendPasswordResetEmail } from "firebase/auth";
@@ -78,6 +78,7 @@ export default function ForgotPasswordPage() {
                 <Input id="email" type="email" placeholder="you@example.com" required value={emailInput} onChange={(e) => setEmailInput(e.target.value)} disabled={isLoading || !auth} />
               </div>
               <Button type="submit" className="w-full" disabled={isLoading || !auth}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {isLoading ? 'Sending...' : 'Send Reset Link'}
               </Button>
             </form>
