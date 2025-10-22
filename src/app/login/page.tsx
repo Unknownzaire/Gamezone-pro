@@ -315,11 +315,17 @@ export default function LoginPage() {
         toast({ title: "OTP Sent", description: `An OTP has been sent to ${phoneNumber}.` });
     } catch (error: any) {
         console.error("SMS Error:", error);
-        toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please check the phone number or try again later.' });
+        let description = 'Please check the phone number or try again later.';
+        if (error.code === 'auth/billing-not-enabled') {
+            description = "Phone sign-in is not enabled for this project. Please enable billing in the Firebase console.";
+        }
+        toast({ variant: 'destructive', title: 'Failed to Send OTP', description: description });
         // Reset reCAPTCHA
         window.recaptchaVerifier?.render().then(widgetId => {
             // @ts-ignore
-            window.grecaptcha.reset(widgetId);
+            if (window.grecaptcha) {
+                window.grecaptcha.reset(widgetId);
+            }
         });
     } finally {
         setIsSendingOtp(false);
@@ -525,7 +531,7 @@ export default function LoginPage() {
               <CardHeader>
                 <CardTitle className="font-headline">Continue with Phone</CardTitle>
                 <CardDescription>
-                  {otpSent ? 'Enter the OTP sent to your phone.' : 'We\'ll send you a one-time password.'}
+                  {otpSent ? 'Enter the OTP sent to your phone.' : 'We\\'ll send you a one-time password.'}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
