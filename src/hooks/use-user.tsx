@@ -28,7 +28,7 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
   login: (email: string, password?: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -170,10 +170,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
     
     // Uniqueness checks
-    if (allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
+    if (userDetails.email && allUsers.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
+        return 'error';
+    }
+    if (userDetails.username && allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return 'error';
     }
@@ -254,7 +258,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setTransactions([]);
       setReferredUsers([]);
-      const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+      const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked', '/reset-password'];
       if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
           router.push('/login');
       }
@@ -296,7 +300,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (isUserLoading || loading) return;
 
     if (firebaseUser) {
-      const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email);
+      const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email || u.phoneNumber === firebaseUser.phoneNumber);
       if (liveUserData) {
         if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
           loadUserContext(liveUserData.id, allUsers, allTransactions);
@@ -307,7 +311,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.log("Firebase user found but no matching local user. Consider signup flow.");
       }
     } else {
-       const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked'];
+       const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked', '/reset-password'];
        if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
            logout();
        }

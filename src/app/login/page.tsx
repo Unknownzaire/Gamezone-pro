@@ -14,9 +14,16 @@ import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { useFirebase } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+
+declare global {
+    interface Window {
+        recaptchaVerifier?: RecaptchaVerifier;
+        confirmationResult?: ConfirmationResult;
+    }
+}
 
 export default function LoginPage() {
   const router = useRouter();
@@ -45,6 +52,12 @@ export default function LoginPage() {
       referralCode: referralCodeFromUrl || '',
   });
 
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   
@@ -56,6 +69,14 @@ export default function LoginPage() {
   const passwordRef = useRef<HTMLInputElement>(null);
   const referralCodeRef = useRef<HTMLInputElement>(null);
   const signupButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    return () => {
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+      }
+    };
+  }, []);
   
   useEffect(() => {
     if (user) {
@@ -157,7 +178,7 @@ export default function LoginPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
-      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'> = {
           username: signupForm.username,
           email: signupForm.email,
           mobile: signupForm.mobile,
@@ -224,7 +245,7 @@ export default function LoginPage() {
       } else {
         // New user: auto-signup and login
         const randomPassword = Math.random().toString(36).slice(-8);
-        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'> = {
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
             email: googleUser.email!,
             googleId: googleUser.uid,
@@ -260,16 +281,119 @@ export default function LoginPage() {
     }
   };
 
+  const setupRecaptcha = () => {
+    if (!auth) return;
+    if (!window.recaptchaVerifier) {
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': () => {
+          // reCAPTCHA solved, allow signInWithPhoneNumber.
+        }
+      });
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (!auth) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+        return;
+    }
+    if (!phone || phone.length !== 10) {
+        toast({ variant: 'destructive', title: 'Invalid Phone Number', description: 'Please enter a valid 10-digit phone number.' });
+        return;
+    }
+    
+    setIsSendingOtp(true);
+    setupRecaptcha();
+    const appVerifier = window.recaptchaVerifier!;
+    const phoneNumber = `+91${phone}`;
+
+    try {
+        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+        window.confirmationResult = confirmationResult;
+        setOtpSent(true);
+        toast({ title: "OTP Sent", description: `An OTP has been sent to ${phoneNumber}.` });
+    } catch (error: any) {
+        console.error("SMS Error:", error);
+        toast({ variant: 'destructive', title: 'Failed to Send OTP', description: 'Please check the phone number or try again later.' });
+        // Reset reCAPTCHA
+        window.recaptchaVerifier?.render().then(widgetId => {
+            // @ts-ignore
+            window.grecaptcha.reset(widgetId);
+        });
+    } finally {
+        setIsSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!window.confirmationResult) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Something went wrong. Please try sending the OTP again.' });
+        return;
+    }
+    if (otp.length !== 6) {
+        toast({ variant: 'destructive', title: 'Invalid OTP', description: 'Please enter the 6-digit OTP.' });
+        return;
+    }
+
+    setIsVerifyingOtp(true);
+    try {
+        const result = await window.confirmationResult.confirm(otp);
+        const firebaseUser = result.user;
+
+        const existingUser = allUsers.find(u => u.phoneNumber === firebaseUser.phoneNumber);
+        if (existingUser) {
+            if (login(existingUser.email, existingUser.password!)) {
+                toast({ title: 'Login Successful', description: 'Welcome back!' });
+                router.push('/home');
+            }
+        } else {
+            // New user via phone
+            const randomPassword = Math.random().toString(36).slice(-8);
+            const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+                username: `user${phone.slice(-4)}`,
+                email: `${firebaseUser.phoneNumber}@gamezone.pro`, // Placeholder email
+                phoneNumber: firebaseUser.phoneNumber!,
+                googleId: firebaseUser.uid,
+                otp: '',
+            };
+            const signupResult = signup(newUserDetails, randomPassword, false, true);
+
+            if (signupResult === 'success') {
+                const loginResult = login(newUserDetails.email, randomPassword);
+                if (loginResult) {
+                    toast({ title: 'Welcome!', description: 'Your account has been created.' });
+                    router.push('/home');
+                }
+            } else {
+                toast({ variant: 'destructive', title: 'Sign Up Failed', description: 'Could not create your account. Please try again.' });
+            }
+        }
+
+    } catch (error: any) {
+        console.error("OTP Verification Error:", error);
+        let description = 'An unexpected error occurred.';
+        if (error.code === 'auth/invalid-verification-code') {
+            description = 'The OTP you entered is incorrect. Please try again.';
+        }
+        toast({ variant: 'destructive', title: 'Verification Failed', description });
+    } finally {
+        setIsVerifyingOtp(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
+      <div id="recaptcha-container"></div>
       <div className="w-full max-w-md space-y-8">
         <div className="flex justify-center">
             <Logo />
         </div>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="phone">Phone</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
             <Card>
@@ -393,6 +517,47 @@ export default function LoginPage() {
                         Sign up with Google
                     </Button>
                 </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="phone">
+            <Card>
+              <CardHeader>
+                <CardTitle className="font-headline">Continue with Phone</CardTitle>
+                <CardDescription>
+                  {otpSent ? 'Enter the OTP sent to your phone.' : 'We\'ll send you a one-time password.'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!otpSent ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="phone">Phone Number</Label>
+                        <div className="flex items-center gap-2">
+                            <span className="rounded-md border border-input bg-background px-3 py-2 text-sm text-muted-foreground">+91</span>
+                            <Input id="phone" type="tel" placeholder="10-digit mobile number" value={phone} onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, '').slice(0,10))} />
+                        </div>
+                    </div>
+                    <Button onClick={handleSendOtp} className="w-full" disabled={isSendingOtp}>
+                      {isSendingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Send OTP
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="otp">One-Time Password</Label>
+                        <Input id="otp" type="text" placeholder="Enter 6-digit OTP" value={otp} onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0,6))} />
+                    </div>
+                     <Button onClick={handleVerifyOtp} className="w-full" disabled={isVerifyingOtp}>
+                       {isVerifyingOtp && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Verify OTP & Continue
+                    </Button>
+                     <Button variant="link" size="sm" className="w-full" onClick={() => setOtpSent(false)}>
+                        Change Phone Number
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
