@@ -28,7 +28,7 @@ interface UserContextType {
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
   login: (email: string, password?: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -170,7 +170,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'phoneNumber'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
     
     // Uniqueness checks
     if (userDetails.email && allUsers.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
@@ -253,6 +253,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = useCallback(() => {
+    if (!auth) return;
     signOut(auth).then(() => {
       sessionStorage.removeItem('currentUser');
       setUser(null);
@@ -300,7 +301,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (isUserLoading || loading) return;
 
     if (firebaseUser) {
-      const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email || u.phoneNumber === firebaseUser.phoneNumber);
+      const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email);
       if (liveUserData) {
         if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
           loadUserContext(liveUserData.id, allUsers, allTransactions);
