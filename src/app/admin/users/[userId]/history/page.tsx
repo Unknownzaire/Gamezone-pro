@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User, Tournament, Participant, Transaction } from '@/lib/types';
 import { mockTournaments, mockUsers, mockTransactions } from '@/lib/mock-data';
@@ -22,8 +22,9 @@ type UserMatchHistory = {
   participant: Participant;
 };
 
-export default function UserHistoryPage({ params }: { params: { userId: string } }) {
-  const { userId } = params;
+export default function UserHistoryPage() {
+  const params = useParams();
+  const userId = params.userId as string;
   const searchParams = useSearchParams();
   const router = useRouter();
   const initialTab = searchParams.get('tab') || 'matches';
