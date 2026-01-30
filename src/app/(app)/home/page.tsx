@@ -12,6 +12,8 @@ import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import Autoplay from "embla-carousel-autoplay";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
     <Link href={`/tournaments/${tournament.id}`}>
@@ -74,25 +76,42 @@ export default function HomePage() {
 
   return (
     <div className="space-y-6">
-        {activeAds.length > 0 && (
+      {activeAds.length > 0 && (
           <div className="space-y-4">
             <h2 className="font-headline text-2xl font-bold">Promotions</h2>
-            {activeAds.map((ad) => (
-                <Link href={ad.link} key={ad.id}>
-                    <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
-                        <div className="relative aspect-video w-full">
-                            <Image
-                                src={ad.imageUrl}
-                                alt={ad.title}
-                                fill
-                                className="object-cover"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                            <h3 className="absolute bottom-4 left-4 text-white font-bold text-xl font-headline">{ad.title}</h3>
-                        </div>
-                   </Card>
-                </Link>
-            ))}
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              plugins={[
+                Autoplay({
+                  delay: 5000,
+                }),
+              ]}
+              className="w-full"
+            >
+              <CarouselContent>
+                {activeAds.map((ad) => (
+                  <CarouselItem key={ad.id}>
+                    <Link href={ad.link}>
+                        <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
+                            <div className="relative aspect-video w-full">
+                                <Image
+                                    src={ad.imageUrl}
+                                    alt={ad.title}
+                                    fill
+                                    className="object-cover"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                                <h3 className="absolute bottom-4 left-4 text-white font-bold text-xl font-headline">{ad.title}</h3>
+                            </div>
+                       </Card>
+                    </Link>
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
           </div>
       )}
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
