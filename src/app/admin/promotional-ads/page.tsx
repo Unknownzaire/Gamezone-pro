@@ -22,11 +22,13 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { useRouter } from 'next/navigation';
 
 export default function AdminPromotionalAdsPage() {
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
   const [adToDelete, setAdToDelete] = useState<PromotionalAd | null>(null);
   const { toast } = useToast();
+  const router = useRouter();
   
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
@@ -71,7 +73,7 @@ export default function AdminPromotionalAdsPage() {
         setPromotionalAds(prev => [...prev, newAd]);
         toast({ title: 'Promotional Ad Created', description: `The ad "${title}" is now live.` });
         
-        setIsFormVisible(false);
+        router.push('/home');
     };
     reader.readAsDataURL(imageFile);
   };
