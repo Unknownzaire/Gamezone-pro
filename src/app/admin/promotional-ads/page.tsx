@@ -36,20 +36,15 @@ export default function AdminPromotionalAdsPage() {
   const [isFormVisible, setIsFormVisible] = useState(false);
 
   useEffect(() => {
-    if (isFormVisible && tournaments.length > 0) {
-      const firstTournament = tournaments[0];
-      if (firstTournament) {
-        handleTournamentLinkSelect(firstTournament.id);
-      }
-    } else {
+    if (!isFormVisible) {
       setTitle('');
       setLink('');
       setImageFile(null);
     }
-  }, [isFormVisible, tournaments]);
+  }, [isFormVisible]);
 
 
-  const handleCreateAd = (e: React.FormEvent) => {
+  const handleCreateAd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title || !link || !imageFile) {
       toast({
@@ -73,7 +68,7 @@ export default function AdminPromotionalAdsPage() {
         setPromotionalAds(prev => [...prev, newAd]);
         toast({ title: 'Promotional Ad Created', description: `The ad "${title}" is now live.` });
         
-        router.push('/home');
+        setIsFormVisible(false);
     };
     reader.readAsDataURL(imageFile);
   };
