@@ -11,8 +11,6 @@ import { Clock, Trophy, Users } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
-import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
-import Autoplay from "embla-carousel-autoplay";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
@@ -77,16 +75,12 @@ export default function HomePage() {
   return (
     <div className="space-y-6">
         {activeAds.length > 0 && (
-          <Carousel 
-            plugins={[Autoplay({ delay: 5000 })]}
-            opts={{ loop: true }}
-            className="w-full -mx-4 relative"
-          >
-            <CarouselContent>
-              {activeAds.map((ad) => (
-                <CarouselItem key={ad.id}>
-                    <Link href={ad.link}>
-                        <div className="relative aspect-video w-full overflow-hidden">
+          <div className="space-y-4">
+            <h2 className="font-headline text-2xl font-bold">Promotions</h2>
+            {activeAds.map((ad) => (
+                <Link href={ad.link} key={ad.id}>
+                    <Card className="overflow-hidden hover:bg-muted/50 transition-colors">
+                        <div className="relative aspect-video w-full">
                             <Image
                                 src={ad.imageUrl}
                                 alt={ad.title}
@@ -96,13 +90,10 @@ export default function HomePage() {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
                             <h3 className="absolute bottom-4 left-4 text-white font-bold text-xl font-headline">{ad.title}</h3>
                         </div>
-                   </Link>
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-             <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/30 border-none hover:bg-black/50 text-white" />
-             <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/30 border-none hover:bg-black/50 text-white" />
-          </Carousel>
+                   </Card>
+                </Link>
+            ))}
+          </div>
       )}
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
 
