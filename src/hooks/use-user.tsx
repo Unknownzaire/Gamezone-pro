@@ -121,6 +121,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, [loadInitialData]);
 
   useEffect(() => {
+    if (!loading) {
+      localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
+    }
+  }, [promotionalAds, loading]);
+  
+  useEffect(() => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
       // Check if the change is one we care about
