@@ -9,17 +9,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { cn } from '@/lib/utils';
+
 
 const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -29,6 +26,7 @@ export default function AdminPromotionsPage() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const { toast } = useToast();
+  const [open, setOpen] = useState(false);
 
   const loadUsers = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -119,19 +117,51 @@ export default function AdminPromotionsPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="user-select">Select User</Label>
-            <Select onValueChange={setSelectedUserId} value={selectedUserId}>
-              <SelectTrigger id="user-select">
-                <SelectValue placeholder="Select a user to credit" />
-              </SelectTrigger>
-              <SelectContent>
-                {users.map(user => (
-                  <SelectItem key={user.id} value={user.id}>
-                    {user.username} ({user.email})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Select User</Label>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
+                  className="w-full justify-between"
+                >
+                  {selectedUserId
+                    ? users.find((user) => user.id === selectedUserId)?.username
+                    : "Select a user to credit..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                <Command>
+                  <CommandInput placeholder="Search user..." />
+                  <CommandList>
+                    <CommandEmpty>No user found.</CommandEmpty>
+                    <CommandGroup>
+                      {users.map((user) => (
+                        <CommandItem
+                          key={user.id}
+                          value={user.username}
+                          onSelect={(currentValue) => {
+                            const userId = users.find(u => u.username.toLowerCase() === currentValue.toLowerCase())?.id || '';
+                            setSelectedUserId(userId);
+                            setOpen(false);
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {user.username} ({user.email})
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bonus-amount">Bonus Amount (₹)</Label>
