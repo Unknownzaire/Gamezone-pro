@@ -14,9 +14,10 @@ import Link from "next/link";
 import { useState, ChangeEvent, useRef, useEffect, KeyboardEvent } from "react";
 import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Loader2, AlertTriangle } from "lucide-react";
 import { useFirebase } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 
 declare global {
@@ -294,11 +295,11 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return;
     }
-    if (signupForm.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === signupForm.bgmiUsername?.toLowerCase())) {
+     if (signupForm.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === signupForm.bgmiUsername?.toLowerCase())) {
         toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already in use.' });
         return;
     }
-    if (signupForm.bgmiId && allUsers.some(u => u.bgmiId === signupForm.bgmiId)) {
+     if (signupForm.bgmiId && allUsers.some(u => u.bgmiId === signupForm.bgmiId)) {
         toast({ variant: 'destructive', title: 'BGMI User ID Taken', description: 'This BGMI User ID is already in use.' });
         return;
     }
@@ -488,6 +489,12 @@ export default function LoginPage() {
                         <Label htmlFor="signup-username">Username</Label>
                         <Input id="signup-username" name="username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} ref={usernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiUsernameRef)} />
                     </div>
+                     <Alert variant="destructive" className="bg-primary/10 border-primary/50 text-primary-foreground p-3">
+                      <AlertTriangle className="h-4 w-4 !text-primary" />
+                      <AlertDescription className="text-primary text-xs ml-6">
+                        PLEASE FILL CORRECT BGMI USERNAME AND BGMI USER ID. It cannot be changed later.
+                      </AlertDescription>
+                    </Alert>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
