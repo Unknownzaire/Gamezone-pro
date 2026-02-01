@@ -123,6 +123,7 @@ export default function AdminPromotionsPage() {
                   role="combobox"
                   aria-expanded={open}
                   className="w-full justify-between"
+                  id="user-select"
                 >
                   {selectedUserId
                     ? users.find((user) => user.id === selectedUserId)?.username
@@ -141,24 +142,19 @@ export default function AdminPromotionsPage() {
                         <CommandItem
                           key={user.id}
                           value={`${user.username} ${user.email}`}
-                          className="[&>[cmdk-item-content]]:w-full"
+                          onSelect={() => {
+                            setSelectedUserId(user.id);
+                            setOpen(false);
+                          }}
+                          className="flex items-center justify-between"
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <span>
-                              {user.username} ({user.email})
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedUserId(user.id);
-                                setOpen(false);
-                              }}
-                            >
-                              Select
-                            </Button>
-                          </div>
+                          <span>{user.username} ({user.email})</span>
+                          <Check
+                            className={cn(
+                              "ml-2 h-4 w-4",
+                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
                         </CommandItem>
                       ))}
                     </CommandGroup>
