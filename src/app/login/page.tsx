@@ -289,6 +289,20 @@ export default function LoginPage() {
         return;
     }
     
+    // Uniqueness checks
+    if (signupForm.username && allUsers.some(u => u.username.toLowerCase() === signupForm.username.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
+        return;
+    }
+    if (signupForm.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === signupForm.bgmiUsername?.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already in use.' });
+        return;
+    }
+    if (signupForm.bgmiId && allUsers.some(u => u.bgmiId === signupForm.bgmiId)) {
+        toast({ variant: 'destructive', title: 'BGMI User ID Taken', description: 'This BGMI User ID is already in use.' });
+        return;
+    }
+    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
