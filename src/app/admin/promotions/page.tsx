@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -122,6 +121,8 @@ export default function AdminPromotionsPage() {
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
+                  role="combobox"
+                  aria-expanded={open}
                   className="w-full justify-between"
                 >
                   {selectedUserId
@@ -131,7 +132,7 @@ export default function AdminPromotionsPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="p-0">
-                <DialogTitle className="sr-only">Select User</DialogTitle>
+                 <DialogTitle className="sr-only">Select User</DialogTitle>
                 <Command>
                   <CommandInput placeholder="Search user..." />
                   <CommandList>
@@ -140,9 +141,9 @@ export default function AdminPromotionsPage() {
                       {users.map((user) => (
                         <CommandItem
                           key={user.id}
-                          value={user.username}
-                          onSelect={() => {
-                            setSelectedUserId(user.id);
+                          value={user.id}
+                          onSelect={(currentValue) => {
+                            setSelectedUserId(currentValue);
                             setOpen(false);
                           }}
                         >
