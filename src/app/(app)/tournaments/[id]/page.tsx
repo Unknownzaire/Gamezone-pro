@@ -329,7 +329,7 @@ export default function TournamentDetailsPage() {
                     </Dialog>
                 </div>
             </div>
-            {tournament.status === 'Live' && tournament.roomId && (
+            {tournament.status === 'Live' && tournament.roomId && isAlreadyJoined && (
                  <Card className="bg-muted p-4">
                     <CardTitle className="text-lg mb-2">Live Match Details</CardTitle>
                     <div className="flex items-center gap-4 text-base">
