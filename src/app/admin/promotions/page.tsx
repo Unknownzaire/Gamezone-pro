@@ -127,7 +127,12 @@ export default function AdminPromotionsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Select User</Label>
-            <Dialog open={isUserSelectorOpen} onOpenChange={setIsUserSelectorOpen}>
+            <Dialog open={isUserSelectorOpen} onOpenChange={(isOpen) => {
+                setIsUserSelectorOpen(isOpen);
+                if (!isOpen) {
+                    setSearchTerm('');
+                }
+            }}>
               <DialogTrigger asChild>
                 <Button
                   variant="outline"
