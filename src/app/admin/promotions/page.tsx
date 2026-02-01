@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -142,26 +141,20 @@ export default function AdminPromotionsPage() {
                         <CommandItem
                           key={user.id}
                           value={`${user.username} ${user.email}`}
+                          onSelect={() => {
+                            setSelectedUserId(user.id);
+                            setOpen(false);
+                          }}
                         >
-                          <div className="flex items-center justify-between w-full">
-                              <span>
-                                  {user.username} ({user.email})
-                              </span>
-                              <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onPointerDown={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                  }}
-                                  onClick={() => {
-                                      setSelectedUserId(user.id);
-                                      setOpen(false);
-                                  }}
-                              >
-                                  Select
-                              </Button>
-                          </div>
+                          <span>
+                            {user.username} ({user.email})
+                          </span>
+                          <Check
+                            className={cn(
+                              "ml-auto h-4 w-4",
+                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
                         </CommandItem>
                       ))}
                     </CommandGroup>
