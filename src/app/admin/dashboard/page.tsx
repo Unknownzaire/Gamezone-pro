@@ -102,7 +102,7 @@ export default function AdminDashboardPage() {
     .reduce((acc, tx) => acc + tx.amount, 0);
     
   const totalPromotions = allTransactions
-    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('promotion') || tx.description.toLowerCase().includes('bonus') || tx.description.toLowerCase() === 'admin deposit'))
+    .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('promotion') || tx.description.toLowerCase().includes('bonus')))
     .reduce((acc, tx) => acc + tx.amount, 0);
 
   const totalReferredUsers = allUsers.filter(u => u.referredBy).length;
@@ -530,4 +530,5 @@ export default function AdminDashboardPage() {
     
 
     
+
 
