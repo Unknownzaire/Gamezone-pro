@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
@@ -131,6 +131,7 @@ export default function AdminPromotionsPage() {
                 </Button>
               </DialogTrigger>
               <DialogContent className="p-0">
+                <DialogTitle className="sr-only">Select User</DialogTitle>
                 <Command>
                   <CommandInput placeholder="Search user..." />
                   <CommandList>
