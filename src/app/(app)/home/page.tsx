@@ -12,7 +12,7 @@ import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Carousel, CarouselContent, CarouselItem } from "@/components/ui/carousel";
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
@@ -87,9 +87,10 @@ export default function HomePage() {
               plugins={[
                 Autoplay({
                   delay: 5000,
+                  stopOnInteraction: true,
                 }),
               ]}
-              className="w-full"
+              className="w-full group"
             >
               <CarouselContent>
                 {activeAds.map((ad) => (
@@ -111,6 +112,8 @@ export default function HomePage() {
                   </CarouselItem>
                 ))}
               </CarouselContent>
+              <CarouselPrevious className="absolute left-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-black/40 text-white hover:bg-black/60 border-none opacity-0 group-hover:opacity-100 transition-opacity" />
+              <CarouselNext className="absolute right-2 top-1/2 -translate-y-1/2 z-10 h-8 w-8 bg-black/40 text-white hover:bg-black/60 border-none opacity-0 group-hover:opacity-100 transition-opacity" />
             </Carousel>
           </div>
       )}
