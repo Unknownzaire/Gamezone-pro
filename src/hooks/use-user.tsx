@@ -187,6 +187,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return 'error';
     }
+    if (userDetails.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === userDetails.bgmiUsername?.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already in use.' });
+        return 'error';
+    }
     
     let newUserBonus = 0;
     let referredBy: string | undefined = undefined;
