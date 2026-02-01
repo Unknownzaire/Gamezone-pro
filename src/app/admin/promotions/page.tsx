@@ -141,19 +141,28 @@ export default function AdminPromotionsPage() {
                       {users.map((user) => (
                         <CommandItem
                           key={user.id}
-                          value={user.id}
-                          onSelect={(currentValue) => {
-                            setSelectedUserId(currentValue);
+                          value={`${user.username} ${user.email}`}
+                          onSelect={() => {
+                            setSelectedUserId(user.id);
                             setOpen(false);
                           }}
                         >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          {user.username} ({user.email})
+                          <div className="flex items-center justify-between w-full">
+                              <span>
+                                  {user.username} ({user.email})
+                              </span>
+                              <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={(e) => {
+                                      e.stopPropagation();
+                                      setSelectedUserId(user.id);
+                                      setOpen(false);
+                                  }}
+                              >
+                                  Select
+                              </Button>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
