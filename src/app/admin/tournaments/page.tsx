@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +12,13 @@ import { format } from "date-fns";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import type { Tournament } from "@/lib/types";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminTournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
+  const [tournamentToDelete, setTournamentToDelete] = useState<Tournament | null>(null);
+  const { toast } = useToast();
 
    useEffect(() => {
     const loadTournaments = () => {
@@ -41,6 +44,21 @@ export default function AdminTournamentsPage() {
       window.removeEventListener('storage', loadTournaments);
     };
   }, []);
+
+  const handleDeleteTournament = () => {
+    if (!tournamentToDelete) return;
+
+    const updatedTournaments = tournaments.filter(t => t.id !== tournamentToDelete.id);
+    setTournaments(updatedTournaments);
+    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+
+    toast({
+        title: "Tournament Deleted",
+        description: `The tournament "${tournamentToDelete.title}" has been successfully deleted.`,
+    });
+
+    setTournamentToDelete(null);
+  };
 
   return (
     <div className="space-y-6">
@@ -120,7 +138,7 @@ export default function AdminTournamentsPage() {
                         <Link href={`/admin/tournaments/${t.id}`}><DropdownMenuItem>Manage</DropdownMenuItem></Link>
                         <Link href={`/admin/tournaments/edit/${t.id}`}><DropdownMenuItem>Edit</DropdownMenuItem></Link>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500">Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-500" onClick={() => setTournamentToDelete(t)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -130,6 +148,21 @@ export default function AdminTournamentsPage() {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!tournamentToDelete} onOpenChange={(open) => !open && setTournamentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the tournament "{tournamentToDelete?.title}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
