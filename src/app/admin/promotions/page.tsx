@@ -11,10 +11,9 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
-
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -116,23 +115,21 @@ export default function AdminPromotionsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Select User</Label>
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
+            <Popover open={open} onOpenChange={setOpen}>
+              <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   role="combobox"
                   aria-expanded={open}
                   className="w-full justify-between"
-                  id="user-select"
                 >
                   {selectedUserId
                     ? users.find((user) => user.id === selectedUserId)?.username
                     : "Select a user to credit..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="p-0">
-                 <DialogTitle className="sr-only">Select User</DialogTitle>
+              </PopoverTrigger>
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                 <Command>
                   <CommandInput placeholder="Search user..." />
                   <CommandList>
@@ -146,22 +143,21 @@ export default function AdminPromotionsPage() {
                             setSelectedUserId(user.id);
                             setOpen(false);
                           }}
-                          className="flex items-center justify-between"
                         >
-                          <span>{user.username} ({user.email})</span>
                           <Check
                             className={cn(
-                              "ml-2 h-4 w-4",
+                              "mr-2 h-4 w-4",
                               selectedUserId === user.id ? "opacity-100" : "opacity-0"
                             )}
                           />
+                          <span>{user.username} ({user.email})</span>
                         </CommandItem>
                       ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
-              </DialogContent>
-            </Dialog>
+              </PopoverContent>
+            </Popover>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bonus-amount">Bonus Amount (₹)</Label>
