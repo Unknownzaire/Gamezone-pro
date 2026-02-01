@@ -141,9 +141,8 @@ export default function AdminPromotionsPage() {
                         <CommandItem
                           key={user.id}
                           value={user.username}
-                          onSelect={(currentValue) => {
-                            const userId = users.find(u => u.username.toLowerCase() === currentValue.toLowerCase())?.id || '';
-                            setSelectedUserId(userId);
+                          onSelect={() => {
+                            setSelectedUserId(user.id);
                             setOpen(false);
                           }}
                         >
