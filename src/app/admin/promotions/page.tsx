@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -142,10 +141,6 @@ export default function AdminPromotionsPage() {
                         <CommandItem
                           key={user.id}
                           value={`${user.username} ${user.email}`}
-                          onSelect={() => {
-                            setSelectedUserId(user.id);
-                            setOpen(false);
-                          }}
                         >
                           <div className="flex items-center justify-between w-full">
                               <span>
@@ -154,8 +149,7 @@ export default function AdminPromotionsPage() {
                               <Button
                                   variant="outline"
                                   size="sm"
-                                  onClick={(e) => {
-                                      e.stopPropagation();
+                                  onClick={() => {
                                       setSelectedUserId(user.id);
                                       setOpen(false);
                                   }}
