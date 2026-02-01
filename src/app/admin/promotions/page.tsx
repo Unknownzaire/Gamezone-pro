@@ -141,20 +141,24 @@ export default function AdminPromotionsPage() {
                         <CommandItem
                           key={user.id}
                           value={`${user.username} ${user.email}`}
-                          onSelect={() => {
-                            setSelectedUserId(user.id);
-                            setOpen(false);
-                          }}
+                          className="[&>[cmdk-item-content]]:w-full"
                         >
-                          <span>
-                            {user.username} ({user.email})
-                          </span>
-                          <Check
-                            className={cn(
-                              "ml-auto h-4 w-4",
-                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
+                          <div className="flex items-center justify-between w-full">
+                            <span>
+                              {user.username} ({user.email})
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedUserId(user.id);
+                                setOpen(false);
+                              }}
+                            >
+                              Select
+                            </Button>
+                          </div>
                         </CommandItem>
                       ))}
                     </CommandGroup>
