@@ -13,7 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { cn } from '@/lib/utils';
 
@@ -118,12 +118,10 @@ export default function AdminPromotionsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Select User</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
                   className="w-full justify-between"
                 >
                   {selectedUserId
@@ -131,8 +129,8 @@ export default function AdminPromotionsPage() {
                     : "Select a user to credit..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+              </DialogTrigger>
+              <DialogContent className="p-0">
                 <Command>
                   <CommandInput placeholder="Search user..." />
                   <CommandList>
@@ -160,8 +158,8 @@ export default function AdminPromotionsPage() {
                     </CommandGroup>
                   </CommandList>
                 </Command>
-              </PopoverContent>
-            </Popover>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bonus-amount">Bonus Amount (₹)</Label>
