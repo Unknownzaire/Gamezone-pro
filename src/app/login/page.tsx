@@ -492,7 +492,7 @@ export default function LoginPage() {
                      <Alert variant="destructive" className="bg-primary/10 border-primary/50 text-primary-foreground p-3">
                       <AlertTriangle className="h-4 w-4 !text-primary" />
                       <AlertDescription className="text-primary text-xs ml-6">
-                        PLEASE FILL CORRECT BGMI USERNAME AND BGMI USER ID. It cannot be changed later.
+                        PLEASE FILL CORRECT BGMI USERNAME AND BGMI USER ID. IT CANNOT BE CHANGED LATER.
                       </AlertDescription>
                     </Alert>
                      <div className="grid grid-cols-2 gap-4">
