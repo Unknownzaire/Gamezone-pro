@@ -1,186 +1,173 @@
 /**
- * @description This ruleset enforces a strict user-ownership model for user profiles and transactions,
- *              while allowing public read access to tournament information with owner-only writes.
- *              Admin privileges are granted based on the existence of a document in the /roles_admin/{userId} collection.
- * @dataStructure
- *  - /users/{userId}: Stores user profiles. Only the user themselves can read/write their profile.
- *  - /tournaments/{tournamentId}: Stores tournament details. Publicly readable, but only admins can create, update, or delete.
- *  - /users/{userId}/transactions/{transactionId}: Stores transaction history. Only the user themselves can read/write their transactions.
- *  - /tournaments/{tournamentId}/participants/{participantId}: Stores participant information.
- *                                                                 In this prototype, any signed-in user can join.
- *  - /roles_admin/{userId}: Grants admin privileges to a user. Only accessible to admins.
- * @keySecurityDecisions
- *  - User listing is explicitly denied.
- *  - Tournament data is publicly readable to facilitate discovery.
- *  - Admin role assignment is managed via document existence in `/roles_admin/{userId}`.
- * @denormalizationForAuthorization N/A
- *  - The rules are designed to minimize or eliminate the need for data denormalization in this initial prototype.
- *    However, the structure anticipates future expansion, such as adding tournament moderators, which would require
- *    denormalizing the moderator list into the `/tournaments/{tournamentId}/participants/{participantId}` documents.
- * @structuralSegregation
- *  - User-specific data (profiles, transactions) is stored under `/users/{userId}` to enforce strict ownership.
- *  - Public tournament data is stored in a separate `/tournaments` collection for easy discoverability.
+ * This ruleset enforces a security model for the Gamezone Pro application with a
+ * clear separation between private user data and public/managed data.
+ *
+ * Core Philosophy:
+ * The security model is primarily based on user ownership and administrative roles.
+ * User-specific data (profiles, transactions, participation history) is strictly
+ * private and can only be accessed by the owning user. Global data like tournaments
+ * is publicly readable but managed exclusively by administrators.
+ *
+ * Data Structure:
+ * - /users/{userId}: Contains private user profile data. All sensitive, user-specific
+ *   subcollections (transactions, participants) are nested under this path.
+ * - /roles_admin/{userId}: An access-control collection where the existence of a
+ *   document signifies that the user is an administrator.
+ * - /tournaments/{tournamentId}: A top-level collection for all tournament data,
+ *   intended for public read access.
+ *
+ * Key Security Decisions:
+ * - Strict User Data Isolation: All paths under /users/{userId} are governed by an
+ *   ownership check, preventing any user from accessing another user's data.
+ * - Admin-Managed Content: Tournaments are managed by users with an admin role,
+ *   defined by the existence of a document in the /roles_admin collection. This avoids
+ *   hardcoding UIDs and provides a flexible role system. Client-side modifications to
+ *   the roles collection are disallowed to prevent privilege escalation.
+ * - Public Listing is Deliberate: Only the /tournaments collection allows public
+ *   listing. Listing all users via /users is explicitly forbidden.
+ * - Authorization over Validation: In this prototyping stage, rules focus on *who*
+ *   can perform an action, not the exact *shape* of the data. Validation is limited to
+ *   fields critical for maintaining relational integrity and ownership (e.g., user IDs).
+ *
+ * Denormalization for Authorization:
+ * - Admin roles are stored in `/roles_admin/{userId}`. This allows a fast `exists()`
+ *   check to determine if a user is an admin without reading a user document, making
+ *   rules on other collections (like /tournaments) efficient and secure.
+ * - User participation records are stored under the user's own data tree
+ *   (`/users/{userId}/participants/{participantId}`). This scopes the data directly
+ *   to the owner, simplifying access control and avoiding complex queries or lookups
+ *   in the rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Grants access to a document if the signed-in user's UID matches the document ID.
-     * @param {string} userId - The user ID to check against.
-     * @returns {boolean} True if the user is signed in and their UID matches the userId, false otherwise.
-     */
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
+    // ------------------------------------------------------------------------
+    // Helper Functions
+    // ------------------------------------------------------------------------
 
     /**
-     * @description Checks if the user is signed in.
-     * @returns {boolean} True if the user is signed in, false otherwise.
+     * Checks if the user is authenticated.
      */
     function isSignedIn() {
       return request.auth != null;
     }
 
     /**
-     * @description Checks if the user exists
-     * @returns {boolean} True if the resource exists
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the foundation of the user-ownership model.
+     * @param userId The user ID to check against the request's auth UID.
      */
-    function isExisting() {
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    /**
+     * Checks if the document being accessed already exists in Firestore.
+     * Crucial for protecting against writes on non-existent documents.
+     */
+    function isExistingDoc() {
         return resource != null;
     }
 
     /**
-     * @description Checks if the user is the owner of the document, and the document exists.
-     * @param {string} userId - The user ID to check against.
-     * @returns {boolean} True if the user is the owner and the document exists, false otherwise.
+     * Checks if the authenticated user is the owner of an EXISTING document.
+     * Used for safe update and delete operations.
+     * @param userId The user ID to check against the request's auth UID.
      */
     function isExistingOwner(userId) {
-        return isOwner(userId) && isExisting();
+      return isOwner(userId) && isExistingDoc();
     }
 
     /**
-     * @description Determines if the requesting user has admin privileges by checking for the existence of a document in the /roles_admin/{userId} collection.
-     * @returns {boolean} True if the user is an admin, false otherwise.
+     * Checks if the user has administrative privileges.
+     * Admin status is determined by the existence of a document for the user
+     * in the /roles_admin collection.
      */
     function isAdmin() {
-        return exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
+      return isSignedIn() && exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid));
     }
 
-    /**
-     * @description Defines allowed data for creating a user, permitting 'id', 'username', 'email', 'walletBalance', 'createdAt', and 'googleId'.
-     * @returns {boolean} True if the data is valid, false otherwise.
-     */
-    function hasValidUserData() {
-      return request.resource.data.keys().hasOnly(['id', 'username', 'email', 'walletBalance', 'createdAt', 'googleId'])
-          && request.resource.data.id == request.auth.uid;
-    }
-
+    // ------------------------------------------------------------------------
+    // Collection Rules
+    // ------------------------------------------------------------------------
 
     /**
-     * @description
-     *   - This rule secures user profiles, allowing only the authenticated user to read and write their own data.
+     * @description Manages user profile documents.
      * @path /users/{userId}
-     * @allow
-     *   - (get, update, delete): Authenticated user with UID 'user123' reading/writing their own profile at /users/user123.
-     *   - (create): Authenticated user with UID 'user123' creating their profile at /users/user123, with data containing 'id': 'user123'.
-     * @deny
-     *   - (get, update, delete): Authenticated user with UID 'user456' attempting to read/write the profile of user 'user123' at /users/user123.
-     *   - (create): Authenticated user with UID 'user123' attempting to create a profile at /users/user456.
-     * @principle
-     *   - Enforces document ownership for all operations on user profiles.
+     * @allow A user (auth.uid='user123') can (create) their own user document at /users/user123.
+     * @deny An anonymous user cannot (get) any user document.
+     * @deny A logged-in user (auth.uid='user456') cannot (update) another user's document at /users/user123.
+     * @principle Restricts access to a user's own data tree (Ownership).
      */
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow list: if false; // User listing is not permitted.
-      allow create: if isOwner(userId) && hasValidUserData();
-      allow update: if isExistingOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
       allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description Manages a user's participation record in tournaments.
+       * @path /users/{userId}/participants/{participantId}
+       * @allow A user (auth.uid='user123') can (list) their own participation records at /users/user123/participants.
+       * @deny A user (auth.uid='user456') cannot (get) a record at /users/user123/participants/p1.
+       * @principle Inherits ownership from the parent document path.
+       */
+      match /participants/{participantId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
+
+      /**
+       * @description Manages a user's financial transaction history.
+       * @path /users/{userId}/transactions/{transactionId}
+       * @allow A user (auth.uid='user123') can (create) a new transaction at /users/user123/transactions/t1.
+       * @deny A user (auth.uid='user456') cannot (list) transactions at /users/user123/transactions.
+       * @principle Inherits ownership from the parent document path.
+       */
+      match /transactions/{transactionId} {
+        allow get: if isOwner(userId);
+        allow list: if isOwner(userId);
+        allow create: if isOwner(userId) && request.resource.data.userId == userId;
+        allow update: if isExistingOwner(userId) && request.resource.data.userId == resource.data.userId;
+        allow delete: if isExistingOwner(userId);
+      }
     }
 
     /**
-     * @description
-     *   - This rule secures transaction history for each user, allowing only the authenticated user to read and write their own transactions.
-     * @path /users/{userId}/transactions/{transactionId}
-     * @allow
-     *   - (get, update, delete): Authenticated user with UID 'user123' reading/writing their own transaction at /users/user123/transactions/txn456.
-     *   - (create): Authenticated user with UID 'user123' creating a transaction at /users/user123/transactions/txn456.
-     * @deny
-     *   - (get, update, delete): Authenticated user with UID 'user456' attempting to read/write the transaction of user 'user123' at /users/user123/transactions/txn456.
-     *   - (create): Authenticated user with UID 'user123' attempting to create a transaction at /users/user456/transactions/txn789.
-     * @principle
-     *   - Enforces document ownership for all operations on user transactions.
+     * @description Defines which users are administrators.
+     * @path /roles_admin/{userId}
+     * @allow An admin user can (get) a document at /roles_admin/anotherAdminId to check their status.
+     * @deny A non-admin user cannot (list) the collection.
+     * @deny No user can (create), (update), or (delete) roles from the client to prevent privilege escalation.
+     * @principle Role-based access control; client-side modifications are locked down.
      */
-    match /users/{userId}/transactions/{transactionId} {
-      allow get: if isOwner(userId);
-      allow list: if isOwner(userId);
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
-    }
-
-    /**
-     * @description
-     *   - This rule secures tournament data, allowing public read access but restricting create, update, and delete operations to admins only.
-     * @path /tournaments/{tournamentId}
-     * @allow
-     *   - (get, list): Any user (authenticated or not) can read the details of any tournament.
-     *   - (create, update, delete): Only a user who is authenticated and also an admin (as determined by the /roles_admin/{uid} collection) can create, update, or delete tournaments.
-     * @deny
-     *   - (create, update, delete): Any non-admin user attempting to create, update, or delete a tournament.
-     * @principle
-     *   - Allows public read access for tournaments while restricting write access to admins.
-     */
-    match /tournaments/{tournamentId} {
-      allow get: if true;
-      allow list: if true;
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExisting();
-      allow delete: if isAdmin() && isExisting();
-    }
-
-    /**
-     * @description
-     *   - This rule manages participant data for tournaments.
-     *   - In this prototype, any signed-in user can join a tournament. More sophisticated role-based access (e.g., tournament moderators)
-     *     would require denormalizing authorization data into the participant documents.
-     * @path /tournaments/{tournamentId}/participants/{participantId}
-     * @allow
-     *   - (get, list, create): Any signed-in user can read/list participants or join a tournament.
-     *   - (update, delete): No one can update or delete participant data in this prototype.  These operations would require
-     *     additional security considerations and potentially denormalized authorization data.
-     * @deny
-     *   - (update, delete): All users are denied the ability to update or delete participant data.
-     * @principle
-     *   - Allows any signed-in user to join a tournament (create a participant document).
-     *   - This is a simplified rule for the prototype. Future iterations should include stricter access control based on tournament roles.
-     */
-    match /tournaments/{tournamentId}/participants/{participantId} {
-      allow get: if isSignedIn();
-      allow list: if isSignedIn();
-      allow create: if isSignedIn();
+    match /roles_admin/{userId} {
+      allow get: if isAdmin();
+      allow list: if isAdmin();
+      allow create: if false;
       allow update: if false;
       allow delete: if false;
     }
 
     /**
-     * @description
-     *   - This rule manages admin roles. Only admins can create/delete admin roles.
-     *   - The existence of a document in this collection grants admin privileges to the corresponding user.
-     * @path /roles_admin/{userId}
-     * @allow
-     *   - (get, create, update, delete): Only a user who is already an admin can manage other admin roles.
-     * @deny
-     *   - (get, create, update, delete): Any non-admin user attempting to manage admin roles.
-     * @principle
-     *   - Enforces strict admin-only access for managing admin roles.
+     * @description Manages public tournament information.
+     * @path /tournaments/{tournamentId}
+     * @allow Any user, including anonymous ones, can (get) or (list) tournaments.
+     * @deny A non-admin user cannot (create) a new tournament.
+     * @deny A logged-in user who is not an admin cannot (update) a tournament.
+     * @principle Public read access with writes restricted to administrators.
      */
-    match /roles_admin/{userId} {
-      allow get: if isAdmin();
-      allow list: if isAdmin();
-      allow create: if isAdmin();
-      allow update: if isAdmin() && isExisting();
-      allow delete: if isAdmin() && isExisting();
+    match /tournaments/{tournamentId} {
+      allow get: if true;
+      allow list: if true;
+      allow create: if isAdmin() && request.resource.data.id == tournamentId;
+      allow update: if isAdmin() && isExistingDoc();
+      allow delete: if isAdmin() && isExistingDoc();
     }
   }
 }
