@@ -289,11 +289,6 @@ export default function LoginPage() {
         return;
     }
     
-    if (allUsers.some(u => u.email.toLowerCase() === signupForm.email.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
-        return;
-    }
-    
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
