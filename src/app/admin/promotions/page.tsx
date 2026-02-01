@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -149,6 +150,10 @@ export default function AdminPromotionsPage() {
                               <Button
                                   variant="outline"
                                   size="sm"
+                                  onPointerDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                  }}
                                   onClick={() => {
                                       setSelectedUserId(user.id);
                                       setOpen(false);
