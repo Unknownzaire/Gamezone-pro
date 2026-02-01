@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -9,11 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, Check, ChevronsUpDown } from 'lucide-react';
+import { ArrowLeft, ChevronsUpDown } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
-import { cn } from '@/lib/utils';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
@@ -23,7 +23,9 @@ export default function AdminPromotionsPage() {
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
   const { toast } = useToast();
-  const [open, setOpen] = useState(false);
+  const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
 
   const loadUsers = useCallback(() => {
     const storedUsers = localStorage.getItem('allUsers');
@@ -89,6 +91,16 @@ export default function AdminPromotionsPage() {
     setAmount('');
     setDescription('');
   };
+  
+  const handleUserSelect = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsUserSelectorOpen(false);
+  }
+
+  const filteredUsers = users.filter(user => 
+    user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -115,12 +127,10 @@ export default function AdminPromotionsPage() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Select User</Label>
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
+            <Dialog open={isUserSelectorOpen} onOpenChange={setIsUserSelectorOpen}>
+              <DialogTrigger asChild>
                 <Button
                   variant="outline"
-                  role="combobox"
-                  aria-expanded={open}
                   className="w-full justify-between"
                 >
                   {selectedUserId
@@ -128,36 +138,33 @@ export default function AdminPromotionsPage() {
                     : "Select a user to credit..."}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                <Command>
-                  <CommandInput placeholder="Search user..." />
-                  <CommandList>
-                    <CommandEmpty>No user found.</CommandEmpty>
-                    <CommandGroup>
-                      {users.map((user) => (
-                        <CommandItem
-                          key={user.id}
-                          value={`${user.username} ${user.email}`}
-                          onSelect={() => {
-                            setSelectedUserId(user.id);
-                            setOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <span>{user.username} ({user.email})</span>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Select a User</DialogTitle>
+                </DialogHeader>
+                <div className="flex flex-col gap-4">
+                    <Input 
+                        placeholder="Search by username or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                    <ScrollArea className="h-72">
+                        <div className="space-y-2 pr-4">
+                            {filteredUsers.map(user => (
+                                <div key={user.id} className="flex items-center justify-between gap-2 rounded-md border p-3">
+                                    <div>
+                                        <p className="font-semibold">{user.username}</p>
+                                        <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    </div>
+                                    <Button size="sm" onClick={() => handleUserSelect(user.id)}>Select</Button>
+                                </div>
+                            ))}
+                        </div>
+                    </ScrollArea>
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="space-y-2">
             <Label htmlFor="bonus-amount">Bonus Amount (₹)</Label>
