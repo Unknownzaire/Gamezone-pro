@@ -2,7 +2,7 @@
 import { User, Tournament, Participant, Transaction } from './types';
 
 const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
-  const bgmiId = `5${Math.floor(100000000 + Math.random() * 900000000)}`;
+  const gameId = `5${Math.floor(100000000 + Math.random() * 900000000)}`;
   return {
     id: `user-${i + 1}`,
     username: `Player${i + 1}`,
@@ -12,11 +12,12 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
     referralBalance: i < 2 ? 50 : 0, // First two users have some referral balance
     avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
     mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
-    bgmiUsername: `Player${i + 1}BGMI`,
-    bgmiId: bgmiId,
+    primaryGame: 'BGMI',
+    inGameUsername: `Player${i + 1}BGMI`,
+    inGameId: gameId,
     createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
     referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
-    referralCode: bgmiId,
+    referralCode: gameId,
   }
 });
 

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function EditUserPage() {
   const params = useParams();
@@ -53,6 +54,10 @@ export default function EditUserPage() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -126,12 +131,25 @@ export default function EditUserPage() {
                 <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} onChange={(e) => setTotalDeposits(Number(e.target.value))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bgmiUsername">BGMI Username</Label>
-              <Input id="bgmiUsername" name="bgmiUsername" value={formData.bgmiUsername || ''} onChange={handleChange} />
+                <Label htmlFor="primaryGame">Primary Game</Label>
+                <Select name="primaryGame" value={formData.primaryGame} onValueChange={(value) => handleSelectChange('primaryGame', value)}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a game" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="BGMI">BGMI</SelectItem>
+                        <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                        <SelectItem value="COD">COD</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="bgmiId">BGMI ID</Label>
-              <Input id="bgmiId" name="bgmiId" value={formData.bgmiId || ''} onChange={handleChange} />
+              <Label htmlFor="inGameUsername">In-Game Username</Label>
+              <Input id="inGameUsername" name="inGameUsername" value={formData.inGameUsername || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="inGameId">In-Game ID</Label>
+              <Input id="inGameId" name="inGameId" value={formData.inGameId || ''} onChange={handleChange} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="referralCode">Referral Code</Label>

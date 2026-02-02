@@ -19,6 +19,7 @@ import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
@@ -70,8 +71,9 @@ export default function ProfilePage() {
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [bgmiUsername, setBgmiUsername] = useState('');
-  const [bgmiId, setBgmiId] = useState('');
+  const [primaryGame, setPrimaryGame] = useState<'BGMI' | 'FREE FIRE' | 'COD' | undefined>();
+  const [inGameUsername, setInGameUsername] = useState('');
+  const [inGameId, setInGameId] = useState('');
   const [mobile, setMobile] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -94,8 +96,9 @@ export default function ProfilePage() {
     if (currentUser) {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
-      setBgmiUsername(currentUser.bgmiUsername || '');
-      setBgmiId(currentUser.bgmiId || '');
+      setPrimaryGame(currentUser.primaryGame);
+      setInGameUsername(currentUser.inGameUsername || '');
+      setInGameId(currentUser.inGameId || '');
       setMobile(currentUser.mobile || '');
     }
      const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
@@ -122,8 +125,9 @@ export default function ProfilePage() {
     if (currentUser) {
       const updatedFields: Partial<User> = {
         username,
-        bgmiUsername,
-        bgmiId,
+        primaryGame,
+        inGameUsername,
+        inGameId,
         mobile,
       };
       
@@ -152,11 +156,12 @@ export default function ProfilePage() {
 
       const updatedFields: Partial<User> = {
           username,
-          bgmiUsername,
-          bgmiId,
+          inGameUsername,
+          inGameId,
           mobile,
           email,
           emailVerified: false,
+          primaryGame,
       };
       
       updateUser(updatedFields);
@@ -274,7 +279,7 @@ export default function ProfilePage() {
     );
   }
 
-  const bgmiDetailsSet = !!currentUser.bgmiUsername && !!currentUser.bgmiId;
+  const gameDetailsSet = !!currentUser.primaryGame && !!currentUser.inGameUsername && !!currentUser.inGameId;
 
   return (
     <div className="space-y-6">
@@ -363,12 +368,25 @@ export default function ProfilePage() {
                 <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={!isEditing} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bgmiUsername">BGMI Username</Label>
-                <Input id="bgmiUsername" value={bgmiUsername} onChange={(e) => setBgmiUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing || bgmiDetailsSet} />
+                <Label htmlFor="primaryGame">Primary Game</Label>
+                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={!isEditing || gameDetailsSet}>
+                    <SelectTrigger id="primaryGame">
+                        <SelectValue placeholder="Select your main game" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="BGMI">BGMI</SelectItem>
+                        <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                        <SelectItem value="COD">COD</SelectItem>
+                    </SelectContent>
+                </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="bgmiId">BGMI User ID</Label>
-                <Input id="bgmiId" value={bgmiId} onChange={(e) => setBgmiId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || bgmiDetailsSet} />
+                <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
+                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing || gameDetailsSet} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
+                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || gameDetailsSet} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>

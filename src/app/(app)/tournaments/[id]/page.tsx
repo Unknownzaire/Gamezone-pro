@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -318,7 +319,7 @@ export default function TournamentDetailsPage() {
                                 <div>
                                   <p className="font-semibold">{p.user.username}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {p.user.bgmiUsername} ({p.user.bgmiId})
+                                    {p.user.inGameUsername} ({p.user.inGameId})
                                   </p>
                                 </div>
                                 </div>

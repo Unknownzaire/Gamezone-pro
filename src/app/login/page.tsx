@@ -18,6 +18,7 @@ import { Eye, EyeOff, Loader2, AlertTriangle } from "lucide-react";
 import { useFirebase } from '@/firebase';
 import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 
 export default function LoginPage() {
@@ -39,8 +40,9 @@ export default function LoginPage() {
 
   const [signupForm, setSignupForm] = useState({
       username: '',
-      bgmiUsername: '',
-      bgmiId: '',
+      primaryGame: 'BGMI' as 'BGMI' | 'FREE FIRE' | 'COD',
+      inGameUsername: '',
+      inGameId: '',
       mobile: '',
       email: '',
       password: '',
@@ -51,8 +53,8 @@ export default function LoginPage() {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   
   const usernameRef = useRef<HTMLInputElement>(null);
-  const bgmiUsernameRef = useRef<HTMLInputElement>(null);
-  const bgmiIdRef = useRef<HTMLInputElement>(null);
+  const inGameUsernameRef = useRef<HTMLInputElement>(null);
+  const inGameIdRef = useRef<HTMLInputElement>(null);
   const mobileRef = useRef<HTMLInputElement>(null);
   const emailRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -92,7 +94,7 @@ export default function LoginPage() {
         processedValue = value.replace(/[^0-9]/g, '');
         if (processedValue.length > 10) return;
       }
-       if (name === 'bgmiId') {
+       if (name === 'inGameId') {
         processedValue = value.replace(/[^0-9]/g, '');
       }
       
@@ -101,6 +103,13 @@ export default function LoginPage() {
           [name]: processedValue
       });
   };
+  
+  const handleSignupSelectChange = (value: string) => {
+      setSignupForm({
+          ...signupForm,
+          primaryGame: value as any
+      });
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,12 +166,12 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return;
     }
-     if (signupForm.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === signupForm.bgmiUsername?.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already in use.' });
+     if (signupForm.inGameUsername && allUsers.some(u => u.inGameUsername?.toLowerCase() === signupForm.inGameUsername?.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'In-Game Username Taken', description: 'This in-game username is already in use.' });
         return;
     }
-     if (signupForm.bgmiId && allUsers.some(u => u.bgmiId === signupForm.bgmiId)) {
-        toast({ variant: 'destructive', title: 'BGMI User ID Taken', description: 'This BGMI User ID is already in use.' });
+     if (signupForm.inGameId && allUsers.some(u => u.inGameId === signupForm.inGameId)) {
+        toast({ variant: 'destructive', title: 'In-Game User ID Taken', description: 'This in-game User ID is already in use.' });
         return;
     }
     
@@ -173,8 +182,9 @@ export default function LoginPage() {
           username: signupForm.username,
           email: signupForm.email,
           mobile: signupForm.mobile,
-          bgmiUsername: signupForm.bgmiUsername,
-          bgmiId: signupForm.bgmiId,
+          primaryGame: signupForm.primaryGame,
+          inGameUsername: signupForm.inGameUsername,
+          inGameId: signupForm.inGameId,
           referralCode: signupForm.referralCode,
           googleId: userCredential.user.uid,
           otp: '',
@@ -187,8 +197,9 @@ export default function LoginPage() {
         setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
         setSignupForm({
             username: '',
-            bgmiUsername: '',
-            bgmiId: '',
+            primaryGame: 'BGMI',
+            inGameUsername: '',
+            inGameId: '',
             mobile: '',
             email: '',
             password: '',
@@ -347,22 +358,35 @@ export default function LoginPage() {
                 <form onSubmit={handleSignUp} className="space-y-4">
                     <div className="space-y-2">
                         <Label htmlFor="signup-username">Username</Label>
-                        <Input id="signup-username" name="username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} ref={usernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiUsernameRef)} />
+                        <Input id="signup-username" name="username" placeholder="PlayerOne" required onChange={handleSignupChange} value={signupForm.username} ref={usernameRef} onKeyDown={(e) => handleKeyDown(e, inGameUsernameRef)} />
                     </div>
                      <Alert variant="destructive" className="bg-primary/10 border-primary/50 text-primary-foreground p-3">
                       <AlertTriangle className="h-4 w-4 !text-primary" />
                       <AlertDescription className="text-primary text-xs ml-6">
-                        PLEASE FILL CORRECT BGMI USERNAME AND BGMI USER ID. IT CANNOT BE CHANGED LATER.
+                        PLEASE FILL CORRECT IN-GAME DETAILS. IT CANNOT BE CHANGED LATER.
                       </AlertDescription>
                     </Alert>
+                    <div className="space-y-2">
+                        <Label htmlFor="signup-primaryGame">Primary Game</Label>
+                        <Select name="primaryGame" onValueChange={handleSignupSelectChange} value={signupForm.primaryGame}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select your primary game" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="BGMI">BGMI</SelectItem>
+                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                                <SelectItem value="COD">COD</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
                      <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="signup-bgmiUsername">BGMI Username</Label>
-                            <Input id="signup-bgmiUsername" name="bgmiUsername" placeholder="In-game name" onChange={handleSignupChange} value={signupForm.bgmiUsername} ref={bgmiUsernameRef} onKeyDown={(e) => handleKeyDown(e, bgmiIdRef)} />
+                            <Label htmlFor="signup-inGameUsername">{signupForm.primaryGame} Username</Label>
+                            <Input id="signup-inGameUsername" name="inGameUsername" placeholder="In-game name" onChange={handleSignupChange} value={signupForm.inGameUsername} ref={inGameUsernameRef} onKeyDown={(e) => handleKeyDown(e, inGameIdRef)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="signup-bgmiId">BGMI User ID</Label>
-                            <Input id="signup-bgmiId" name="bgmiId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.bgmiId} ref={bgmiIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
+                            <Label htmlFor="signup-inGameId">{signupForm.primaryGame} User ID</Label>
+                            <Input id="signup-inGameId" name="inGameId" placeholder="Your numeric game ID" onChange={handleSignupChange} value={signupForm.inGameId} ref={inGameIdRef} onKeyDown={(e) => handleKeyDown(e, mobileRef)} />
                         </div>
                     </div>
                      <div className="space-y-2">

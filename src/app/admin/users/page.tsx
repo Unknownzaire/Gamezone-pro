@@ -201,9 +201,8 @@ export default function AdminUsersPage() {
                 <TableHead>Available Balance</TableHead>
                 <TableHead>Total Balance</TableHead>
                 <TableHead>Total Deposits</TableHead>
-                <TableHead>User OTP</TableHead>
+                <TableHead>Game Info</TableHead>
                 <TableHead>OTP Authentication</TableHead>
-                <TableHead>BGMI Username</TableHead>
                 <TableHead>Mobile</TableHead>
                 <TableHead>Referred By</TableHead>
                 <TableHead>Total Referrals</TableHead>
@@ -233,14 +232,19 @@ export default function AdminUsersPage() {
                   <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                   <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell>{user.otp}</TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      <p className="font-bold">{user.primaryGame}</p>
+                      <p>{user.inGameUsername}</p>
+                      <p className="text-muted-foreground">{user.inGameId}</p>
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                        {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}
                        {user.mobileVerified && <Phone className="h-4 w-4 text-green-500" title="Mobile Verified" />}
                     </div>
                   </TableCell>
-                  <TableCell>{user.bgmiUsername}</TableCell>
                   <TableCell>{user.mobile}</TableCell>
                   <TableCell>
                     {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
@@ -341,6 +345,3 @@ export default function AdminUsersPage() {
     </div>
   );
 }
-
-
-

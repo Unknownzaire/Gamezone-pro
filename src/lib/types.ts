@@ -1,5 +1,4 @@
 
-
 export type PrizeDistribution = {
   rank: string; // e.g., "1", "2", "3", "4-10"
   percentage: number; // e.g., 50 for 50%
@@ -84,8 +83,9 @@ export type User = {
   avatarUrl: string;
   coverImageUrl?: string;
   mobile?: string;
-  bgmiUsername?: string;
-  bgmiId?: string;
+  primaryGame?: 'BGMI' | 'FREE FIRE' | 'COD';
+  inGameUsername?: string;
+  inGameId?: string;
   isBlocked?: boolean;
   createdAt: Date;
   totalDeposits?: number;
