@@ -56,7 +56,23 @@ export const mockParticipants: Participant[] = [
       tournamentId: 't-1',
       result: null,
       joinedAt: new Date('2025-09-16T11:00:00Z')
-    }
+    },
+    // Participants for t-6 (FREE FIRE Completed)
+    ...mockUsers.slice(75, 85).map((user, index) => ({
+      id: `p-t6-${index + 1}`,
+      user,
+      tournamentId: 't-6',
+      result: index === 0 ? 'Winner' : 'Participated',
+      joinedAt: new Date(new Date('2025-09-12T18:30:00Z').getTime() - (10-index) * 60000)
+    })),
+    // Participants for t-7 (COD Live)
+    ...mockUsers.slice(85, 95).map((user, index) => ({
+      id: `p-t7-${index + 1}`,
+      user,
+      tournamentId: 't-7',
+      result: null,
+      joinedAt: new Date(new Date('2025-09-16T14:00:00Z').getTime() - (10-index) * 60000)
+    })),
 ];
 
 export const mockTournaments: Tournament[] = [
@@ -114,6 +130,61 @@ export const mockTournaments: Tournament[] = [
     participants: [],
     imageUrl: 'https://picsum.photos/seed/4/600/400',
     imageHint: 'team soldier'
+  },
+  {
+    id: 't-5',
+    title: 'Inferno Arena',
+    gameName: 'FREE FIRE',
+    entryFee: 25,
+    prizePool: 2500,
+    matchTime: new Date('2025-09-20T20:00:00Z'),
+    status: 'Upcoming',
+    commissionPercentage: 15,
+    participants: [],
+    imageUrl: 'https://picsum.photos/seed/5/600/400',
+    imageHint: 'fire arena'
+  },
+  {
+    id: 't-6',
+    title: 'Coastal Clash',
+    gameName: 'FREE FIRE',
+    entryFee: 50,
+    prizePool: 4000,
+    matchTime: new Date('2025-09-12T18:30:00Z'),
+    status: 'Completed',
+    commissionPercentage: 10,
+    participants: mockParticipants.filter(p => p.tournamentId === 't-6'),
+    winner: mockUsers[75],
+    imageUrl: 'https://picsum.photos/seed/6/600/400',
+    imageHint: 'beach battle'
+  },
+  {
+    id: 't-7',
+    title: 'Urban Warfare',
+    gameName: 'COD',
+    entryFee: 150,
+    prizePool: 15000,
+    matchTime: new Date('2025-09-16T14:00:00Z'),
+    status: 'Live',
+    roomId: 'CODWAR',
+    roomPassword: 'WARZONE',
+    commissionPercentage: 10,
+    participants: mockParticipants.filter(p => p.tournamentId === 't-7'),
+    imageUrl: 'https://picsum.photos/seed/7/600/400',
+    imageHint: 'city war'
+  },
+  {
+    id: 't-8',
+    title: 'Frostbite Ops',
+    gameName: 'COD',
+    entryFee: 100,
+    prizePool: 8000,
+    matchTime: new Date('2025-09-25T22:00:00Z'),
+    status: 'Upcoming',
+    commissionPercentage: 12,
+    participants: [],
+    imageUrl: 'https://picsum.photos/seed/8/600/400',
+    imageHint: 'snow combat'
   },
 ];
 
