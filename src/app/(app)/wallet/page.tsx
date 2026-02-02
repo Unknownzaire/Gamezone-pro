@@ -316,8 +316,8 @@ export default function WalletPage() {
   const sortTransactions = (txs: Transaction[]) => [...txs].sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const allSortedTransactions = sortTransactions(transactions);
-  const creditTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'credit' && tx.status === 'completed'));
-  const debitTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'debit' && tx.status === 'completed'));
+  const creditTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'credit'));
+  const debitTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.type === 'debit'));
   const pendingTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'pending'));
   const declinedTransactions = sortTransactions(allSortedTransactions.filter(tx => tx.status === 'declined'));
   
@@ -510,14 +510,14 @@ export default function WalletPage() {
              <TabsContent value="credit" className="mt-4">
                 <Card>
                     <CardContent className="p-0">
-                       <TransactionList transactions={creditTransactions} />
+                       <TransactionList transactions={creditTransactions} showStatus={true} />
                     </CardContent>
                 </Card>
             </TabsContent>
              <TabsContent value="debit" className="mt-4">
                 <Card>
                     <CardContent className="p-0">
-                       <TransactionList transactions={debitTransactions} />
+                       <TransactionList transactions={debitTransactions} showStatus={true} />
                     </CardContent>
                 </Card>
             </TabsContent>
