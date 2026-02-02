@@ -66,28 +66,44 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
     </Link>
 );
 
+const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: Tournament[]}) => {
+    const gameTournaments = tournaments.filter(t => t.gameName === gameName);
+    const upcoming = gameTournaments.filter(t => t.status === 'Upcoming');
+    const live = gameTournaments.filter(t => t.status === 'Live');
+    const completed = gameTournaments.filter(t => t.status === 'Completed');
+
+    if (gameTournaments.length === 0) {
+        return <p className="text-muted-foreground text-center py-8">No {gameName} tournaments.</p>;
+    }
+
+    return (
+        <Tabs defaultValue="upcoming" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="upcoming">Upcoming</TabsTrigger>
+                <TabsTrigger value="live">Live</TabsTrigger>
+                <TabsTrigger value="completed">Completed</TabsTrigger>
+            </TabsList>
+            <TabsContent value="upcoming" className="mt-4 space-y-4">
+                {upcoming.length > 0 ? upcoming.map((t) => (
+                    <TournamentCard key={t.id} tournament={t} />
+                )) : <p className="text-muted-foreground text-center py-8">No upcoming {gameName} tournaments.</p>}
+            </TabsContent>
+            <TabsContent value="live" className="mt-4 space-y-4">
+                {live.length > 0 ? live.map((t) => (
+                    <TournamentCard key={t.id} tournament={t} />
+                )) : <p className="text-muted-foreground text-center py-8">No live {gameName} tournaments.</p>}
+            </TabsContent>
+            <TabsContent value="completed" className="mt-4 space-y-4">
+                {completed.length > 0 ? completed.map((t) => (
+                    <TournamentCard key={t.id} tournament={t} />
+                )) : <p className="text-muted-foreground text-center py-8">No completed {gameName} tournaments.</p>}
+            </TabsContent>
+        </Tabs>
+    );
+};
+
 export default function HomePage() {
   const { user, tournaments, promotionalAds } = useUser();
-  
-  const getSortValue = (status: string) => {
-    if (status === 'Live') return 1;
-    if (status === 'Upcoming') return 2;
-    if (status === 'Completed') return 3;
-    return 4;
-  };
-
-  const bgmi = tournaments
-    .filter((t) => t.gameName === 'BGMI')
-    .sort((a,b) => getSortValue(a.status) - getSortValue(b.status));
-    
-  const freefire = tournaments
-    .filter((t) => t.gameName === 'FREE FIRE')
-    .sort((a,b) => getSortValue(a.status) - getSortValue(b.status));
-
-  const cod = tournaments
-    .filter((t) => t.gameName === 'COD')
-    .sort((a,b) => getSortValue(a.status) - getSortValue(b.status));
-
   const activeAds = promotionalAds.filter(ad => ad.status === 'active');
 
   return (
@@ -141,20 +157,14 @@ export default function HomePage() {
           <TabsTrigger value="freefire">FREE FIRE</TabsTrigger>
           <TabsTrigger value="cod">COD</TabsTrigger>
         </TabsList>
-        <TabsContent value="bgmi" className="mt-4 space-y-4">
-            {bgmi.length > 0 ? bgmi.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8">No BGMI tournaments.</p>}
+        <TabsContent value="bgmi" className="mt-4">
+            <GameContent gameName="BGMI" tournaments={tournaments} />
         </TabsContent>
-        <TabsContent value="freefire" className="mt-4 space-y-4">
-            {freefire.length > 0 ? freefire.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8">No FREE FIRE tournaments.</p>}
+        <TabsContent value="freefire" className="mt-4">
+            <GameContent gameName="FREE FIRE" tournaments={tournaments} />
         </TabsContent>
-        <TabsContent value="cod" className="mt-4 space-y-4">
-            {cod.length > 0 ? cod.map((tournament) => (
-              <TournamentCard key={tournament.id} tournament={tournament} />
-            )) : <p className="text-muted-foreground text-center py-8">No COD tournaments.</p>}
+        <TabsContent value="cod" className="mt-4">
+            <GameContent gameName="COD" tournaments={tournaments} />
         </TabsContent>
       </Tabs>
     </div>
