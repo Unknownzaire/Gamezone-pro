@@ -285,7 +285,7 @@ export default function ProfilePage() {
         <Card className="overflow-hidden rounded-none border-x-0">
           <div className="relative h-32 bg-muted">
               {currentUser.coverImageUrl && (
-                  <Image src={currentUser.coverImageUrl} alt="Cover image" fill style={{objectFit: 'cover'}} />
+                  <Image src={currentUser.coverImageUrl} alt="Cover image" fill={{objectFit: 'cover'}} />
               )}
               <Dialog>
                 <DialogTrigger asChild>
@@ -429,11 +429,6 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="new-password">New Password</Label>
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              </div>
-               <div className="flex justify-end">
-                <Link href="/forgot-password">
-                  <Button variant="link" type="button" className="text-sm p-0 h-auto">Forgot Password?</Button>
-                </Link>
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
           </CardContent>
