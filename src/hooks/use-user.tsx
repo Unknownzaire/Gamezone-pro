@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
@@ -9,7 +10,7 @@ import type { ReferralSettings } from '@/app/admin/settings/page';
 import { useFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 
-type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | false;
+type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | 'game_mismatch' | false;
 
 
 interface UserContextType {
@@ -391,6 +392,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       if (userToJoin.isBlocked) {
           toast({ variant: 'destructive', title: "Account Blocked", description: "Your account is blocked and cannot join tournaments." });
           return 'blocked';
+      }
+      if (userToJoin.primaryGame !== tournament.gameName) {
+          toast({ 
+            variant: 'destructive', 
+            title: "Game Mismatch", 
+            description: `Only ${tournament.gameName} players can join this tournament. Update your profile if needed.` 
+          });
+          return 'game_mismatch';
       }
       if (tournament.participants.some(p => p.user.id === userToJoin.id)) {
           toast({ variant: 'destructive', title: "Already Joined", description: "You have already joined this tournament." });

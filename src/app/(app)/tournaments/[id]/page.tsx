@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -215,15 +213,17 @@ export default function TournamentDetailsPage() {
   const isAlreadyJoined = currentUser ? tournament.participants.some(p => p.user.id === currentUser.id) : false;
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
+  const isGameMismatch = currentUser && currentUser.primaryGame !== tournament.gameName;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining && !isGameMismatch;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isJoining) joinButtonText = 'Joining...';
   else if (isAlreadyJoined) joinButtonText = 'Already Joined';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
-  else if(isBlocked) joinButtonText = 'Account Blocked';
+  else if (isBlocked) joinButtonText = 'Account Blocked';
+  else if (isGameMismatch) joinButtonText = `join only ${tournament.gameName.toLowerCase()} player`;
 
 
   return (
