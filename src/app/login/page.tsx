@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -140,9 +139,8 @@ export default function LoginPage() {
         });
       }
     } catch (error: any) {
-      console.error("Firebase login error:", error);
       let description = 'An error occurred during login. Please try again later.';
-      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found') {
+      if (error.code === 'auth/invalid-credential' || error.code === 'auth/wrong-password' || error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
         description = 'Invalid email or password. Please try again.';
       }
       toast({
@@ -164,6 +162,10 @@ export default function LoginPage() {
     // Uniqueness checks
     if (signupForm.username && allUsers.some(u => u.username.toLowerCase() === signupForm.username.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
+        return;
+    }
+    if (signupForm.email && allUsers.some(u => u.email.toLowerCase() === signupForm.email.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Email Taken', description: 'This email address is already in use.' });
         return;
     }
      if (signupForm.inGameUsername && allUsers.some(u => u.inGameUsername?.toLowerCase() === signupForm.inGameUsername?.toLowerCase())) {
@@ -207,12 +209,13 @@ export default function LoginPage() {
         });
       }
     } catch (error: any) {
-      console.error("Firebase signup error:", error);
       let description = 'An error occurred during sign up.';
       if (error.code === 'auth/email-already-in-use') {
         description = 'This email address is already in use by another account.';
       } else if (error.code === 'auth/weak-password') {
         description = 'The password is too weak. It must be at least 6 characters long.';
+      } else if (error.code === 'auth/invalid-email') {
+        description = 'The email address is invalid.';
       }
       toast({
         variant: 'destructive',
