@@ -158,6 +158,16 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
         return;
     }
+
+    // Gmail requirement check
+    if (!signupForm.email.toLowerCase().endsWith('@gmail.com')) {
+        toast({
+            variant: 'destructive',
+            title: 'Invalid Email',
+            description: 'You must use a @gmail.com address to sign up.',
+        });
+        return;
+    }
     
     // Uniqueness checks
     if (signupForm.username && allUsers.some(u => u.username.toLowerCase() === signupForm.username.toLowerCase())) {
@@ -397,8 +407,8 @@ export default function LoginPage() {
                         <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="signup-email">Email</Label>
-                        <Input id="signup-email" name="email" type="email" placeholder="you@example.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
+                        <Label htmlFor="signup-email">Email (@gmail.com Required)</Label>
+                        <Input id="signup-email" name="email" type="email" placeholder="example@gmail.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="signup-password">Password</Label>
