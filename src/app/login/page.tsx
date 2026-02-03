@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -401,7 +402,7 @@ export default function LoginPage() {
                         <Input id="signup-mobile" name="mobile" type="tel" placeholder="Your 10-digit mobile number" required onChange={handleSignupChange} value={signupForm.mobile} ref={mobileRef} onKeyDown={(e) => handleKeyDown(e, emailRef)} />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="signup-email">Email (@gmail.com Required)</Label>
+                        <Label htmlFor="signup-email">Email</Label>
                         <Input id="signup-email" name="email" type="email" placeholder="example@gmail.com" required onChange={handleSignupChange} value={signupForm.email} ref={emailRef} onKeyDown={(e) => handleKeyDown(e, passwordRef)} />
                     </div>
                     <div className="space-y-2">
