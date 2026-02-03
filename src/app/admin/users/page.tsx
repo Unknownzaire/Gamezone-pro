@@ -214,15 +214,6 @@ export default function AdminUsersPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative w-full max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                    placeholder="Search users..."
-                    className="pl-9 h-9"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-            </div>
             <Button 
                 variant={gameFilter === 'BGMI' ? 'default' : 'outline'} 
                 size="sm" 
@@ -248,6 +239,15 @@ export default function AdminUsersPage() {
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh users</span>
             </Button>
+            <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search users..."
+                    className="pl-9 h-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
         </div>
       </div>
 
