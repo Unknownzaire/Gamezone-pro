@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
 export default function AdminTransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -248,6 +249,12 @@ export default function AdminTransactionsPage() {
   const deposits = filteredTransactions.filter(tx => tx.type === 'credit' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')));
   const withdrawals = filteredTransactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal'));
   const declined = filteredTransactions.filter(tx => tx.status === 'declined');
+  const prizes = filteredTransactions.filter(tx => tx.description.toLowerCase().includes('prize'));
+  const referrals = filteredTransactions.filter(tx => tx.description.toLowerCase().includes('referral'));
+  const bonuses = filteredTransactions.filter(tx => 
+    (tx.description.toLowerCase().includes('bonus') || tx.description.toLowerCase().includes('promotion')) && 
+    !tx.description.toLowerCase().includes('referral')
+  );
 
   return (
     <div className="space-y-6">
@@ -261,7 +268,7 @@ export default function AdminTransactionsPage() {
             </Link>
             <div>
                 <h1 className="font-headline text-3xl font-bold">Transaction History</h1>
-                <p className="text-muted-foreground">A log of all deposits and withdrawals.</p>
+                <p className="text-muted-foreground">Detailed history of all financial activities.</p>
             </div>
         </div>
         <div className='flex items-center gap-2'>
@@ -283,12 +290,18 @@ export default function AdminTransactionsPage() {
       </div>
 
       <Tabs defaultValue={initialTab} className="w-full">
-        <TabsList>
-          <TabsTrigger value="all">All Transactions</TabsTrigger>
-          <TabsTrigger value="deposits">Deposits</TabsTrigger>
-          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
-          <TabsTrigger value="declined">Declined</TabsTrigger>
-        </TabsList>
+        <ScrollArea className="w-full">
+            <TabsList className="inline-flex w-max min-w-full">
+                <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="deposits">Deposits</TabsTrigger>
+                <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+                <TabsTrigger value="prizes">Prizes</TabsTrigger>
+                <TabsTrigger value="referrals">Referrals</TabsTrigger>
+                <TabsTrigger value="bonuses">Bonuses</TabsTrigger>
+                <TabsTrigger value="declined">Declined</TabsTrigger>
+            </TabsList>
+            <ScrollBar orientation="horizontal" />
+        </ScrollArea>
         <TabsContent value="all" className="mt-4">
             <Card>
                 <CardContent className='p-0'>
@@ -307,6 +320,27 @@ export default function AdminTransactionsPage() {
             <Card>
                 <CardContent className='p-0'>
                     <TransactionTable txs={withdrawals} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="prizes" className="mt-4">
+            <Card>
+                <CardContent className='p-0'>
+                    <TransactionTable txs={prizes} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="referrals" className="mt-4">
+            <Card>
+                <CardContent className='p-0'>
+                    <TransactionTable txs={referrals} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="bonuses" className="mt-4">
+            <Card>
+                <CardContent className='p-0'>
+                    <TransactionTable txs={bonuses} />
                 </CardContent>
             </Card>
         </TabsContent>
