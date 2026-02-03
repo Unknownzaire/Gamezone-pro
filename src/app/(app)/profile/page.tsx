@@ -1,5 +1,3 @@
-
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -20,6 +18,7 @@ import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { compressImage } from '@/lib/utils';
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
@@ -32,7 +31,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
             break;
         case 'instagram':
              socialIcon = (
-                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-8a4 4 0 0 1 -4 -4z" /><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M16.5 7.5l0 .01" /></svg>
+                <svg {...iconProps} viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 4a4 4 0 0 1 4 -4h8a4 4 0 0 1 4 4v8a4 4 0 0 1 -4 4h-12a4 4 0 0 1 -4 -4v-8z" /><path d="M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M16.5 7.5l0 .01" /></svg>
              );
             break;
         case 'discord':
@@ -182,29 +181,33 @@ export default function ProfilePage() {
   };
 
 
-  const handleAvatarUpdate = () => {
+  const handleAvatarUpdate = async () => {
     if (currentUser && avatarFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const avatarUrl = event.target?.result as string;
+        try {
+            // Compress image to 200x200 for avatar
+            const avatarUrl = await compressImage(avatarFile, { maxWidth: 200, maxHeight: 200, quality: 0.8 });
             updateUser({ avatarUrl });
             toast({ title: "Avatar Updated", description: "Your profile picture has been changed." });
-        };
-        reader.readAsDataURL(avatarFile);
+        } catch (error) {
+            console.error("Avatar compression error:", error);
+            toast({ variant: 'destructive', title: "Update Failed", description: "Could not process the image. Please try a different one." });
+        }
     } else {
         toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your avatar."});
     }
   };
   
-  const handleCoverImageUpdate = () => {
+  const handleCoverImageUpdate = async () => {
     if (currentUser && coverImageFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const coverImageUrl = event.target?.result as string;
+        try {
+            // Compress cover image to a reasonable banner size
+            const coverImageUrl = await compressImage(coverImageFile, { maxWidth: 1000, maxHeight: 400, quality: 0.7 });
             updateUser({ coverImageUrl });
             toast({ title: "Cover Image Updated", description: "Your profile background has been changed." });
-        };
-        reader.readAsDataURL(coverImageFile);
+        } catch (error) {
+            console.error("Cover image compression error:", error);
+            toast({ variant: 'destructive', title: "Update Failed", description: "Could not process the image. Please try a different one." });
+        }
     } else {
         toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your cover image."});
     }

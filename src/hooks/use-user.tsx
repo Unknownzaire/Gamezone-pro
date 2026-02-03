@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
@@ -122,7 +120,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
+      try {
+        localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
+      } catch (e) {
+        console.error("Failed to save promotionalAds:", e);
+      }
     }
   }, [promotionalAds, loading]);
   
@@ -144,17 +146,36 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const saveAllUsers = useCallback((updatedUsers: User[]) => {
       setAllUsers(updatedUsers);
-      localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
-  }, []);
+      try {
+        localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+      } catch (e) {
+        console.error("Failed to save allUsers to localStorage:", e);
+        if (e instanceof Error && e.name === 'QuotaExceededError') {
+          toast({
+            variant: 'destructive',
+            title: 'Storage Full',
+            description: 'Could not save data. Please try clearing your browser cache or using smaller images.',
+          });
+        }
+      }
+  }, [toast]);
 
   const saveAllTransactions = useCallback((updatedTransactions: Transaction[]) => {
       setAllTransactions(updatedTransactions);
-      localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+      try {
+        localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+      } catch (e) {
+        console.error("Failed to save allTransactions:", e);
+      }
   }, []);
 
   const saveAllTournaments = useCallback((updatedTournaments: Tournament[]) => {
       setTournaments(updatedTournaments);
-      localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+      try {
+        localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+      } catch (e) {
+        console.error("Failed to save allTournaments:", e);
+      }
   }, []);
 
 
@@ -499,7 +520,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedTickets = localStorage.getItem('supportTickets');
     const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
     const updatedTickets = [newTicket, ...allTickets];
-    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    try {
+      localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    } catch (e) {
+      console.error("Failed to save supportTickets:", e);
+    }
   };
   
   const addMessageToTicket = (ticketId: string, message: string, imageUrl?: string) => {
@@ -525,7 +550,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return ticket;
     });
 
-    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    try {
+      localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    } catch (e) {
+      console.error("Failed to save supportTickets message:", e);
+    }
     reload(); // Force a reload to update UI everywhere
   };
 
