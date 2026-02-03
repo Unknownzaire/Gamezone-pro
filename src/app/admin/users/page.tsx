@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers as initialUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
+import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
-import { User, Transaction } from "@/lib/types";
+import { User, Transaction, Tournament } from "@/lib/types";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,12 +27,14 @@ import { format } from "date-fns";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
 const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userToFund, setUserToFund] = useState<User | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -58,12 +59,19 @@ export default function AdminUsersPage() {
       setTransactions(initialTransactions);
       localStorage.setItem('allTransactions', JSON.stringify(initialTransactions));
     }
+
+    const storedTournaments = localStorage.getItem('allTournaments');
+    if (storedTournaments) {
+      setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
+    } else {
+      setTournaments(initialMockTournaments);
+    }
   }, []);
 
   useEffect(() => {
     loadData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allUsers' || event.key === 'allTransactions') {
+      if (event.key === 'allUsers' || event.key === 'allTransactions' || event.key === 'allTournaments') {
         loadData();
       }
     };
@@ -169,6 +177,13 @@ export default function AdminUsersPage() {
     return users.filter(u => u.referredBy === userId).length;
   };
 
+  const getParticipationCount = (userId: string, gameName: string) => {
+    return tournaments.filter(t => 
+      t.gameName.toUpperCase() === gameName.toUpperCase() && 
+      t.participants.some(p => p.user.id === userId)
+    ).length;
+  };
+
 
   return (
     <div className="space-y-6">
@@ -193,107 +208,116 @@ export default function AdminUsersPage() {
 
       <Card>
         <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>User</TableHead>
-                <TableHead>Password</TableHead>
-                <TableHead>Available Balance</TableHead>
-                <TableHead>Total Balance</TableHead>
-                <TableHead>Total Deposits</TableHead>
-                <TableHead>Game Info</TableHead>
-                <TableHead>OTP Authentication</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Referred By</TableHead>
-                <TableHead>Total Referrals</TableHead>
-                <TableHead>Registered</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>
-                  <span className="sr-only">Actions</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((user) => (
-                <TableRow key={user.id} className={user.isBlocked ? 'bg-destructive/10' : ''}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={user.avatarUrl} alt={user.username} />
-                        <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="font-medium">
-                        <p>{user.username}</p>
-                        <p className="text-sm text-muted-foreground">{user.email}</p>
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.password}</TableCell>
-                  <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                  <TableCell>
-                    <div className="text-xs">
-                      <p className="font-bold">{user.primaryGame}</p>
-                      <p>{user.inGameUsername}</p>
-                      <p className="text-muted-foreground">{user.inGameId}</p>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                       {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}
-                       {user.mobileVerified && <Phone className="h-4 w-4 text-green-500" title="Mobile Verified" />}
-                    </div>
-                  </TableCell>
-                  <TableCell>{user.mobile}</TableCell>
-                  <TableCell>
-                    {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
-                  </TableCell>
-                  <TableCell className="font-bold text-center">{getTotalReferrals(user.id)}</TableCell>
-                   <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
-                   <TableCell>
-                    {user.isBlocked ? (
-                      <Badge variant="destructive">Blocked</Badge>
-                    ) : (
-                      <Badge variant="secondary">Active</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/users/edit/${user.id}`}>Edit User</Link>
-                        </DropdownMenuItem>
-                         <DropdownMenuItem onClick={() => openFundDialog(user)}>
-                            Add Funds
-                        </DropdownMenuItem>
-                         <DropdownMenuItem asChild>
-                          <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/admin/users/${user.id}/history?tab=transactions`}>View Transaction History</Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
-                          {user.isBlocked ? 'Unblock User' : 'Block User'}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-500" onClick={() => openDeleteDialog(user)}>
-                          Delete User
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          <ScrollArea className="w-full">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>User</TableHead>
+                  <TableHead>Password</TableHead>
+                  <TableHead>Available Balance</TableHead>
+                  <TableHead>Total Balance</TableHead>
+                  <TableHead>Total Deposits</TableHead>
+                  <TableHead className="text-center">BGMI</TableHead>
+                  <TableHead className="text-center">FREE FIRE</TableHead>
+                  <TableHead className="text-center">COD</TableHead>
+                  <TableHead>Game Info</TableHead>
+                  <TableHead>OTP Authentication</TableHead>
+                  <TableHead>Mobile</TableHead>
+                  <TableHead>Referred By</TableHead>
+                  <TableHead>Total Referrals</TableHead>
+                  <TableHead>Registered</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <span className="sr-only">Actions</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {users.map((user) => (
+                  <TableRow key={user.id} className={user.isBlocked ? 'bg-destructive/10' : ''}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage src={user.avatarUrl} alt={user.username} />
+                          <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="font-medium">
+                          <p>{user.username}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.password}</TableCell>
+                    <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'BGMI')}</TableCell>
+                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'FREE FIRE')}</TableCell>
+                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'COD')}</TableCell>
+                    <TableCell>
+                      <div className="text-xs">
+                        <p className="font-bold">{user.primaryGame}</p>
+                        <p>{user.inGameUsername}</p>
+                        <p className="text-muted-foreground">{user.inGameId}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}
+                        {user.mobileVerified && <Phone className="h-4 w-4 text-green-500" title="Mobile Verified" />}
+                      </div>
+                    </TableCell>
+                    <TableCell>{user.mobile}</TableCell>
+                    <TableCell>
+                      {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
+                    </TableCell>
+                    <TableCell className="font-bold text-center">{getTotalReferrals(user.id)}</TableCell>
+                    <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
+                    <TableCell>
+                      {user.isBlocked ? (
+                        <Badge variant="destructive">Blocked</Badge>
+                      ) : (
+                        <Badge variant="secondary">Active</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/users/edit/${user.id}`}>Edit User</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openFundDialog(user)}>
+                              Add Funds
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/users/${user.id}/history?tab=transactions`}>View Transaction History</Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
+                            {user.isBlocked ? 'Unblock User' : 'Block User'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem className="text-red-500" onClick={() => openDeleteDialog(user)}>
+                            Delete User
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <ScrollBar orientation="horizontal" />
+          </ScrollArea>
         </CardContent>
       </Card>
       
