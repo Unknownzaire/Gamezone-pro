@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -6,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments as initialMockTournaments } from "@/lib/mock-data";
-import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone, Search } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
 import {
@@ -40,6 +41,7 @@ export default function AdminUsersPage() {
   const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
   const [fundAmount, setFundAmount] = useState('');
   const [gameFilter, setGameFilter] = useState<'ALL' | 'BGMI' | 'FREE FIRE' | 'COD'>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { toast } = useToast();
 
@@ -185,13 +187,20 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(u => {
-    if (gameFilter === 'ALL') return true;
-    return u.primaryGame === gameFilter;
+    const matchesGame = gameFilter === 'ALL' || u.primaryGame === gameFilter;
+    const searchLower = searchTerm.toLowerCase();
+    const matchesSearch = 
+        u.username.toLowerCase().includes(searchLower) ||
+        u.email.toLowerCase().includes(searchLower) ||
+        (u.inGameUsername && u.inGameUsername.toLowerCase().includes(searchLower)) ||
+        (u.inGameId && u.inGameId.toLowerCase().includes(searchLower));
+    
+    return matchesGame && matchesSearch;
   });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
         <div className="flex items-center gap-4">
           <Link href="/admin/dashboard" className="hidden md:block">
               <Button variant="outline" size="icon" className="h-7 w-7">
@@ -204,7 +213,16 @@ export default function AdminUsersPage() {
             <p className="text-muted-foreground">Manage all registered users.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search users..."
+                    className="pl-9 h-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
             <Button 
                 variant={gameFilter === 'BGMI' ? 'default' : 'outline'} 
                 size="sm" 
