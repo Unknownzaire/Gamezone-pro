@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -335,11 +334,6 @@ export default function LoginPage() {
                           {showLoginPassword ? "Hide password" : "Show password"}
                         </span>
                       </Button>
-                    </div>
-                    <div className="flex items-center justify-end pt-1">
-                       <Link href="/forgot-password" className="text-sm text-muted-foreground hover:text-primary underline">
-                          Forgot Password?
-                        </Link>
                     </div>
                   </div>
                   <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Login</Button>
