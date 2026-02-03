@@ -2,7 +2,7 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockParticipants, mockTournaments, mockUsers } from "@/lib/mock-data";
+import { mockTournaments, mockUsers } from "@/lib/mock-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearchParams } from "next/navigation";
 import {
@@ -14,7 +14,8 @@ import {
 } from "@/components/ui/select"
 import { useRouter } from "next/navigation";
 import { Trophy } from "lucide-react";
-import { Participant } from "@/lib/types";
+import { Participant, Tournament, User } from "@/lib/types";
+import { useEffect, useState, useCallback } from "react";
 
 
 const getRank = (participant: Participant) => {
@@ -29,32 +30,49 @@ export default function LeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const tournamentId = searchParams.get('tournamentId');
+  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+
+  const loadData = useCallback(() => {
+    try {
+      const storedTournaments = localStorage.getItem('allTournaments');
+      const tournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
+      setAllTournaments(tournaments);
+
+      const storedUsers = localStorage.getItem('allUsers');
+      const users = storedUsers ? JSON.parse(storedUsers) : mockUsers;
+      setAllUsers(users);
+    } catch (error) {
+      console.error("Failed to parse data from localStorage", error);
+      setAllTournaments(mockTournaments);
+      setAllUsers(mockUsers);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+    window.addEventListener('storage', loadData);
+    return () => {
+      window.removeEventListener('storage', loadData);
+    };
+  }, [loadData]);
 
   const handleTournamentChange = (value: string) => {
     router.push(`/leaderboard?tournamentId=${value}`);
   };
   
-  const allParticipants = mockParticipants;
-  const usersWithPoints = mockUsers.map(user => {
-      const userParticipants = allParticipants.filter(p => p.user.id === user.id);
-      const points = userParticipants.reduce((acc, p) => {
-          if(p.result === 'Winner') return acc + 10;
-          if(p.result === 'Participated') return acc + 1;
+  const usersWithPoints = allUsers.map(user => {
+      const points = allTournaments.reduce((acc, t) => {
+          const p = t.participants.find(part => part.user.id === user.id);
+          if (p) {
+              if(p.result === 'Winner') return acc + 10;
+              if(p.result === 'Participated' || (p.result?.startsWith('Rank #'))) return acc + 1;
+          }
           return acc;
       }, 0);
       return { ...user, points };
   }).sort((a,b) => b.points - a.points);
 
-
-  let allTournaments = [];
-  try {
-    const storedTournaments = localStorage.getItem('allTournaments');
-    allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
-  } catch (error) {
-    console.error("Failed to parse tournaments from localStorage", error);
-    allTournaments = mockTournaments;
-    localStorage.setItem('allTournaments', JSON.stringify(mockTournaments));
-  }
 
   const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
   const tournamentParticipants = currentTournament ? currentTournament.participants : [];
@@ -76,57 +94,56 @@ export default function LeaderboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Filter by Tournament</CardTitle>
-           <Select onValueChange={handleTournamentChange} defaultValue={tournamentId || undefined}>
+           <Select onValueChange={handleTournamentChange} value={tournamentId || undefined}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select a tournament to see results" />
             </SelectTrigger>
             <SelectContent>
-              {mockTournaments.filter(t => t.status === 'Completed').map(t => (
+              {allTournaments.filter(t => t.status === 'Completed').map(t => (
                 <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </CardHeader>
 
-        {tournamentId && rankedParticipants.length > 0 && (
+        {tournamentId && (
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Rank</TableHead>
-                  <TableHead>Player</TableHead>
-                  <TableHead className="text-right">Result</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rankedParticipants.sort((a: Participant, b: Participant) => {
-                  const rankA = getRank(a);
-                  const rankB = getRank(b);
-                  if (rankA === null) return 1;
-                  if (rankB === null) return -1;
-                  return rankA - rankB;
-                }).map((p: Participant) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-bold">{getRank(p) ?? 'Unranked'}</TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-8 w-8">
-                          <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
-                          <AvatarFallback>{p.user.username.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <span>{p.user.username}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-medium">{p.result}</TableCell>
+            {rankedParticipants.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Rank</TableHead>
+                    <TableHead>Player</TableHead>
+                    <TableHead className="text-right">Result</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        )}
-        {tournamentId && rankedParticipants.length === 0 && (
-          <CardContent>
-             <p className="text-muted-foreground text-center py-8">No ranked players for this tournament.</p>
+                </TableHeader>
+                <TableBody>
+                  {rankedParticipants.sort((a: Participant, b: Participant) => {
+                    const rankA = getRank(a);
+                    const rankB = getRank(b);
+                    if (rankA === null) return 1;
+                    if (rankB === null) return -1;
+                    return rankA - rankB;
+                  }).map((p: Participant) => (
+                    <TableRow key={p.id}>
+                      <TableCell className="font-bold">{getRank(p) ?? 'Unranked'}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
+                            <AvatarFallback>{p.user.username.charAt(0)}</AvatarFallback>
+                          </Avatar>
+                          <span>{p.user.username}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-medium">{p.result}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <p className="text-muted-foreground text-center py-8">No results available for this tournament yet.</p>
+            )}
           </CardContent>
         )}
       </Card>
@@ -146,7 +163,7 @@ export default function LeaderboardPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {usersWithPoints.map((user, index) => (
+                {usersWithPoints.filter(u => u.points > 0).map((user, index) => (
                   <TableRow key={user.id}>
                     <TableCell className="font-bold">{index+1}</TableCell>
                     <TableCell>
@@ -163,6 +180,9 @@ export default function LeaderboardPage() {
                 ))}
               </TableBody>
             </Table>
+            {usersWithPoints.filter(u => u.points > 0).length === 0 && (
+                <p className="text-muted-foreground text-center py-8">No players have earned points yet.</p>
+            )}
           </CardContent>
         </Card>
       )}
