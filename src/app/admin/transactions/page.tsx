@@ -249,6 +249,7 @@ export default function AdminTransactionsPage() {
   const deposits = filteredTransactions.filter(tx => tx.type === 'credit' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')));
   const withdrawals = filteredTransactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal'));
   const declined = filteredTransactions.filter(tx => tx.status === 'declined');
+  const pending = filteredTransactions.filter(tx => tx.status === 'pending');
   const prizes = filteredTransactions.filter(tx => tx.description.toLowerCase().includes('prize'));
   const referrals = filteredTransactions.filter(tx => tx.description.toLowerCase().includes('referral'));
   const bonuses = filteredTransactions.filter(tx => 
@@ -293,6 +294,7 @@ export default function AdminTransactionsPage() {
         <ScrollArea className="w-full">
             <TabsList className="inline-flex w-max min-w-full">
                 <TabsTrigger value="all">All</TabsTrigger>
+                <TabsTrigger value="pending">Pending</TabsTrigger>
                 <TabsTrigger value="deposits">Deposits</TabsTrigger>
                 <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
                 <TabsTrigger value="prizes">Prizes</TabsTrigger>
@@ -306,6 +308,13 @@ export default function AdminTransactionsPage() {
             <Card>
                 <CardContent className='p-0'>
                     <TransactionTable txs={filteredTransactions} />
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="pending" className="mt-4">
+            <Card>
+                <CardContent className='p-0'>
+                    <TransactionTable txs={pending} />
                 </CardContent>
             </Card>
         </TabsContent>
