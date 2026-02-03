@@ -84,7 +84,8 @@ export default function AdminTransactionsPage() {
   };
   
   const filteredTransactions = transactions.filter(tx => 
-    tx.id.toLowerCase().includes(searchTerm.toLowerCase())
+    tx.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    tx.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const TransactionTable = ({ txs }: { txs: Transaction[] }) => {
@@ -244,8 +245,8 @@ export default function AdminTransactionsPage() {
     )
   }
 
-  const deposits = filteredTransactions.filter(tx => tx.type === 'credit' && tx.description.toLowerCase().includes('deposit') && tx.status === 'completed');
-  const withdrawals = filteredTransactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal') && tx.status === 'completed');
+  const deposits = filteredTransactions.filter(tx => tx.type === 'credit' && (tx.description.toLowerCase().includes('deposit') || tx.description.toLowerCase().includes('added to wallet')));
+  const withdrawals = filteredTransactions.filter(tx => tx.type === 'debit' && tx.description.toLowerCase().includes('withdrawal'));
   const declined = filteredTransactions.filter(tx => tx.status === 'declined');
 
   return (
@@ -268,7 +269,7 @@ export default function AdminTransactionsPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                     type="search"
-                    placeholder="Search by transaction ID..."
+                    placeholder="Search ID or description..."
                     className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
