@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -372,7 +373,7 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="primaryGame">Primary Game</Label>
-                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={!isEditing || gameDetailsSet}>
+                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={!isEditing}>
                     <SelectTrigger id="primaryGame">
                         <SelectValue placeholder="Select your main game" />
                     </SelectTrigger>
@@ -385,11 +386,11 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
-                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing || gameDetailsSet} />
+                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
-                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || gameDetailsSet} />
+                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
