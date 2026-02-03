@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,6 +39,7 @@ export default function AdminUsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
   const [fundAmount, setFundAmount] = useState('');
+  const [gameFilter, setGameFilter] = useState<'ALL' | 'BGMI' | 'FREE FIRE' | 'COD'>('ALL');
 
   const { toast } = useToast();
 
@@ -106,9 +106,9 @@ export default function AdminUsersPage() {
         user.id === userId ? { ...user, isBlocked: !user.isBlocked } : user
     );
     saveUsers(updatedUsers);
-    const user = users.find(u => u.id === userId);
-    if(user) {
-        toast({ title: `User ${user.isBlocked ? 'Unblocked' : 'Blocked'}`, description: `User ${user.username} has been ${user.isBlocked ? 'unblocked' : 'blocked'}.` });
+    const userObj = updatedUsers.find(u => u.id === userId);
+    if(userObj) {
+        toast({ title: `User ${userObj.isBlocked ? 'Blocked' : 'Unblocked'}`, description: `User ${userObj.username} has been ${userObj.isBlocked ? 'blocked' : 'unblocked'}.` });
     }
   };
 
@@ -184,6 +184,10 @@ export default function AdminUsersPage() {
     ).length;
   };
 
+  const filteredUsers = users.filter(u => {
+    if (gameFilter === 'ALL') return true;
+    return u.primaryGame === gameFilter;
+  });
 
   return (
     <div className="space-y-6">
@@ -200,10 +204,33 @@ export default function AdminUsersPage() {
             <p className="text-muted-foreground">Manage all registered users.</p>
           </div>
         </div>
-        <Button variant="outline" size="icon" onClick={() => loadData()}>
-            <RefreshCw className="h-4 w-4" />
-            <span className="sr-only">Refresh users</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Button 
+                variant={gameFilter === 'BGMI' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setGameFilter(gameFilter === 'BGMI' ? 'ALL' : 'BGMI')}
+            >
+                BGMI user
+            </Button>
+            <Button 
+                variant={gameFilter === 'FREE FIRE' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setGameFilter(gameFilter === 'FREE FIRE' ? 'ALL' : 'FREE FIRE')}
+            >
+                FREE FIRE user
+            </Button>
+            <Button 
+                variant={gameFilter === 'COD' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setGameFilter(gameFilter === 'COD' ? 'ALL' : 'COD')}
+            >
+                COD user
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => loadData()}>
+                <RefreshCw className="h-4 w-4" />
+                <span className="sr-only">Refresh users</span>
+            </Button>
+        </div>
       </div>
 
       <Card>
@@ -233,7 +260,7 @@ export default function AdminUsersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {users.map((user) => (
+                {filteredUsers.map((user) => (
                   <TableRow key={user.id} className={user.isBlocked ? 'bg-destructive/10' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
