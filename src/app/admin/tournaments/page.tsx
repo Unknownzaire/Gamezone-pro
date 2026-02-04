@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Badge } from "@/components/ui/badge";
@@ -6,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
-import { MoreHorizontal, PlusCircle, ArrowLeft } from "lucide-react";
+import { MoreHorizontal, PlusCircle, ArrowLeft, Search, Clock, Trophy, Swords } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -21,11 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 
 export default function AdminTournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournamentToDelete, setTournamentToDelete] = useState<Tournament | null>(null);
   const [gameFilter, setGameFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<string>('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
   const { toast } = useToast();
 
    useEffect(() => {
@@ -68,13 +72,16 @@ export default function AdminTournamentsPage() {
     setTournamentToDelete(null);
   };
 
-  const filteredTournaments = tournaments.filter(t => 
-    gameFilter === 'ALL' || t.gameName.toUpperCase() === gameFilter.toUpperCase()
-  );
+  const filteredTournaments = tournaments.filter(t => {
+    const matchesGame = gameFilter === 'ALL' || t.gameName.toUpperCase() === gameFilter.toUpperCase();
+    const matchesStatus = statusFilter === 'ALL' || t.status.toUpperCase() === statusFilter.toUpperCase();
+    const matchesSearch = t.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesGame && matchesStatus && matchesSearch;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between flex-wrap gap-4">
          <div className="flex items-center gap-4">
           <Link href="/admin/dashboard" className="hidden md:block">
               <Button variant="outline" size="icon" className="h-7 w-7">
@@ -87,9 +94,34 @@ export default function AdminTournamentsPage() {
             <p className="text-muted-foreground">Manage all tournaments in the system.</p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        
+        <div className="flex items-center gap-4 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+                <Button 
+                    variant={statusFilter === 'Upcoming' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setStatusFilter(statusFilter === 'Upcoming' ? 'ALL' : 'Upcoming')}
+                >
+                    Upcoming
+                </Button>
+                <Button 
+                    variant={statusFilter === 'Live' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setStatusFilter(statusFilter === 'Live' ? 'ALL' : 'Live')}
+                >
+                    Live
+                </Button>
+                <Button 
+                    variant={statusFilter === 'Completed' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setStatusFilter(statusFilter === 'Completed' ? 'ALL' : 'Completed')}
+                >
+                    Completed
+                </Button>
+            </div>
+
           <Select value={gameFilter} onValueChange={setGameFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filter by Game" />
             </SelectTrigger>
             <SelectContent>
@@ -99,6 +131,17 @@ export default function AdminTournamentsPage() {
               <SelectItem value="COD">COD</SelectItem>
             </SelectContent>
           </Select>
+
+          <div className="relative w-full max-w-xs">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                    placeholder="Search tournaments..."
+                    className="pl-9 h-9"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+
           <Link href="/admin/tournaments/create">
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -106,6 +149,36 @@ export default function AdminTournamentsPage() {
             </Button>
           </Link>
         </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Upcoming Tournaments</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{tournaments.filter(t => t.status === 'Upcoming').length}</div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Live Tournaments</CardTitle>
+                <Swords className="h-4 w-4 text-destructive" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{tournaments.filter(t => t.status === 'Live').length}</div>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Completed Tournaments</CardTitle>
+                <Trophy className="h-4 w-4 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+                <div className="text-2xl font-bold">{tournaments.filter(t => t.status === 'Completed').length}</div>
+            </CardContent>
+        </Card>
       </div>
 
       <Card>
