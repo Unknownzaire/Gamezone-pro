@@ -14,10 +14,18 @@ import { useEffect, useState } from "react";
 import type { Tournament } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function AdminTournamentsPage() {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournamentToDelete, setTournamentToDelete] = useState<Tournament | null>(null);
+  const [gameFilter, setGameFilter] = useState<string>('ALL');
   const { toast } = useToast();
 
    useEffect(() => {
@@ -60,6 +68,10 @@ export default function AdminTournamentsPage() {
     setTournamentToDelete(null);
   };
 
+  const filteredTournaments = tournaments.filter(t => 
+    gameFilter === 'ALL' || t.gameName.toUpperCase() === gameFilter.toUpperCase()
+  );
+
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between">
@@ -75,12 +87,25 @@ export default function AdminTournamentsPage() {
             <p className="text-muted-foreground">Manage all tournaments in the system.</p>
           </div>
         </div>
-        <Link href="/admin/tournaments/create">
-          <Button>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Tournament
-          </Button>
-        </Link>
+        <div className="flex items-center gap-4">
+          <Select value={gameFilter} onValueChange={setGameFilter}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Filter by Game" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ALL">All Games</SelectItem>
+              <SelectItem value="BGMI">BGMI</SelectItem>
+              <SelectItem value="FREE FIRE">Free Fire</SelectItem>
+              <SelectItem value="COD">COD</SelectItem>
+            </SelectContent>
+          </Select>
+          <Link href="/admin/tournaments/create">
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Tournament
+            </Button>
+          </Link>
+        </div>
       </div>
 
       <Card>
@@ -101,7 +126,7 @@ export default function AdminTournamentsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {tournaments.map((t) => (
+              {filteredTournaments.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.title}</TableCell>
                   <TableCell>
@@ -152,6 +177,11 @@ export default function AdminTournamentsPage() {
               ))}
             </TableBody>
           </Table>
+          {filteredTournaments.length === 0 && (
+            <div className="py-12 text-center text-muted-foreground">
+              No {gameFilter !== 'ALL' ? gameFilter : ''} tournaments found.
+            </div>
+          )}
         </CardContent>
       </Card>
 
