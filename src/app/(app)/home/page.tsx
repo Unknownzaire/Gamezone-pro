@@ -7,7 +7,7 @@ import { Tournament } from "@/lib/types";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Clock, Trophy, Users } from "lucide-react";
+import { Clock, Trophy, Users, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
@@ -16,43 +16,66 @@ import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious
 import Autoplay from "embla-carousel-autoplay";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Link href={`/tournaments/${tournament.id}`}>
-        <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors">
-            <div className="flex">
-                <div className="relative h-32 w-32 flex-shrink-0">
-                    <Image
-                        src={tournament.imageUrl}
-                        alt={tournament.title}
-                        fill
-                        className="object-cover"
-                        data-ai-hint={tournament.imageHint}
-                    />
-                    <Badge
-                        variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-                        className="absolute right-1 top-1"
-                    >
-                        {tournament.status}
-                    </Badge>
-                </div>
-                <div className="flex-1 p-4 flex flex-col justify-between">
-                    <div>
-                        <h3 className="font-headline font-semibold">{tournament.title}</h3>
-                        <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-                            <div className="flex items-center gap-2">
-                                <Trophy className="h-3 w-3 text-primary" />
-                                <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Users className="h-3 w-3 text-primary" />
-                                <span>Entry: ₹{tournament.entryFee}</span>
-                            </div>
-                             <div className="flex items-center gap-2">
-                                <Clock className="h-3 w-3 text-primary" />
-                                <span>{format(new Date(tournament.matchTime), "PPp")}</span>
-                            </div>
+    <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative">
+        <div className="flex">
+            {/* Main card link overlay */}
+            <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-0">
+                <span className="sr-only">View {tournament.title} details</span>
+            </Link>
+            
+            <div className="relative h-32 w-32 flex-shrink-0 z-10 pointer-events-none">
+                <Image
+                    src={tournament.imageUrl}
+                    alt={tournament.title}
+                    fill
+                    className="object-cover"
+                    data-ai-hint={tournament.imageHint}
+                />
+                <Badge
+                    variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                    className="absolute right-1 top-1"
+                >
+                    {tournament.status}
+                </Badge>
+            </div>
+            <div className="flex-1 p-4 flex flex-col justify-between z-10">
+                <div>
+                    <h3 className="font-headline font-semibold">{tournament.title}</h3>
+                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-2">
+                            <Trophy className="h-3 w-3 text-primary" />
+                            <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Users className="h-3 w-3 text-primary" />
+                            <span>Entry: ₹{tournament.entryFee}</span>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-primary" />
+                            <span>{format(new Date(tournament.matchTime), "PPp")}</span>
                         </div>
                     </div>
-                     {tournament.status !== 'Completed' && (
+                </div>
+                
+                <div className="mt-auto">
+                    {tournament.status === 'Live' && tournament.liveStreamLink ? (
+                        <Button 
+                            size="sm" 
+                            variant="secondary" 
+                            className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white border-none h-8 text-xs relative z-20"
+                            asChild
+                        >
+                            <a 
+                                href={tournament.liveStreamLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()} // Extra precaution
+                            >
+                                <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
+                                Watch Live
+                            </a>
+                        </Button>
+                    ) : tournament.status !== 'Completed' && (
                         <div className="mt-2 space-y-1">
                             <div className="flex justify-between text-xs text-muted-foreground">
                                 <span>{tournament.participants.length} / 100</span>
@@ -62,8 +85,8 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                     )}
                 </div>
             </div>
-        </Card>
-    </Link>
+        </div>
+    </Card>
 );
 
 const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: Tournament[]}) => {
