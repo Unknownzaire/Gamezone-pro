@@ -89,6 +89,7 @@ export default function AdminTournamentsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Title</TableHead>
+                <TableHead>Game</TableHead>
                 <TableHead>Image</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Prize Pool</TableHead>
@@ -103,6 +104,11 @@ export default function AdminTournamentsPage() {
               {tournaments.map((t) => (
                 <TableRow key={t.id}>
                   <TableCell className="font-medium">{t.title}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className="font-bold">
+                      {t.gameName}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     <Image 
                       src={t.imageUrl} 
