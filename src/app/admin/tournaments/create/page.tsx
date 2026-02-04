@@ -127,6 +127,7 @@ export default function CreateTournamentPage() {
                 entryFee: entryFee,
                 prizePool: prizePool,
                 commissionPercentage: Number(formData.get('commission')),
+                liveStreamLink: formData.get('liveStreamLink') as string,
                 imageUrl,
                 imageHint: formData.get('imageHint') as string,
                 status: 'Upcoming',
@@ -225,6 +226,10 @@ export default function CreateTournamentPage() {
                                     <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required min="0" />
                                 </div>
                                 <div className="space-y-2">
+                                    <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
+                                    <Input id="liveStreamLink" name="liveStreamLink" placeholder="https://youtube.com/live/..." />
+                                </div>
+                                <div className="space-y-2">
                                     <Label htmlFor="imageHint">Image Hint</Label>
                                     <Input id="imageHint" name="imageHint" placeholder="e.g., epic battle" />
                                 </div>
@@ -306,5 +311,3 @@ export default function CreateTournamentPage() {
         </div>
     );
 }
-
-    

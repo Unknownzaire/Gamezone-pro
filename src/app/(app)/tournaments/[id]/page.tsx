@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight, PlayCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament, PrizeDistribution, User } from '@/lib/types';
@@ -330,14 +331,27 @@ export default function TournamentDetailsPage() {
                     </Dialog>
                 </div>
             </div>
-            {tournament.status === 'Live' && tournament.roomId && isAlreadyJoined && (
-                 <Card className="bg-muted p-4">
-                    <CardTitle className="text-lg mb-2">Live Match Details</CardTitle>
-                    <div className="flex items-center gap-4 text-base">
-                      <p>Room ID: <span className="font-mono text-primary">{tournament.roomId}</span></p>
-                      <p>Password: <span className="font-mono text-primary">{tournament.roomPassword}</span></p>
-                    </div>
-                </Card>
+            
+            {tournament.status === 'Live' && (
+              <div className="space-y-3">
+                {tournament.liveStreamLink && (
+                  <a href={tournament.liveStreamLink} target="_blank" rel="noopener noreferrer" className="block">
+                    <Button variant="secondary" className="w-full bg-red-600 hover:bg-red-700 text-white border-none">
+                      <PlayCircle className="mr-2 h-4 w-4" />
+                      Watch Live Stream
+                    </Button>
+                  </a>
+                )}
+                {tournament.roomId && isAlreadyJoined && (
+                  <Card className="bg-muted p-4">
+                      <CardTitle className="text-lg mb-2">Live Match Details</CardTitle>
+                      <div className="flex items-center gap-4 text-base">
+                        <p>Room ID: <span className="font-mono text-primary">{tournament.roomId}</span></p>
+                        <p>Password: <span className="font-mono text-primary">{tournament.roomPassword}</span></p>
+                      </div>
+                  </Card>
+                )}
+              </div>
             )}
         </CardContent>
       </Card>
@@ -355,7 +369,7 @@ export default function TournamentDetailsPage() {
         <CardHeader>
           <CardTitle className="font-headline flex items-center gap-2">
             <ShieldCheck className="text-primary" />
-            BGMI Tournament – Terms &amp; Conditions
+            {tournament.gameName} Tournament – Terms &amp; Conditions
             </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">

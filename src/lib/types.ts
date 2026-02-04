@@ -38,6 +38,7 @@ export type Tournament = {
   matchTime: Date;
   roomId?: string;
   roomPassword?: string;
+  liveStreamLink?: string;
   status: 'Upcoming' | 'Live' | 'Completed';
   commissionPercentage: number;
   participants: Participant[];
@@ -103,5 +104,3 @@ export type SocialLink = {
   url: string;
   icon: 'youtube' | 'instagram' | 'discord' | 'telegram' | 'whatsapp' | 'link';
 };
-      
-    

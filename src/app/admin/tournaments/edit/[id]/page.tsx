@@ -27,6 +27,7 @@ export default function EditTournamentPage() {
     entryFee: 0,
     prizePool: 0,
     commissionPercentage: 0,
+    liveStreamLink: '',
     imageUrl: '',
     imageHint: '',
   });
@@ -264,6 +265,10 @@ export default function EditTournamentPage() {
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>
                         <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required min="0" />
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
+                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink} onChange={handleChange} placeholder="https://youtube.com/live/..." />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="imageHint">Image Hint</Label>

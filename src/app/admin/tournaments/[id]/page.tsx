@@ -30,6 +30,7 @@ export default function ManageTournamentPage() {
 
   const [roomId, setRoomId] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
+  const [liveStreamLink, setLiveStreamLink] = useState('');
   
   useEffect(() => {
     let allTournaments: Tournament[];
@@ -49,6 +50,7 @@ export default function ManageTournamentPage() {
     if (currentTournament) {
         setRoomId(currentTournament.roomId || '');
         setRoomPassword(currentTournament.roomPassword || '');
+        setLiveStreamLink(currentTournament.liveStreamLink || '');
     } else {
         router.push('/admin/tournaments');
     }
@@ -76,7 +78,7 @@ export default function ManageTournamentPage() {
     
     const updatedTournaments = tournaments.map(t => 
         t.id === tournament.id 
-          ? { ...t, status: 'Live' as const, roomId, roomPassword } 
+          ? { ...t, status: 'Live' as const, roomId, roomPassword, liveStreamLink } 
           : t
       );
     
@@ -162,6 +164,10 @@ export default function ManageTournamentPage() {
                 <div className="space-y-2">
                     <Label htmlFor="room-password">Room Password</Label>
                     <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} disabled={tournament.status !== 'Upcoming'}/>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="live-stream">Live Stream URL (Optional)</Label>
+                    <Input id="live-stream" value={liveStreamLink} onChange={(e) => setLiveStreamLink(e.target.value)} placeholder="https://..." disabled={tournament.status === 'Completed'} />
                 </div>
                 <div className="flex gap-2">
                     <Button onClick={handleUpdateAndGoLive} disabled={tournament.status !== 'Upcoming'} className="w-full">
