@@ -18,12 +18,12 @@ import Autoplay from "embla-carousel-autoplay";
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
     <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative">
         <div className="flex">
-            {/* Main card link overlay */}
-            <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-0">
-                <span className="sr-only">tap to open</span>
+            {/* Main card link overlay - increased z-index to ensure it captures taps across the column */}
+            <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
+                <span className="sr-only">open tournament</span>
             </Link>
             
-            <div className="relative h-32 w-32 flex-shrink-0 z-10 pointer-events-none">
+            <div className="relative h-32 w-32 flex-shrink-0 z-10">
                 <Image
                     src={tournament.imageUrl}
                     alt={tournament.title}
@@ -62,14 +62,14 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                         <Button 
                             size="sm" 
                             variant="secondary" 
-                            className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white border-none h-8 text-xs relative z-20"
+                            className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white border-none h-8 text-xs relative z-30"
                             asChild
                         >
                             <a 
                                 href={tournament.liveStreamLink} 
                                 target="_blank" 
                                 rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()} // Extra precaution
+                                onClick={(e) => e.stopPropagation()} // Allow button to work independently
                             >
                                 <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
                                 Watch Live
