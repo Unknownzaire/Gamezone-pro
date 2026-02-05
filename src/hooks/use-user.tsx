@@ -44,7 +44,24 @@ const generateUniqueId = (prefix: string, userId: string) => {
 };
 
 
-// Let's create a provider component
+// Safe localStorage write wrapper
+const saveToStorage = (key: string, data: any, toast: any) => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (e) {
+    console.error(`Failed to save ${key} to localStorage:`, e);
+    if (e instanceof Error && e.name === 'QuotaExceededError') {
+      toast({
+        variant: 'destructive',
+        title: 'Storage Full',
+        description: `Could not save ${key}. Please try deleting old data or using smaller images.`,
+      });
+    }
+    return false;
+  }
+};
+
 export const UserProvider = ({ children }: { children: ReactNode }) => {
   const { user: firebaseUser, isUserLoading, auth } = useFirebase();
   const [user, setUser] = useState<User | null>(null);
@@ -97,11 +114,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setPromotionalAds([]);
         }
         
-        // Initialize support tickets if not present
         if (!localStorage.getItem('supportTickets')) {
             localStorage.setItem('supportTickets', JSON.stringify([]));
         }
-
 
     } catch(e) {
         console.error("Error loading data from localStorage", e);
@@ -111,7 +126,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setPromotionalAds([]);
     }
     setLoading(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const reload = useCallback(() => {
@@ -121,32 +135,19 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!loading) {
-      try {
-        localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
-      } catch (e) {
-        console.error("Failed to save promotionalAds:", e);
-        if (e instanceof Error && e.name === 'QuotaExceededError') {
-          toast({
-            variant: 'destructive',
-            title: 'Storage Quota Exceeded',
-            description: 'Could not save promotional ads. The data is too large. Try deleting old ads or using smaller images.',
-          });
-        }
-      }
+      saveToStorage('promotionalAds', promotionalAds, toast);
     }
   }, [promotionalAds, loading, toast]);
   
   useEffect(() => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
-      // Check if the change is one we care about
       if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets'].includes(event.key || '')) {
         reload();
       }
     };
 
     window.addEventListener('storage', handleStorageChange);
-
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -154,43 +155,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const saveAllUsers = useCallback((updatedUsers: User[]) => {
       setAllUsers(updatedUsers);
-      try {
-        localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
-      } catch (e) {
-        console.error("Failed to save allUsers to localStorage:", e);
-        if (e instanceof Error && e.name === 'QuotaExceededError') {
-          toast({
-            variant: 'destructive',
-            title: 'Storage Full',
-            description: 'Could not save user data. Please try clearing your browser cache or using smaller images.',
-          });
-        }
-      }
+      saveToStorage('allUsers', updatedUsers, toast);
   }, [toast]);
 
   const saveAllTransactions = useCallback((updatedTransactions: Transaction[]) => {
       setAllTransactions(updatedTransactions);
-      try {
-        localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
-      } catch (e) {
-        console.error("Failed to save allTransactions:", e);
-      }
-  }, []);
+      saveToStorage('allTransactions', updatedTransactions, toast);
+  }, [toast]);
 
   const saveAllTournaments = useCallback((updatedTournaments: Tournament[]) => {
       setTournaments(updatedTournaments);
-      try {
-        localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
-      } catch (e) {
-        console.error("Failed to save allTournaments:", e);
-        if (e instanceof Error && e.name === 'QuotaExceededError') {
-          toast({
-            variant: 'destructive',
-            title: 'Storage Full',
-            description: 'Could not save tournament data. Please try using smaller images.',
-          });
-        }
-      }
+      saveToStorage('allTournaments', updatedTournaments, toast);
   }, [toast]);
 
 
@@ -214,7 +189,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
     
-    // Uniqueness checks
     if (userDetails.email && allUsers.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
         return 'error';
@@ -352,10 +326,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
           loadUserContext(liveUserData.id, allUsers, allTransactions);
         }
-      } else {
-        // This case can be for a new Google Sign-in user who needs to be added to the local mock data
-        // This logic is mostly handled in login page, but as a fallback:
-        console.log("Firebase user found but no matching local user. Consider signup flow.");
       }
     } else {
        const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked', '/reset-password'];
@@ -385,10 +355,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const hasUserJoinedTournament = (userId: string): boolean => {
-    // Check against all transactions, not just the current user's
     return allTransactions.some(tx => 
         tx.userId === userId && 
-        tx.type --- 'debit' && 
+        tx.type === 'debit' && 
         tx.status === 'completed' &&
         tx.description.toLowerCase().startsWith('joined')
     );
@@ -398,7 +367,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const joinTournament = (tournamentId: string, userToJoin: User): JoinTournamentResult => {
       const tournament = tournaments.find(t => t.id === tournamentId);
 
-      if (!tournament) return false; // Should not happen
+      if (!tournament) return false;
       if (!userToJoin) {
           toast({ variant: 'destructive', title: "Not Logged In", description: "Please log in to join a tournament." });
           return 'not_logged_in';
@@ -411,7 +380,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           toast({ 
             variant: 'destructive', 
             title: "Game Mismatch", 
-            description: `Only ${tournament.gameName} players can join this tournament. Update your profile if needed.` 
+            description: `Only ${tournament.gameName} players can join this tournament.` 
           });
           return 'game_mismatch';
       }
@@ -424,13 +393,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           return 'tournament_full';
       }
       if (userToJoin.walletBalance < tournament.entryFee) {
-          toast({ variant: 'destructive', title: "Insufficient Balance", description: `You need ₹${tournament.entryFee} to join. Please add funds.` });
+          toast({ variant: 'destructive', title: "Insufficient Balance", description: `You need ₹${tournament.entryFee} to join.` });
           return 'insufficient_balance';
       }
 
       const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
 
-      // 1. Update User's balance and tournament participants
       let updatedUsers = [...allUsers];
       const updatedTournaments = tournaments.map(t => {
           if (t.id === tournamentId) {
@@ -447,7 +415,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           return t;
       });
       
-      // 2. Add join transaction
       const newTransaction: Transaction = {
           id: generateUniqueId('tx-join', userToJoin.id),
           userId: userToJoin.id,
@@ -459,7 +426,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       };
       let updatedTransactions = [newTransaction, ...allTransactions];
       
-      // 3. Handle referral bonus if applicable
       if (isFirstTournament && userToJoin.referredBy) {
           const referrer = updatedUsers.find(u => u.id === userToJoin.referredBy);
           if (referrer) {
@@ -467,10 +433,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
               const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
               const bonus = settings.referralBonus;
 
-              updatedUsers.forEach(u => {
+              updatedUsers = updatedUsers.map(u => {
                   if (u.id === referrer.id) {
-                      u.referralBalance = (u.referralBalance || 0) + bonus;
+                      return { ...u, referralBalance: (u.referralBalance || 0) + bonus };
                   }
+                  return u;
               });
 
               const bonusTransaction: Transaction = {
@@ -486,7 +453,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           }
       }
 
-      // 4. Save all state updates
       saveAllUsers(updatedUsers);
       saveAllTransactions(updatedTransactions);
       saveAllTournaments(updatedTournaments);
@@ -543,11 +509,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const storedTickets = localStorage.getItem('supportTickets');
     const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
     const updatedTickets = [newTicket, ...allTickets];
-    try {
-      localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    } catch (e) {
-      console.error("Failed to save supportTickets:", e);
-    }
+    saveToStorage('supportTickets', updatedTickets, toast);
   };
   
   const addMessageToTicket = (ticketId: string, message: string, imageUrl?: string) => {
@@ -573,12 +535,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       return ticket;
     });
 
-    try {
-      localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    } catch (e) {
-      console.error("Failed to save supportTickets message:", e);
-    }
-    reload(); // Force a reload to update UI everywhere
+    saveToStorage('supportTickets', updatedTickets, toast);
+    reload(); 
   };
 
 
@@ -589,7 +547,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// And a custom hook to consume it
 export const useUser = () => {
   const context = useContext(UserContext);
   if (context === undefined) {

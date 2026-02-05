@@ -12,7 +12,8 @@ export async function compressImage(
   file: File, 
   options: { maxWidth?: number; maxHeight?: number; quality?: number } = {}
 ): Promise<string> {
-  const { maxWidth = 800, maxHeight = 800, quality = 0.7 } = options;
+  // Use more conservative defaults to avoid QuotaExceededError in localStorage
+  const { maxWidth = 600, maxHeight = 600, quality = 0.6 } = options;
 
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -45,6 +46,7 @@ export async function compressImage(
           return;
         }
         ctx.drawImage(img, 0, 0, width, height);
+        // Using jpeg for better compression than png
         resolve(canvas.toDataURL("image/jpeg", quality));
       };
       img.onerror = (err) => reject(err);

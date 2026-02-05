@@ -29,7 +29,6 @@ export default function AdminPromotionalAdsPage() {
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
   const [adToDelete, setAdToDelete] = useState<PromotionalAd | null>(null);
   const { toast } = useToast();
-  const router = useRouter();
   
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
@@ -59,7 +58,8 @@ export default function AdminPromotionalAdsPage() {
 
     setIsSubmitting(true);
     try {
-        const imageUrl = await compressImage(imageFile, { maxWidth: 1280, maxHeight: 720, quality: 0.7 });
+        // Use conservative compression for localStorage
+        const imageUrl = await compressImage(imageFile, { maxWidth: 800, maxHeight: 450, quality: 0.6 });
         const newAd: PromotionalAd = {
             id: `ad-${Date.now()}`,
             title,
@@ -177,7 +177,7 @@ export default function AdminPromotionalAdsPage() {
                             onChange={handleImageFileChange}
                             required
                         />
-                         <p className="text-xs text-muted-foreground">Recommended aspect ratio: 16:9 (e.g., 1280x720).</p>
+                         <p className="text-xs text-muted-foreground">Smaller images help improve performance.</p>
                     </div>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
                         {isSubmitting ? 'Creating...' : 'Create Ad'}

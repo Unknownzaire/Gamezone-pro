@@ -6,13 +6,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { SocialLink } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { compressImage } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export interface WalletSettings {
     minWithdrawal: number;
@@ -34,6 +45,7 @@ export interface HelpAndSupportSettings {
 
 export default function AdminSettingsPage() {
     const { toast } = useToast();
+    const router = useRouter();
     const searchParams = useSearchParams();
     const showOnly = searchParams.get('show');
 
@@ -99,7 +111,7 @@ export default function AdminSettingsPage() {
                 });
             } catch (error) {
                 console.error("Wallet update save error:", error);
-                toast({ variant: 'destructive', title: 'Update Failed', description: 'Storage limit reached. Please use a smaller QR code image.' });
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Storage limit reached. Try using a smaller QR image.' });
             } finally {
                 setIsUpdatingWallet(false);
             }
@@ -107,7 +119,7 @@ export default function AdminSettingsPage() {
 
         if (qrCodeFile) {
             try {
-                const imageUrl = await compressImage(qrCodeFile, { maxWidth: 400, maxHeight: 400, quality: 0.8 });
+                const imageUrl = await compressImage(qrCodeFile, { maxWidth: 400, maxHeight: 400, quality: 0.6 });
                 const newSettings = { ...walletSettings, qrCodeImageUrl: imageUrl };
                 setWalletSettings(newSettings);
                 saveSettings(newSettings);
@@ -191,6 +203,17 @@ export default function AdminSettingsPage() {
             [id]: value,
         }));
     }
+
+    const handleResetAppData = () => {
+        localStorage.clear();
+        toast({
+            title: "App Data Reset",
+            description: "All local storage has been cleared. The app will now reload with defaults."
+        });
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 1500);
+    };
 
 
     return (
@@ -378,6 +401,46 @@ export default function AdminSettingsPage() {
                         </form>
                     </Card>
                 )}
+
+                <Card className="border-destructive/50 bg-destructive/5">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-destructive">
+                            <AlertTriangle className="h-5 w-5" />
+                            Danger Zone
+                        </CardTitle>
+                        <CardDescription>Destructive actions that cannot be undone.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="flex items-center justify-between gap-4 rounded-lg border border-destructive/20 bg-background p-4">
+                            <div className="space-y-1">
+                                <p className="text-sm font-semibold">Reset App Data</p>
+                                <p className="text-xs text-muted-foreground">Clear all local storage data. Useful if you hit storage limits or data is corrupted.</p>
+                            </div>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">
+                                        <RefreshCcw className="mr-2 h-4 w-4" />
+                                        Reset Data
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            This will permanently clear all mock data, users, tournaments, and transactions from your browser's local storage. This action cannot be undone.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleResetAppData} className="bg-destructive hover:bg-destructive/90 text-white">
+                                            Yes, Reset Everything
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
         </div>
     );
