@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import React, { useState, useEffect, memo, useCallback } from 'react';
@@ -47,7 +46,7 @@ const ParticipantRankItem = memo(({
        <div className="flex-1 truncate">
         <p className="font-semibold">{participant.user.username}</p>
         <p className="text-xs text-muted-foreground">
-          {participant.user.bgmiUsername} ({participant.user.bgmiId})
+          {participant.user.inGameUsername} ({participant.user.inGameId})
         </p>
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
