@@ -190,8 +190,9 @@ export default function ManageTournamentPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Username</TableHead>
-                            <TableHead>BGMI ID</TableHead>
+                            <TableHead>App Username</TableHead>
+                            <TableHead>Game Username</TableHead>
+                            <TableHead>Game ID</TableHead>
                             <TableHead>Result</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -199,7 +200,8 @@ export default function ManageTournamentPage() {
                         {tournament.participants.map(p => (
                             <TableRow key={p.id}>
                                 <TableCell>{p.user.username}</TableCell>
-                                <TableCell>{p.user.bgmiId}</TableCell>
+                                <TableCell>{p.user.inGameUsername || 'N/A'}</TableCell>
+                                <TableCell>{p.user.inGameId || 'N/A'}</TableCell>
                                 <TableCell>
                                     <Badge variant={p.result === 'Winner' ? 'default' : 'outline'}>
                                         {p.result ?? 'N/A'}
