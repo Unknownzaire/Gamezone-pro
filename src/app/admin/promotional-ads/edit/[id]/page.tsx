@@ -10,9 +10,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { compressImage } from '@/lib/utils';
 
 export default function EditPromotionalAdPage() {
   const params = useParams();
@@ -28,6 +29,7 @@ export default function EditPromotionalAdPage() {
     imageUrl: '',
   });
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -72,14 +74,21 @@ export default function EditPromotionalAdPage() {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
-    const processAndSubmit = (imageUrl?: string) => {
+    try {
+      let finalImageUrl = formData.imageUrl;
+      
+      if (imageFile) {
+        finalImageUrl = await compressImage(imageFile, { maxWidth: 1280, maxHeight: 720, quality: 0.7 });
+      }
+
       const updatedAd: PromotionalAd = {
         ...(ad as PromotionalAd),
         ...formData,
-        imageUrl: imageUrl ?? formData.imageUrl,
+        imageUrl: finalImageUrl!,
       };
 
       setPromotionalAds(prevAds => prevAds.map(a => a.id === id ? updatedAd : a));
@@ -89,17 +98,11 @@ export default function EditPromotionalAdPage() {
         description: `The ad "${formData.title}" has been updated.`,
       });
       router.push('/admin/promotional-ads');
-    };
-
-    if (imageFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const newImageUrl = event.target?.result as string;
-            processAndSubmit(newImageUrl);
-        };
-        reader.readAsDataURL(imageFile);
-    } else {
-        processAndSubmit();
+    } catch (error) {
+        console.error("Ad update error:", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process the image.' });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -130,11 +133,11 @@ export default function EditPromotionalAdPage() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">Ad Title</Label>
-              <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+              <Input id="title" name="title" value={formData.title} onChange={handleChange} required disabled={isSubmitting} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="ad-link-select">Link to Tournament</Label>
-              <Select onValueChange={handleTournamentLinkSelect}>
+              <Select onValueChange={handleTournamentLinkSelect} disabled={isSubmitting}>
                 <SelectTrigger id="ad-link-select">
                   <SelectValue placeholder="Select a tournament to auto-fill fields" />
                 </SelectTrigger>
@@ -154,14 +157,18 @@ export default function EditPromotionalAdPage() {
                 placeholder="Or enter a custom URL"
                 className="mt-2"
                 required
+                disabled={isSubmitting}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="imageFile">Ad Image</Label>
-              <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+              <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
               <p className="text-xs text-muted-foreground">Current image is set. Upload a new file to replace it.</p>
             </div>
-            <Button type="submit" className="w-full">Save Changes</Button>
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+            </Button>
           </CardContent>
         </form>
       </Card>

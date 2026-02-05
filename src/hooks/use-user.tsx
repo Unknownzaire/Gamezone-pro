@@ -125,9 +125,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
       } catch (e) {
         console.error("Failed to save promotionalAds:", e);
+        if (e instanceof Error && e.name === 'QuotaExceededError') {
+          toast({
+            variant: 'destructive',
+            title: 'Storage Quota Exceeded',
+            description: 'Could not save promotional ads. The data is too large. Try deleting old ads or using smaller images.',
+          });
+        }
       }
     }
-  }, [promotionalAds, loading]);
+  }, [promotionalAds, loading, toast]);
   
   useEffect(() => {
     loadInitialData();
@@ -155,7 +162,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           toast({
             variant: 'destructive',
             title: 'Storage Full',
-            description: 'Could not save data. Please try clearing your browser cache or using smaller images.',
+            description: 'Could not save user data. Please try clearing your browser cache or using smaller images.',
           });
         }
       }
@@ -176,8 +183,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
       } catch (e) {
         console.error("Failed to save allTournaments:", e);
+        if (e instanceof Error && e.name === 'QuotaExceededError') {
+          toast({
+            variant: 'destructive',
+            title: 'Storage Full',
+            description: 'Could not save tournament data. Please try using smaller images.',
+          });
+        }
       }
-  }, []);
+  }, [toast]);
 
 
   const login = (email: string, password?: string): boolean | 'blocked' => {
@@ -209,8 +223,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return 'error';
     }
-    if (userDetails.bgmiUsername && allUsers.some(u => u.bgmiUsername?.toLowerCase() === userDetails.bgmiUsername?.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'BGMI Username Taken', description: 'This BGMI username is already in use.' });
+    if (userDetails.inGameUsername && allUsers.some(u => u.inGameUsername?.toLowerCase() === userDetails.inGameUsername?.toLowerCase())) {
+        toast({ variant: 'destructive', title: 'Game Username Taken', description: 'This game username is already in use.' });
         return 'error';
     }
     
@@ -374,7 +388,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     // Check against all transactions, not just the current user's
     return allTransactions.some(tx => 
         tx.userId === userId && 
-        tx.type === 'debit' && 
+        tx.type --- 'debit' && 
         tx.status === 'completed' &&
         tx.description.toLowerCase().startsWith('joined')
     );

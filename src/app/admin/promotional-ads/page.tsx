@@ -23,6 +23,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { useRouter } from 'next/navigation';
+import { compressImage } from '@/lib/utils';
 
 export default function AdminPromotionalAdsPage() {
   const { promotionalAds, setPromotionalAds, tournaments } = useUser();
@@ -34,6 +35,7 @@ export default function AdminPromotionalAdsPage() {
   const [link, setLink] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!isFormVisible) {
@@ -44,7 +46,7 @@ export default function AdminPromotionalAdsPage() {
   }, [isFormVisible]);
 
 
-  const handleCreateAd = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleCreateAd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title || !link || !imageFile) {
       toast({
@@ -55,9 +57,9 @@ export default function AdminPromotionalAdsPage() {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-        const imageUrl = event.target?.result as string;
+    setIsSubmitting(true);
+    try {
+        const imageUrl = await compressImage(imageFile, { maxWidth: 1280, maxHeight: 720, quality: 0.7 });
         const newAd: PromotionalAd = {
             id: `ad-${Date.now()}`,
             title,
@@ -67,10 +69,13 @@ export default function AdminPromotionalAdsPage() {
         };
         setPromotionalAds(prev => [...prev, newAd]);
         toast({ title: 'Promotional Ad Created', description: `The ad "${title}" is now live.` });
-        
         setIsFormVisible(false);
-    };
-    reader.readAsDataURL(imageFile);
+    } catch (error) {
+        console.error("Ad creation error:", error);
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not process the image.' });
+    } finally {
+        setIsSubmitting(false);
+    }
   };
   
   const handleDeleteAd = () => {
@@ -115,7 +120,7 @@ export default function AdminPromotionalAdsPage() {
             <p className="text-muted-foreground">Manage ads displayed on the user home page.</p>
             </div>
         </div>
-         <Button onClick={() => setIsFormVisible(!isFormVisible)}>
+         <Button onClick={() => setIsFormVisible(!isFormVisible)} disabled={isSubmitting}>
             <PlusCircle className="mr-2 h-4 w-4" />
             {isFormVisible ? 'Cancel' : 'Create New Ad'}
           </Button>
@@ -174,8 +179,8 @@ export default function AdminPromotionalAdsPage() {
                         />
                          <p className="text-xs text-muted-foreground">Recommended aspect ratio: 16:9 (e.g., 1280x720).</p>
                     </div>
-                    <Button type="submit" className="w-full">
-                        Create Ad
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                        {isSubmitting ? 'Creating...' : 'Create Ad'}
                     </Button>
                 </CardContent>
             </form>

@@ -8,11 +8,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Loader2 } from "lucide-react";
 import React, { useState } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
+import { compressImage } from '@/lib/utils';
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -20,6 +21,7 @@ export default function CreateTournamentPage() {
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [prizePool, setPrizePool] = useState(5000);
     const [matchTime, setMatchTime] = useState<Date | undefined>(new Date());
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -88,7 +90,7 @@ export default function CreateTournamentPage() {
         setPrizeDistributions(newDistributions);
     };
 
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         const formData = new FormData(e.currentTarget);
         
@@ -109,7 +111,7 @@ export default function CreateTournamentPage() {
         }
 
         const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
-        if (Math.abs(finalTotalPercentage - 100) > 0.01) { // Allow for small floating point inaccuracies
+        if (Math.abs(finalTotalPercentage - 100) > 0.01) {
             toast({
                 variant: 'destructive',
                 title: "Invalid Prize Distribution",
@@ -118,7 +120,13 @@ export default function CreateTournamentPage() {
             return;
         }
 
-        const processAndSubmit = (imageUrl: string) => {
+        setIsSubmitting(true);
+        try {
+            let imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
+            if (imageFile) {
+                imageUrl = await compressImage(imageFile, { maxWidth: 1000, maxHeight: 600, quality: 0.7 });
+            }
+
             const newTournament: Tournament = {
                 id: `t-${Date.now()}`,
                 title: formData.get('title') as string,
@@ -151,18 +159,11 @@ export default function CreateTournamentPage() {
                 description: "The new tournament has been successfully created."
             });
             router.push('/admin/tournaments');
-        };
-        
-        if (imageFile) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imageUrl = event.target?.result as string;
-                processAndSubmit(imageUrl);
-            };
-            reader.readAsDataURL(imageFile);
-        } else {
-             const imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
-             processAndSubmit(imageUrl);
+        } catch (error) {
+            console.error("Tournament creation error:", error);
+            toast({ variant: 'destructive', title: 'Creation Failed', description: 'An error occurred while saving the tournament details.' });
+        } finally {
+            setIsSubmitting(false);
         }
     }
 
@@ -183,7 +184,7 @@ export default function CreateTournamentPage() {
         <div className="space-y-6">
             <div className="flex items-center gap-4">
                 <Link href="/admin/tournaments">
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" disabled={isSubmitting}>
                         <ArrowLeft className="h-4 w-4" />
                     </Button>
                 </Link>
@@ -203,11 +204,11 @@ export default function CreateTournamentPage() {
                             <CardContent className="grid gap-4 md:grid-cols-2">
                                 <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="title">Tournament Title</Label>
-                                    <Input id="title" name="title" placeholder="e.g., Summer Showdown" defaultValue="Summer Showdown" required />
+                                    <Input id="title" name="title" placeholder="e.g., Summer Showdown" defaultValue="Summer Showdown" required disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="game">Game Name</Label>
-                                    <Input id="game" name="game" placeholder="BGMI" defaultValue="BGMI" required />
+                                    <Input id="game" name="game" placeholder="BGMI" defaultValue="BGMI" required disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="match-time">Match Time</Label>
@@ -215,27 +216,27 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="entry-fee">Entry Fee (₹)</Label>
-                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" defaultValue={50} required min="0" />
+                                    <Input id="entry-fee" name="entry-fee" type="number" placeholder="50" defaultValue={50} required min="0" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
-                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} min="0" />
+                                    <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} min="0" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>
-                                    <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required min="0" />
+                                    <Input id="commission" name="commission" type="number" placeholder="10" defaultValue={10} required min="0" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
-                                    <Input id="liveStreamLink" name="liveStreamLink" placeholder="https://youtube.com/live/..." />
+                                    <Input id="liveStreamLink" name="liveStreamLink" placeholder="https://youtube.com/live/..." disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="imageHint">Image Hint</Label>
-                                    <Input id="imageHint" name="imageHint" placeholder="e.g., epic battle" />
+                                    <Input id="imageHint" name="imageHint" placeholder="e.g., epic battle" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2 md:col-span-2">
                                     <Label htmlFor="imageFile">Tournament Image</Label>
-                                    <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+                                    <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
                                 </div>
                             </CardContent>
                         </Card>
@@ -258,6 +259,7 @@ export default function CreateTournamentPage() {
                                                     placeholder="e.g., 1 or 4-10" 
                                                     value={dist.rank}
                                                     onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                                    disabled={isSubmitting}
                                                 />
                                             </div>
                                             <div className="space-y-1">
@@ -270,6 +272,7 @@ export default function CreateTournamentPage() {
                                                     placeholder="e.g., 50"
                                                     value={dist.percentage}
                                                     onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                                    disabled={isSubmitting}
                                                 />
                                             </div>
                                             <div className="space-y-1">
@@ -282,6 +285,7 @@ export default function CreateTournamentPage() {
                                                     placeholder="e.g., 2500"
                                                     value={getPrizeAmount(dist.percentage)} 
                                                     onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
+                                                    disabled={isSubmitting}
                                                 />
                                             </div>
                                         </div>
@@ -290,13 +294,13 @@ export default function CreateTournamentPage() {
                                             size="icon"
                                             onClick={() => removePrizeRow(index)}
                                             type="button"
-                                            disabled={prizeDistributions.length <= 1}
+                                            disabled={prizeDistributions.length <= 1 || isSubmitting}
                                         >
                                             <Trash2 className="h-4 w-4 text-destructive" />
                                         </Button>
                                     </div>
                                 ))}
-                                <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100}>Add Prize Tier</Button>
+                                <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100 || isSubmitting}>Add Prize Tier</Button>
                                 <p className="text-xs text-muted-foreground pt-2">
                                     Total percentage distributed: {totalPercentage.toFixed(2)}%
                                 </p>
@@ -305,7 +309,10 @@ export default function CreateTournamentPage() {
                     </div>
                 </div>
                  <div className="mt-6 flex justify-end">
-                    <Button type="submit" size="lg">Create Tournament</Button>
+                    <Button type="submit" size="lg" disabled={isSubmitting}>
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {isSubmitting ? 'Creating...' : 'Create Tournament'}
+                    </Button>
                 </div>
             </form>
         </div>

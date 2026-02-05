@@ -10,9 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
+import { compressImage } from '@/lib/utils';
 
 export default function EditTournamentPage() {
   const params = useParams();
@@ -34,6 +35,7 @@ export default function EditTournamentPage() {
   const [matchTime, setMatchTime] = useState<Date | undefined>(undefined);
    const [imageFile, setImageFile] = useState<File | null>(null);
    const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
+   const [isSubmitting, setIsSubmitting] = useState(false);
    
    const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
 
@@ -141,7 +143,7 @@ export default function EditTournamentPage() {
       setPrizeDistributions(newDistributions);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!matchTime) {
@@ -160,7 +162,7 @@ export default function EditTournamentPage() {
     }
 
     const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
-    if (Math.abs(finalTotalPercentage - 100) > 0.01) { // Allow for small floating point inaccuracies
+    if (Math.abs(finalTotalPercentage - 100) > 0.01) {
         toast({
             variant: 'destructive',
             title: "Invalid Prize Distribution",
@@ -169,12 +171,19 @@ export default function EditTournamentPage() {
         return;
     }
     
-    const processAndSubmit = (imageUrl?: string) => {
+    setIsSubmitting(true);
+    try {
+        let finalImageUrl = formData.imageUrl;
+        
+        if (imageFile) {
+            finalImageUrl = await compressImage(imageFile, { maxWidth: 1000, maxHeight: 600, quality: 0.7 });
+        }
+
         const updatedData: Tournament = {
             ...(tournament as Tournament),
             ...formData,
             matchTime: matchTime,
-            imageUrl: imageUrl ?? formData.imageUrl,
+            imageUrl: finalImageUrl!,
             prizeDistribution: prizeDistributions,
         };
 
@@ -195,17 +204,11 @@ export default function EditTournamentPage() {
             description: `Details for ${formData.title} have been updated.`,
         });
         router.push('/admin/tournaments');
-    };
-
-    if (imageFile) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const newImageUrl = event.target?.result as string;
-            processAndSubmit(newImageUrl);
-        };
-        reader.readAsDataURL(imageFile);
-    } else {
-        processAndSubmit();
+    } catch (error) {
+        console.error("Tournament update error:", error);
+        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save the changes.' });
+    } finally {
+        setIsSubmitting(false);
     }
   };
 
@@ -224,7 +227,7 @@ export default function EditTournamentPage() {
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link href="/admin/tournaments">
-          <Button variant="outline" size="icon">
+          <Button variant="outline" size="icon" disabled={isSubmitting}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
         </Link>
@@ -244,11 +247,11 @@ export default function EditTournamentPage() {
                     <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="title">Tournament Title</Label>
-                        <Input id="title" name="title" value={formData.title} onChange={handleChange} required />
+                        <Input id="title" name="title" value={formData.title} onChange={handleChange} required disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="gameName">Game Name</Label>
-                        <Input id="gameName" name="gameName" value={formData.gameName} onChange={handleChange} required />
+                        <Input id="gameName" name="gameName" value={formData.gameName} onChange={handleChange} required disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="matchTime">Match Time</Label>
@@ -256,27 +259,27 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="entryFee">Entry Fee (₹)</Label>
-                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required min="0" />
+                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="prizePool">Prize Pool (₹)</Label>
-                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" />
+                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>
-                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required min="0" />
+                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
-                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink} onChange={handleChange} placeholder="https://youtube.com/live/..." />
+                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink} onChange={handleChange} placeholder="https://youtube.com/live/..." disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="imageHint">Image Hint</Label>
-                          <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} />
+                          <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="imageFile">Tournament Image</Label>
-                          <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} />
+                          <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
                           {formData.imageUrl && !imageFile && <p className="text-xs text-muted-foreground pt-1">Current image is set. Upload a new file to replace it.</p>}
                       </div>
                     </CardContent>
@@ -299,6 +302,7 @@ export default function EditTournamentPage() {
                                             placeholder="e.g., 1 or 4-10" 
                                             value={dist.rank}
                                             onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
+                                            disabled={isSubmitting}
                                         />
                                     </div>
                                     <div className="space-y-1">
@@ -311,6 +315,7 @@ export default function EditTournamentPage() {
                                             placeholder="e.g., 50"
                                             value={dist.percentage}
                                             onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
+                                            disabled={isSubmitting}
                                         />
                                     </div>
                                     <div className="space-y-1">
@@ -323,6 +328,7 @@ export default function EditTournamentPage() {
                                             placeholder="e.g., 2500"
                                             value={getPrizeAmount(dist.percentage)} 
                                             onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
+                                            disabled={isSubmitting}
                                         />
                                     </div>
                                 </div>
@@ -331,13 +337,13 @@ export default function EditTournamentPage() {
                                     size="icon"
                                     onClick={() => removePrizeRow(index)}
                                     type="button"
-                                    disabled={prizeDistributions.length <= 1}
+                                    disabled={prizeDistributions.length <= 1 || isSubmitting}
                                 >
                                     <Trash2 className="h-4 w-4 text-destructive" />
                                 </Button>
                             </div>
                         ))}
-                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100}>Add Prize Tier</Button>
+                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100 || isSubmitting}>Add Prize Tier</Button>
                         <p className="text-xs text-muted-foreground pt-2">
                             Total percentage distributed: {totalPercentage.toFixed(2)}%
                         </p>
@@ -346,7 +352,10 @@ export default function EditTournamentPage() {
             </div>
         </div>
         <div className="mt-6 flex justify-end">
-            <Button type="submit" size="lg">Save Changes</Button>
+            <Button type="submit" size="lg" disabled={isSubmitting}>
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+            </Button>
         </div>
       </form>
     </div>

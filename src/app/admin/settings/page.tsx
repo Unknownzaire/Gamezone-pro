@@ -6,12 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { SocialLink } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { compressImage } from "@/lib/utils";
 
 export interface WalletSettings {
     minWithdrawal: number;
@@ -56,6 +57,7 @@ export default function AdminSettingsPage() {
         supportEmail: 'support@gamezonepro.com',
     });
     const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
+    const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
     useEffect(() => {
         const storedWalletSettings = localStorage.getItem('walletSettings');
@@ -84,26 +86,36 @@ export default function AdminSettingsPage() {
         });
     }
     
-    const handleWalletUpdate = (e: React.FormEvent) => {
+    const handleWalletUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
+        setIsUpdatingWallet(true);
 
         const saveSettings = (settings: WalletSettings) => {
-            localStorage.setItem('walletSettings', JSON.stringify(settings));
-            toast({
-                title: "Wallet Settings Updated",
-                description: "The global wallet settings have been saved."
-            });
+            try {
+                localStorage.setItem('walletSettings', JSON.stringify(settings));
+                toast({
+                    title: "Wallet Settings Updated",
+                    description: "The global wallet settings have been saved."
+                });
+            } catch (error) {
+                console.error("Wallet update save error:", error);
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Storage limit reached. Please use a smaller QR code image.' });
+            } finally {
+                setIsUpdatingWallet(false);
+            }
         };
 
         if (qrCodeFile) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                const imageUrl = event.target?.result as string;
+            try {
+                const imageUrl = await compressImage(qrCodeFile, { maxWidth: 400, maxHeight: 400, quality: 0.8 });
                 const newSettings = { ...walletSettings, qrCodeImageUrl: imageUrl };
                 setWalletSettings(newSettings);
                 saveSettings(newSettings);
-            };
-            reader.readAsDataURL(qrCodeFile);
+            } catch (error) {
+                console.error("QR Compression error:", error);
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process QR image.' });
+                setIsUpdatingWallet(false);
+            }
         } else {
             saveSettings(walletSettings);
         }
@@ -235,23 +247,26 @@ export default function AdminSettingsPage() {
                             <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
-                                    <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required />
+                                    <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="maxWithdrawal">Maximum Withdrawal (₹)</Label>
-                                    <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required />
+                                    <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
-                                    <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required />
+                                    <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="qr-code">QR Code Image</Label>
-                                    <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} />
+                                    <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} disabled={isUpdatingWallet} />
                                     {walletSettings.qrCodeImageUrl && !qrCodeFile && <p className="text-xs text-muted-foreground pt-1">Current QR code is set. Upload a new file to replace it.</p>}
                                 </div>
                                 <div className="flex justify-end">
-                                    <Button type="submit">Save Wallet Settings</Button>
+                                    <Button type="submit" disabled={isUpdatingWallet}>
+                                        {isUpdatingWallet ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                        Save Wallet Settings
+                                    </Button>
                                 </div>
                             </CardContent>
                         </form>
