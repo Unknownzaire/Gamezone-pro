@@ -20,7 +20,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
         <div className="flex">
             {/* Main card link overlay */}
             <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-0">
-                <span className="sr-only">View {tournament.title} details</span>
+                <span className="sr-only">tap to open details</span>
             </Link>
             
             <div className="relative h-32 w-32 flex-shrink-0 z-10 pointer-events-none">
