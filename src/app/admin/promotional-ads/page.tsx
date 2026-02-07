@@ -32,7 +32,7 @@ export default function AdminPromotionalAdsPage() {
   
   const [title, setTitle] = useState('');
   const [link, setLink] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imageFile, setimageFile] = useState<File | null>(null);
   const [isFormVisible, setIsFormVisible] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -40,7 +40,7 @@ export default function AdminPromotionalAdsPage() {
     if (!isFormVisible) {
       setTitle('');
       setLink('');
-      setImageFile(null);
+      setimageFile(null);
     }
   }, [isFormVisible]);
 
@@ -87,7 +87,7 @@ export default function AdminPromotionalAdsPage() {
 
   const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setImageFile(e.target.files[0]);
+      setimageFile(e.target.files[0]);
     }
   };
   
@@ -229,7 +229,7 @@ export default function AdminPromotionalAdsPage() {
                                         </Link>
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon">
+                                                <Button variant="ghost" size="icon" onClick={() => setAdToDelete(ad)}>
                                                     <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </AlertDialogTrigger>
@@ -241,8 +241,8 @@ export default function AdminPromotionalAdsPage() {
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleDeleteAd()} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                                    <AlertDialogCancel onClick={() => setAdToDelete(null)}>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteAd()} className="bg-destructive hover:bg-destructive/90">after tap this button delete ads</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
