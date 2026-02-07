@@ -150,10 +150,10 @@ export default function AdminPromotionalAdsPage() {
                         <Label htmlFor="ad-link-select">Link to Tournament</Label>
                          <Select onValueChange={handleTournamentLinkSelect} >
                             <SelectTrigger id="ad-link-select">
-                                <SelectValue placeholder="Select a tournament to auto-fill fields" />
+                                <SelectValue placeholder="show only live and upcoming" />
                             </SelectTrigger>
                             <SelectContent>
-                                {tournaments.map(t => (
+                                {tournaments.filter(t => t.status !== 'Completed').map(t => (
                                 <SelectItem key={t.id} value={t.id}>
                                     {t.title}
                                 </SelectItem>
