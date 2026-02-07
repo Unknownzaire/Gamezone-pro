@@ -404,7 +404,7 @@ export default function ProfilePage() {
                   </div>
               </div>
               <Button onClick={handleUpdateProfile} className="w-full">
-                {isEditing ? 'Save Profile' : 'Edit Profile'}
+                {isEditing ? 'after tap this button enter password and change details' : 'Edit Profile'}
               </Button>
           </CardContent>
         </Card>
