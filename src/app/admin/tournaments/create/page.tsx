@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { compressImage } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -22,6 +22,7 @@ export default function CreateTournamentPage() {
     const [prizePool, setPrizePool] = useState(5000);
     const [matchTime, setMatchTime] = useState<Date | undefined>(new Date());
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [gameName, setGameName] = useState('');
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -98,6 +99,12 @@ export default function CreateTournamentPage() {
             toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
             return;
         }
+
+        const gameNameFromForm = formData.get('game') as string;
+        if (!gameNameFromForm) {
+            toast({ variant: 'destructive', title: "Game Required", description: "Please select a game." });
+            return;
+        }
         
         const entryFee = Number(formData.get('entry-fee'));
         if (entryFee < 0) {
@@ -130,7 +137,7 @@ export default function CreateTournamentPage() {
             const newTournament: Tournament = {
                 id: `t-${Date.now()}`,
                 title: formData.get('title') as string,
-                gameName: formData.get('game') as string,
+                gameName: gameNameFromForm,
                 matchTime: matchTime,
                 entryFee: entryFee,
                 prizePool: prizePool,
@@ -208,7 +215,17 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="game">Game Name</Label>
-                                    <Input id="game" name="game" placeholder="BGMI" defaultValue="BGMI" required disabled={isSubmitting} />
+                                    <input type="hidden" name="game" value={gameName} />
+                                    <Select value={gameName} onValueChange={setGameName} disabled={isSubmitting}>
+                                        <SelectTrigger id="game">
+                                            <SelectValue placeholder="tap to select game" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="BGMI">BGMI</SelectItem>
+                                            <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                                            <SelectItem value="COD">COD</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="match-time">Match Time</Label>

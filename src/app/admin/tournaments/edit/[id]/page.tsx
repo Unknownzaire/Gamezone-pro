@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -14,6 +13,7 @@ import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 import { compressImage } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function EditTournamentPage() {
   const params = useParams();
@@ -74,6 +74,13 @@ export default function EditTournamentPage() {
     setFormData(prev => ({
       ...prev,
       [name]: val
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
     }));
   };
   
@@ -151,6 +158,11 @@ export default function EditTournamentPage() {
       return;
     }
 
+    if (!formData.gameName) {
+        toast({ variant: 'destructive', title: "Game Required", description: "Please select a game." });
+        return;
+    }
+
     if (formData.entryFee && formData.entryFee < 0) {
         toast({ variant: 'destructive', title: "Invalid Entry Fee", description: "Entry fee cannot be negative." });
         return;
@@ -185,7 +197,7 @@ export default function EditTournamentPage() {
             matchTime: matchTime,
             imageUrl: finalImageUrl!,
             prizeDistribution: prizeDistributions,
-        };
+        } as Tournament;
 
         let allTournaments: Tournament[];
         try {
@@ -251,7 +263,16 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="gameName">Game Name</Label>
-                        <Input id="gameName" name="gameName" value={formData.gameName} onChange={handleChange} required disabled={isSubmitting} />
+                        <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
+                            <SelectTrigger id="gameName">
+                                <SelectValue placeholder="tap to select game" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="BGMI">BGMI</SelectItem>
+                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                                <SelectItem value="COD">COD</SelectItem>
+                            </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="matchTime">Match Time</Label>
