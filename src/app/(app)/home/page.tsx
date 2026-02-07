@@ -20,7 +20,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
         <div className="flex">
             {/* Main card link overlay - increased z-index to ensure it captures taps across the column */}
             <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
-                <span className="sr-only">open tournament</span>
+                <span className="sr-only">after tap this live button go live</span>
             </Link>
             
             <div className="relative h-32 w-32 flex-shrink-0 z-10">
