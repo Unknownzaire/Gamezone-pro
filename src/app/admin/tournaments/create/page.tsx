@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -131,7 +132,7 @@ export default function CreateTournamentPage() {
         try {
             let imageUrl = `https://picsum.photos/seed/${Math.random()}/600/400`;
             if (imageFile) {
-                imageUrl = await compressImage(imageFile, { maxWidth: 1000, maxHeight: 600, quality: 0.7 });
+                imageUrl = await compressImage(imageFile, { maxWidth: 800, maxHeight: 450, quality: 0.6 });
             }
 
             const newTournament: Tournament = {
@@ -218,12 +219,13 @@ export default function CreateTournamentPage() {
                                     <input type="hidden" name="game" value={gameName} />
                                     <Select value={gameName} onValueChange={setGameName} disabled={isSubmitting}>
                                         <SelectTrigger id="game">
-                                            <SelectValue placeholder="tap to select game" />
+                                            <SelectValue placeholder="add other games column" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="BGMI">BGMI</SelectItem>
                                             <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
                                             <SelectItem value="COD">COD</SelectItem>
+                                            <SelectItem value="OTHER">OTHER</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>

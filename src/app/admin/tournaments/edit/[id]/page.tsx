@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -188,7 +189,7 @@ export default function EditTournamentPage() {
         let finalImageUrl = formData.imageUrl;
         
         if (imageFile) {
-            finalImageUrl = await compressImage(imageFile, { maxWidth: 1000, maxHeight: 600, quality: 0.7 });
+            finalImageUrl = await compressImage(imageFile, { maxWidth: 800, maxHeight: 450, quality: 0.6 });
         }
 
         const updatedData: Tournament = {
@@ -264,13 +265,14 @@ export default function EditTournamentPage() {
                       <div className="space-y-2">
                         <Label htmlFor="gameName">Game Name</Label>
                         <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
-                            <SelectTrigger id="gameName">
-                                <SelectValue placeholder="tap to select game" />
+                            <SelectTrigger id="game">
+                                <SelectValue placeholder="add other games column" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="BGMI">BGMI</SelectItem>
                                 <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
                                 <SelectItem value="COD">COD</SelectItem>
+                                <SelectItem value="OTHER">OTHER</SelectItem>
                             </SelectContent>
                         </Select>
                       </div>

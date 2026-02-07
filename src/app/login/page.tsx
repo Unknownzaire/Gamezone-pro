@@ -39,7 +39,7 @@ export default function LoginPage() {
 
   const [signupForm, setSignupForm] = useState({
       username: '',
-      primaryGame: 'BGMI' as 'BGMI' | 'FREE FIRE' | 'COD',
+      primaryGame: 'BGMI' as 'BGMI' | 'FREE FIRE' | 'COD' | 'OTHER',
       inGameUsername: '',
       inGameId: '',
       mobile: '',
@@ -384,6 +384,7 @@ export default function LoginPage() {
                                 <SelectItem value="BGMI">BGMI</SelectItem>
                                 <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
                                 <SelectItem value="COD">COD</SelectItem>
+                                <SelectItem value="OTHER">OTHER</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>

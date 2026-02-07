@@ -90,7 +90,12 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
 );
 
 const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: Tournament[]}) => {
-    const gameTournaments = tournaments.filter(t => t.gameName === gameName);
+    const gameTournaments = tournaments.filter(t => {
+        if (gameName === 'OTHER') {
+            return !['BGMI', 'FREE FIRE', 'COD'].includes(t.gameName.toUpperCase());
+        }
+        return t.gameName.toUpperCase() === gameName.toUpperCase();
+    });
     const upcoming = gameTournaments.filter(t => t.status === 'Upcoming');
     const live = gameTournaments.filter(t => t.status === 'Live');
     const completed = gameTournaments.filter(t => t.status === 'Completed');
@@ -175,10 +180,11 @@ export default function HomePage() {
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
 
       <Tabs defaultValue="bgmi" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="bgmi">BGMI</TabsTrigger>
           <TabsTrigger value="freefire">FREE FIRE</TabsTrigger>
           <TabsTrigger value="cod">COD</TabsTrigger>
+          <TabsTrigger value="other">OTHER</TabsTrigger>
         </TabsList>
         <TabsContent value="bgmi" className="mt-4">
             <GameContent gameName="BGMI" tournaments={tournaments} />
@@ -188,6 +194,9 @@ export default function HomePage() {
         </TabsContent>
         <TabsContent value="cod" className="mt-4">
             <GameContent gameName="COD" tournaments={tournaments} />
+        </TabsContent>
+        <TabsContent value="other" className="mt-4">
+            <GameContent gameName="OTHER" tournaments={tournaments} />
         </TabsContent>
       </Tabs>
     </div>

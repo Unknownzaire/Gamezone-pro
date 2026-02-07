@@ -40,7 +40,7 @@ export default function AdminUsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
   const [fundAmount, setFundAmount] = useState('');
-  const [gameFilter, setGameFilter] = useState<'ALL' | 'BGMI' | 'FREE FIRE' | 'COD'>('ALL');
+  const [gameFilter, setGameFilter] = useState<'ALL' | 'BGMI' | 'FREE FIRE' | 'COD' | 'OTHER'>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
 
   const { toast } = useToast();
@@ -180,6 +180,12 @@ export default function AdminUsersPage() {
   };
 
   const getParticipationCount = (userId: string, gameName: string) => {
+    if (gameName === 'OTHER') {
+        return tournaments.filter(t => 
+          !['BGMI', 'FREE FIRE', 'COD'].includes(t.gameName.toUpperCase()) && 
+          t.participants.some(p => p.user.id === userId)
+        ).length;
+    }
     return tournaments.filter(t => 
       t.gameName.toUpperCase() === gameName.toUpperCase() && 
       t.participants.some(p => p.user.id === userId)
@@ -187,7 +193,7 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesGame = gameFilter === 'ALL' || u.primaryGame === gameFilter;
+    const matchesGame = gameFilter === 'ALL' || (gameFilter === 'OTHER' ? !['BGMI', 'FREE FIRE', 'COD'].includes(u.primaryGame || '') : u.primaryGame === gameFilter);
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
         u.username.toLowerCase().includes(searchLower) ||
@@ -235,6 +241,13 @@ export default function AdminUsersPage() {
             >
                 COD user
             </Button>
+            <Button 
+                variant={gameFilter === 'OTHER' ? 'default' : 'outline'} 
+                size="sm" 
+                onClick={() => setGameFilter(gameFilter === 'OTHER' ? 'ALL' : 'OTHER')}
+            >
+                OTHER user
+            </Button>
             <Button variant="outline" size="icon" onClick={() => loadData()}>
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh users</span>
@@ -265,6 +278,7 @@ export default function AdminUsersPage() {
                   <TableHead className="text-center">BGMI</TableHead>
                   <TableHead className="text-center">FREE FIRE</TableHead>
                   <TableHead className="text-center">COD</TableHead>
+                  <TableHead className="text-center">OTHER</TableHead>
                   <TableHead>Game Info</TableHead>
                   <TableHead>OTP Authentication</TableHead>
                   <TableHead>Mobile</TableHead>
@@ -299,6 +313,7 @@ export default function AdminUsersPage() {
                     <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'BGMI')}</TableCell>
                     <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'FREE FIRE')}</TableCell>
                     <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'COD')}</TableCell>
+                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'OTHER')}</TableCell>
                     <TableCell>
                       <div className="text-xs">
                         <p className="font-bold">{user.primaryGame}</p>
