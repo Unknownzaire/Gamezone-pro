@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -282,6 +282,16 @@ export default function ProfilePage() {
     logout();
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
+
+  const handleInviteToTeam = () => {
+    if (!teamName) return;
+    const inviteMessage = `Join my team "${teamName}" on Gamezone Pro! Go to your profile, tap 'Edit Profile', and enter the team name.`;
+    navigator.clipboard.writeText(inviteMessage);
+    toast({
+        title: "Invitation Copied!",
+        description: "The team invitation message has been copied to your clipboard.",
+    });
+  };
   
   if (!currentUser) {
     return (
@@ -423,7 +433,13 @@ export default function ProfilePage() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Team: {teamName}</DialogTitle>
+                          <div className="flex justify-between items-center">
+                            <DialogTitle>Team: {teamName}</DialogTitle>
+                            <Button variant="outline" size="icon" onClick={handleInviteToTeam}>
+                                <Plus className="h-4 w-4" />
+                                <span className="sr-only">Invite to team</span>
+                            </Button>
+                          </div>
                           <DialogDescription>
                             Members of your team.
                           </DialogDescription>
