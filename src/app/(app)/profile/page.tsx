@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -66,7 +66,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateUser, logout } = useUser();
+  const { user: currentUser, updateUser, logout, allUsers } = useUser();
   const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
@@ -93,6 +93,8 @@ export default function ProfilePage() {
     });
     const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
     
+  const teamMembers = currentUser?.teamName ? allUsers.filter(u => u.teamName === currentUser.teamName) : [];
+
   useEffect(() => {
     if (currentUser) {
       setUsername(currentUser.username || '');
@@ -409,7 +411,46 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="teamName">Team Name</Label>
-                <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
+                <div className="flex items-center gap-2">
+                  <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
+                  {teamName && (
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
+                          <Users className="h-4 w-4" />
+                          <span className="sr-only">View Team Members</span>
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Team: {teamName}</DialogTitle>
+                          <DialogDescription>
+                            Members of your team.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="max-h-72 overflow-y-auto space-y-4 pr-4">
+                          {teamMembers.map(member => (
+                            <div key={member.id} className="flex items-center gap-4">
+                              <Avatar className="h-10 w-10">
+                                <AvatarImage src={member.avatarUrl} alt={member.username} />
+                                <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <p className="font-semibold">{member.username}</p>
+                                {member.inGameUsername && <p className="text-sm text-muted-foreground">{member.inGameUsername}</p>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                         <DialogFooter>
+                            <DialogClose asChild>
+                                <Button variant="outline">Close</Button>
+                            </DialogClose>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
