@@ -20,6 +20,7 @@ const notifications = [
     { id: 1, title: 'Tournament Starting!', description: 'Midnight Mayhem is about to start in 15 minutes.', time: '5m ago' },
     { id: 2, title: 'Prize Credited', description: 'You won ₹1,500 from Victory Valley.', time: '2h ago' },
     { id: 3, title: 'Withdrawal Processed', description: 'Your withdrawal of ₹500 was successful.', time: '1d ago' },
+    { id: 4, title: 'Team Invite!', description: 'Player42 has invited you to join "The Winners".', time: '2d ago' },
 ];
 
 
