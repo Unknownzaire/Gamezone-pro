@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
@@ -23,6 +23,7 @@ interface UserContextType {
   setPromotionalAds: Dispatch<SetStateAction<PromotionalAd[]>>;
   referredUsers: User[];
   allUsers: User[];
+  notifications: Notification[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
@@ -35,6 +36,8 @@ interface UserContextType {
   moveReferralBonusToWallet: () => void;
   addSupportTicket: (message: string, imageUrl?: string) => void;
   addMessageToTicket: (ticketId: string, message: string, imageUrl?: string) => void;
+  addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
+  markNotificationsAsRead: () => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -69,6 +72,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [allNotifications, setAllNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [promotionalAds, setPromotionalAds] = useState<PromotionalAd[]>([]);
   const [referredUsers, setReferredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -114,6 +119,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             setPromotionalAds([]);
         }
         
+        let storedNotifications = localStorage.getItem('allNotifications');
+        if (storedNotifications) {
+            setAllNotifications(JSON.parse(storedNotifications).map((n: any) => ({...n, createdAt: new Date(n.createdAt)})));
+        } else {
+            localStorage.setItem('allNotifications', JSON.stringify([]));
+            setAllNotifications([]);
+        }
+
         if (!localStorage.getItem('supportTickets')) {
             localStorage.setItem('supportTickets', JSON.stringify([]));
         }
@@ -124,6 +137,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         setAllTransactions(mockTransactions);
         setTournaments(initialMockTournaments);
         setPromotionalAds([]);
+        setAllNotifications([]);
     }
     setLoading(false);
   }, []);
@@ -142,7 +156,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets'].includes(event.key || '')) {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets', 'allNotifications'].includes(event.key || '')) {
         reload();
       }
     };
@@ -168,6 +182,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       saveToStorage('allTournaments', updatedTournaments, toast);
   }, [toast]);
 
+  const saveAllNotifications = useCallback((updatedNotifications: Notification[]) => {
+      setAllNotifications(updatedNotifications);
+      saveToStorage('allNotifications', updatedNotifications, toast);
+  }, [toast]);
+
 
   const login = (email: string, password?: string): boolean | 'blocked' => {
     const userToLogin = password 
@@ -183,7 +202,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return 'blocked';
     }
     
-    loadUserContext(userToLogin.id, allUsers, allTransactions);
+    loadUserContext(userToLogin.id, allUsers, allTransactions, allNotifications);
     return true;
   };
   
@@ -279,6 +298,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       setUser(null);
       setTransactions([]);
       setReferredUsers([]);
+      setNotifications([]);
       const nonUserRoutes = ['/login', '/signup', '/admin', '/forgot-password', '/blocked', '/reset-password'];
       if (!nonUserRoutes.some(route => pathname.startsWith(route))) {
           router.push('/login');
@@ -293,7 +313,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [auth, pathname, router, toast]);
 
-  const loadUserContext = useCallback((userId: string, currentAllUsers: User[], currentAllTransactions: Transaction[]) => {
+  const loadUserContext = useCallback((userId: string, currentAllUsers: User[], currentAllTransactions: Transaction[], currentAllNotifications: Notification[]) => {
     const liveUserData = currentAllUsers.find(u => u.id === userId);
 
     if (liveUserData) {
@@ -305,11 +325,15 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
         const userTransactions = currentAllTransactions.filter(tx => tx.userId === liveUserData.id);
         const userReferredUsers = currentAllUsers.filter(u => u.referredBy === liveUserData.id);
+        const userNotifications = currentAllNotifications
+            .filter(n => n.userId === liveUserData.id)
+            .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
         const currentUser = { ...liveUserData };
         setUser(currentUser);
         setTransactions(userTransactions);
         setReferredUsers(userReferredUsers);
+        setNotifications(userNotifications);
         sessionStorage.setItem('currentUser', JSON.stringify(currentUser));
     } else {
         logout();
@@ -324,7 +348,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       const liveUserData = allUsers.find(u => u.googleId === firebaseUser.uid || u.email === firebaseUser.email);
       if (liveUserData) {
         if (JSON.stringify(liveUserData) !== JSON.stringify(user)) {
-          loadUserContext(liveUserData.id, allUsers, allTransactions);
+          loadUserContext(liveUserData.id, allUsers, allTransactions, allNotifications);
         }
       }
     } else {
@@ -333,7 +357,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
            logout();
        }
     }
-  }, [firebaseUser, isUserLoading, allUsers, allTransactions, loading, pathname, user, loadUserContext, logout]);
+  }, [firebaseUser, isUserLoading, allUsers, allTransactions, allNotifications, loading, pathname, user, loadUserContext, logout]);
 
 
   const addTransaction = (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => {
@@ -538,10 +562,35 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     saveToStorage('supportTickets', updatedTickets, toast);
     reload(); 
   };
+  
+  const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
+      const newNotification: Notification = {
+          ...notification,
+          id: generateUniqueId('notif', notification.userId),
+          createdAt: new Date(),
+          read: false,
+      };
+      const updatedNotifications = [newNotification, ...allNotifications];
+      saveAllNotifications(updatedNotifications);
+  };
+
+  const markNotificationsAsRead = () => {
+      if (!user) return;
+      const hasUnread = notifications.some(n => !n.read);
+      if (!hasUnread) return;
+
+      const updatedNotifications = allNotifications.map(n => {
+          if (n.userId === user.id) {
+              return { ...n, read: true };
+          }
+          return n;
+      });
+      saveAllNotifications(updatedNotifications);
+  };
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead }}>
       {!loading && children}
     </UserContext.Provider>
   );

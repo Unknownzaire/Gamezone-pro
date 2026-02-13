@@ -16,18 +16,18 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-
-const notifications = [
-    { id: 1, title: 'Tournament Starting!', description: 'Midnight Mayhem is about to start in 15 minutes.', time: '5m ago' },
-    { id: 2, title: 'Prize Credited', description: 'You won ₹1,500 from Victory Valley.', time: '2h ago' },
-    { id: 3, title: 'Withdrawal Processed', description: 'Your withdrawal of ₹500 was successful.', time: '1d ago' },
-    { id: 4, title: 'Team Invite!', description: 'Player42 has invited you to join "The Winners".', time: '2d ago' },
-    { id: 5, title: 'Team Invite Request', description: 'Player99 wants to join your team "The Legends".', time: '3d ago' },
-];
-
+import { formatDistanceToNow } from "date-fns";
 
 export default function AppHeader() {
-  const { user } = useUser();
+  const { user, notifications, markNotificationsAsRead } = useUser();
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const handleOpenChange = (open: boolean) => {
+    if (open && unreadCount > 0) {
+      setTimeout(() => markNotificationsAsRead(), 1000); // Mark as read after a short delay
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-10 border-b bg-background/80 backdrop-blur-sm">
@@ -43,11 +43,11 @@ export default function AppHeader() {
             )}
           </Link>
           
-          <DropdownMenu>
+          <DropdownMenu onOpenChange={handleOpenChange}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
-                    {notifications.length > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center p-0 text-xs">{notifications.length}</Badge>}
+                    {unreadCount > 0 && <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 justify-center p-0 text-xs">{unreadCount}</Badge>}
                     <span className="sr-only">Notifications</span>
                 </Button>
             </DropdownMenuTrigger>
@@ -56,12 +56,14 @@ export default function AppHeader() {
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? (
                   notifications.map(notification => (
-                      <DropdownMenuItem key={notification.id} className="flex-col items-start gap-1 p-3">
+                      <DropdownMenuItem key={notification.id} asChild className="flex-col items-start gap-1 p-3 cursor-pointer">
+                        <Link href={notification.link || '#'}>
                           <div className="flex justify-between w-full">
                               <p className="font-semibold text-sm">{notification.title}</p>
-                              <p className="text-xs text-muted-foreground">{notification.time}</p>
+                              <p className="text-xs text-muted-foreground">{formatDistanceToNow(notification.createdAt, { addSuffix: true })}</p>
                           </div>
                           <p className="text-sm text-muted-foreground w-full whitespace-normal">{notification.description}</p>
+                        </Link>
                       </DropdownMenuItem>
                   ))
                 ) : (

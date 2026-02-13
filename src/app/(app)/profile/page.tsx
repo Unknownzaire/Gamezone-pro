@@ -67,7 +67,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateUser, logout, allUsers } = useUser();
+  const { user: currentUser, updateUser, logout, allUsers, addNotification } = useUser();
   const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
@@ -295,12 +295,20 @@ export default function ProfilePage() {
   }
   
   const handleGenerateInvite = (userToInvite: User) => {
-    if (!teamName) return;
+    if (!teamName || !currentUser) return;
+    
+    addNotification({
+      userId: userToInvite.id,
+      title: 'Team Invitation',
+      description: `${currentUser.username} has invited you to join team "${teamName}". Go to your profile to accept.`,
+      link: '/profile'
+    });
+
     const inviteMessage = `Hi ${userToInvite.username}, join my team "${teamName}" on Gamezone Pro! Go to your profile, tap 'Edit Profile', and enter the team name.`;
     navigator.clipboard.writeText(inviteMessage);
     toast({
-        title: "Invitation Copied!",
-        description: `A personalized invitation for ${userToInvite.username} has been copied.`,
+        title: "Invitation Sent!",
+        description: `A notification has been sent to ${userToInvite.username}. The invite message is also copied.`,
     });
     setIsInviteDialogOpen(false);
   };
@@ -667,4 +675,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-

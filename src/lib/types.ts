@@ -105,3 +105,13 @@ export type SocialLink = {
   url: string;
   icon: 'youtube' | 'instagram' | 'discord' | 'telegram' | 'whatsapp' | 'link';
 };
+
+export type Notification = {
+  id: string;
+  userId: string;
+  title: string;
+  description: string;
+  createdAt: Date;
+  read: boolean;
+  link?: string;
+};
