@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -433,13 +432,7 @@ export default function ProfilePage() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <div className="flex justify-between items-center">
-                            <DialogTitle>Team: {teamName}</DialogTitle>
-                            <Button variant="outline" size="icon" onClick={handleInviteToTeam}>
-                                <Plus className="h-4 w-4" />
-                                <span className="sr-only">Invite to team</span>
-                            </Button>
-                          </div>
+                          <DialogTitle>Team: {teamName}</DialogTitle>
                           <DialogDescription>
                             Members of your team.
                           </DialogDescription>
@@ -461,8 +454,12 @@ export default function ProfilePage() {
                           ))}
                         </div>
                          <DialogFooter>
+                            <Button variant="outline" onClick={handleInviteToTeam}>
+                                <Plus className="mr-2 h-4 w-4" />
+                                Invite to Team
+                            </Button>
                             <DialogClose asChild>
-                                <Button variant="outline">Close</Button>
+                                <Button>Close</Button>
                             </DialogClose>
                         </DialogFooter>
                       </DialogContent>
