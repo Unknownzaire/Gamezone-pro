@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -73,6 +74,7 @@ export default function ProfilePage() {
   const [primaryGame, setPrimaryGame] = useState<'BGMI' | 'FREE FIRE' | 'COD' | undefined>();
   const [inGameUsername, setInGameUsername] = useState('');
   const [inGameId, setInGameId] = useState('');
+  const [teamName, setTeamName] = useState('');
   const [mobile, setMobile] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -98,6 +100,7 @@ export default function ProfilePage() {
       setPrimaryGame(currentUser.primaryGame);
       setInGameUsername(currentUser.inGameUsername || '');
       setInGameId(currentUser.inGameId || '');
+      setTeamName(currentUser.teamName || '');
       setMobile(currentUser.mobile || '');
     }
      const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
@@ -128,6 +131,7 @@ export default function ProfilePage() {
         primaryGame,
         inGameUsername,
         inGameId,
+        teamName,
       };
       
       if (mobile !== currentUser.mobile) {
@@ -147,6 +151,7 @@ export default function ProfilePage() {
       setPrimaryGame(currentUser.primaryGame);
       setInGameUsername(currentUser.inGameUsername || '');
       setInGameId(currentUser.inGameId || '');
+      setTeamName(currentUser.teamName || '');
       setMobile(currentUser.mobile || '');
     }
     setIsEditing(false);
@@ -173,6 +178,7 @@ export default function ProfilePage() {
           primaryGame,
           inGameUsername,
           inGameId,
+          teamName,
       };
       
       updateUser(updatedFields);
@@ -400,6 +406,10 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
                 <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="teamName">Team Name</Label>
+                <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>

@@ -87,6 +87,7 @@ export type User = {
   primaryGame?: 'BGMI' | 'FREE FIRE' | 'COD';
   inGameUsername?: string;
   inGameId?: string;
+  teamName?: string;
   isBlocked?: boolean;
   createdAt: Date;
   totalDeposits?: number;

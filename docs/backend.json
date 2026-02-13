@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "User": {
@@ -23,6 +24,10 @@
         "walletBalance": {
           "type": "number",
           "description": "The user's current wallet balance."
+        },
+        "teamName": {
+          "type": "string",
+          "description": "The name of the user's team."
         },
         "createdAt": {
           "type": "string",
