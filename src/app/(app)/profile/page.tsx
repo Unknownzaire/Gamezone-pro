@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +20,7 @@ import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, update
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { compressImage } from '@/lib/utils';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
@@ -85,6 +87,10 @@ export default function ProfilePage() {
   
   const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
   const [emailReauthPassword, setEmailReauthPassword] = useState('');
+
+  const [isTeamDialogOpen, setIsTeamDialogOpen] = useState(false);
+  const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
   
    const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
         helplineNumber: '+911234567890',
@@ -282,15 +288,26 @@ export default function ProfilePage() {
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
 
-  const handleInviteToTeam = () => {
+  const handleOpenInvite = () => {
+    setIsTeamDialogOpen(false);
+    setIsInviteDialogOpen(true);
+    setInviteSearch('');
+  }
+  
+  const handleGenerateInvite = (userToInvite: User) => {
     if (!teamName) return;
-    const inviteMessage = `Join my team "${teamName}" on Gamezone Pro! Go to your profile, tap 'Edit Profile', and enter the team name.`;
+    const inviteMessage = `Hi ${userToInvite.username}, join my team "${teamName}" on Gamezone Pro! Go to your profile, tap 'Edit Profile', and enter the team name.`;
     navigator.clipboard.writeText(inviteMessage);
     toast({
         title: "Invitation Copied!",
-        description: "The team invitation message has been copied to your clipboard.",
+        description: `A personalized invitation for ${userToInvite.username} has been copied.`,
     });
+    setIsInviteDialogOpen(false);
   };
+
+  const usersToInvite = allUsers.filter(u => u.id !== currentUser?.id && u.teamName !== teamName);
+  const searchedUsersToInvite = inviteSearch ? usersToInvite.filter(u => u.username.toLowerCase().includes(inviteSearch.toLowerCase())) : usersToInvite;
+
   
   if (!currentUser) {
     return (
@@ -423,7 +440,7 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
                   {teamName && (
-                    <Dialog>
+                    <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                       <DialogTrigger asChild>
                         <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
                           <Users className="h-4 w-4" />
@@ -437,26 +454,28 @@ export default function ProfilePage() {
                             Members of your team.
                           </DialogDescription>
                         </DialogHeader>
-                        <div className="max-h-72 overflow-y-auto space-y-4 pr-4">
-                          {teamMembers.map(member => (
-                            <div key={member.id} className="flex items-center gap-4">
-                              <Avatar className="h-10 w-10">
-                                <AvatarImage src={member.avatarUrl} alt={member.username} />
-                                <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div>
-                                <p className="font-semibold">{member.username}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {member.inGameUsername} ({member.inGameId})
-                                </p>
+                        <ScrollArea className="h-72">
+                          <div className="space-y-4 pr-4">
+                            {teamMembers.map(member => (
+                              <div key={member.id} className="flex items-center gap-4">
+                                <Avatar className="h-10 w-10">
+                                  <AvatarImage src={member.avatarUrl} alt={member.username} />
+                                  <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="font-semibold">{member.username}</p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {member.inGameUsername} ({member.inGameId})
+                                  </p>
+                                </div>
                               </div>
-                            </div>
-                          ))}
-                        </div>
+                            ))}
+                          </div>
+                        </ScrollArea>
                          <DialogFooter>
-                            <Button variant="outline" onClick={handleInviteToTeam}>
+                            <Button variant="outline" onClick={handleOpenInvite}>
                                 <Plus className="mr-2 h-4 w-4" />
-                                Invite to Team
+                                Invite Player
                             </Button>
                             <DialogClose asChild>
                                 <Button>Close</Button>
@@ -527,6 +546,40 @@ export default function ProfilePage() {
             </DialogContent>
         </Dialog>
         
+        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Invite a player to '{teamName}'</DialogTitle>
+                    <DialogDescription>Search for a user to create a personalized invite.</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4">
+                    <Input placeholder="Search for player by username..." value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} />
+                    <ScrollArea className="h-72">
+                        <div className="space-y-2 pr-4">
+                            {searchedUsersToInvite.map(userToInvite => (
+                                <div key={userToInvite.id} className="flex items-center justify-between p-2 rounded-md border">
+                                    <div className="flex items-center gap-3">
+                                        <Avatar className="h-8 w-8">
+                                            <AvatarImage src={userToInvite.avatarUrl} alt={userToInvite.username} />
+                                            <AvatarFallback>{userToInvite.username.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{userToInvite.username}</p>
+                                            <p className="text-xs text-muted-foreground">{userToInvite.primaryGame}</p>
+                                        </div>
+                                    </div>
+                                    <Button size="sm" onClick={() => handleGenerateInvite(userToInvite)}>Invite</Button>
+                                </div>
+                            ))}
+                            {searchedUsersToInvite.length === 0 && (
+                                <p className="text-sm text-center text-muted-foreground py-8">No users found.</p>
+                            )}
+                        </div>
+                    </ScrollArea>
+                </div>
+            </DialogContent>
+        </Dialog>
+
         <Card>
           <CardContent className="pt-6 space-y-4">
               <h2 className="font-headline text-xl font-semibold">Change Password</h2>
@@ -614,3 +667,4 @@ export default function ProfilePage() {
     </div>
   );
 }
+
