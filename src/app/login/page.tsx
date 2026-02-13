@@ -159,16 +159,6 @@ export default function LoginPage() {
         return;
     }
 
-    // Gmail requirement check
-    if (!signupForm.email.toLowerCase().endsWith('@gmail.com')) {
-        toast({
-            variant: 'destructive',
-            title: 'Invalid Email',
-            description: 'You must use a @gmail.com address to sign up.',
-        });
-        return;
-    }
-    
     // Uniqueness checks
     if (signupForm.username && allUsers.some(u => u.username.toLowerCase() === signupForm.username.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
