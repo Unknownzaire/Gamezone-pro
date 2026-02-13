@@ -123,8 +123,47 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedNotifications) {
             setAllNotifications(JSON.parse(storedNotifications).map((n: any) => ({...n, createdAt: new Date(n.createdAt)})));
         } else {
-            localStorage.setItem('allNotifications', JSON.stringify([]));
-            setAllNotifications([]);
+            const mockNotifications: Notification[] = [
+                {
+                  id: 'notif-1',
+                  userId: 'user-1',
+                  title: 'Tournament Starting!',
+                  description: 'Midnight Mayhem is about to start in 15 minutes.',
+                  createdAt: new Date(Date.now() - 5 * 60 * 1000),
+                  read: false,
+                  link: '/tournaments/t-2',
+                },
+                {
+                  id: 'notif-2',
+                  userId: 'user-1',
+                  title: 'Prize Credited',
+                  description: 'You won ₹1,500 from Victory Valley.',
+                  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
+                  read: false,
+                  link: '/wallet',
+                },
+                {
+                  id: 'notif-3',
+                  userId: 'user-1',
+                  title: 'Withdrawal Processed',
+                  description: 'Your withdrawal of ₹500 was successful.',
+                  createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+                  read: true,
+                  link: '/wallet',
+                },
+                {
+                  id: 'notif-4',
+                  userId: 'user-1',
+                  title: 'Team Invitation',
+                  description: 'Player42 has invited you to join "The Winners".',
+                  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+                  read: true,
+                  type: 'team-invite',
+                  payload: { teamName: 'The Winners' }
+                },
+            ];
+            localStorage.setItem('allNotifications', JSON.stringify(mockNotifications));
+            setAllNotifications(mockNotifications);
         }
 
         if (!localStorage.getItem('supportTickets')) {
