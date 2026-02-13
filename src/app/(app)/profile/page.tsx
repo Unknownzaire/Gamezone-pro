@@ -138,6 +138,18 @@ export default function ProfilePage() {
     }
   };
 
+  const handleResetChanges = () => {
+    if (currentUser) {
+      setUsername(currentUser.username || '');
+      setEmail(currentUser.email || '');
+      setPrimaryGame(currentUser.primaryGame);
+      setInGameUsername(currentUser.inGameUsername || '');
+      setInGameId(currentUser.inGameId || '');
+      setMobile(currentUser.mobile || '');
+    }
+    setIsEditing(false);
+  };
+
   const handleEmailChange = async () => {
     if (!firebaseUser || !currentUser || !currentUser.email) return;
 
@@ -403,9 +415,20 @@ export default function ProfilePage() {
                       {currentUser.mobileVerified && <CheckCircle className="text-green-500" />}
                   </div>
               </div>
-              <Button onClick={handleUpdateProfile} className="w-full">
-                {isEditing ? 'after tap this button enter password and change details' : 'Edit Profile'}
-              </Button>
+              {isEditing ? (
+                <div className="flex gap-4">
+                    <Button onClick={handleResetChanges} variant="outline" className="w-full" type="button">
+                        Cancel
+                    </Button>
+                    <Button onClick={handleUpdateProfile} className="w-full" type="button">
+                        Save Changes
+                    </Button>
+                </div>
+                ) : (
+                <Button onClick={handleUpdateProfile} className="w-full" type="button">
+                    Edit Profile
+                </Button>
+              )}
           </CardContent>
         </Card>
         
