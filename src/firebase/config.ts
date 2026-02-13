@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  "projectId": "gamezone-pro-89166614-a5301",
-  "appId": "1:999815471676:web:b8a8fcd13c36100839d939",
-  "apiKey": "AIzaSyCLNlorcaAnB6H2B753ZgyyCN9Ml0dYwmY",
-  "authDomain": "gamezone-pro-89166614-a5301.firebaseapp.com",
+  "projectId": "gamezone-pro-38727990-3ba36",
+  "appId": "1:130911994597:web:09be35b4417d2874d28a0c",
+  "apiKey": "AIzaSyBFrzX6ZZrHP5SSPpsk79Si5OzVLt-a9XM",
+  "authDomain": "gamezone-pro-38727990-3ba36.firebaseapp.com",
   "measurementId": "",
-  "messagingSenderId": "999815471676"
+  "messagingSenderId": "130911994597"
 };
