@@ -437,7 +437,9 @@ export default function ProfilePage() {
                               </Avatar>
                               <div>
                                 <p className="font-semibold">{member.username}</p>
-                                {member.inGameUsername && <p className="text-sm text-muted-foreground">{member.inGameUsername}</p>}
+                                <p className="text-sm text-muted-foreground">
+                                  {member.inGameUsername} ({member.inGameId})
+                                </p>
                               </div>
                             </div>
                           ))}
