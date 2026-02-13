@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Wallet, Bell } from "lucide-react";
@@ -21,6 +22,7 @@ const notifications = [
     { id: 2, title: 'Prize Credited', description: 'You won ₹1,500 from Victory Valley.', time: '2h ago' },
     { id: 3, title: 'Withdrawal Processed', description: 'Your withdrawal of ₹500 was successful.', time: '1d ago' },
     { id: 4, title: 'Team Invite!', description: 'Player42 has invited you to join "The Winners".', time: '2d ago' },
+    { id: 5, title: 'Team Invite Request', description: 'Player99 wants to join your team "The Legends".', time: '3d ago' },
 ];
 
 
