@@ -15,8 +15,18 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 
 export default function AppHeader() {
   const { user, notifications, markNotificationsAsRead } = useUser();
@@ -56,15 +66,40 @@ export default function AppHeader() {
                 <DropdownMenuSeparator />
                 {notifications.length > 0 ? (
                   notifications.map(notification => (
-                      <DropdownMenuItem key={notification.id} asChild className="flex-col items-start gap-1 p-3 cursor-pointer">
-                        <Link href={notification.link || '#'}>
-                          <div className="flex justify-between w-full">
-                              <p className="font-semibold text-sm">{notification.title}</p>
-                              <p className="text-xs text-muted-foreground">{formatDistanceToNow(notification.createdAt, { addSuffix: true })}</p>
-                          </div>
-                          <p className="text-sm text-muted-foreground w-full whitespace-normal">{notification.description}</p>
-                        </Link>
-                      </DropdownMenuItem>
+                    <Dialog key={notification.id}>
+                        <DialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="flex-col items-start gap-1 p-3 cursor-pointer">
+                                <div className="flex justify-between w-full">
+                                    <p className="font-semibold text-sm">{notification.title}</p>
+                                    <p className="text-xs text-muted-foreground">{formatDistanceToNow(notification.createdAt, { addSuffix: true })}</p>
+                                </div>
+                                <p className="text-sm text-muted-foreground w-full whitespace-normal">{notification.description}</p>
+                            </DropdownMenuItem>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>{notification.title}</DialogTitle>
+                                <DialogDescription>
+                                    {format(notification.createdAt, 'PPp')}
+                                </DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <p>{notification.description}</p>
+                            </div>
+                            <DialogFooter className="gap-2 sm:justify-between">
+                                <DialogClose asChild>
+                                    <Button variant="outline">Close</Button>
+                                </DialogClose>
+                                {notification.link && (
+                                    <DialogClose asChild>
+                                        <Link href={notification.link} passHref>
+                                            <Button>Take Action</Button>
+                                        </Link>
+                                    </DialogClose>
+                                )}
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                   ))
                 ) : (
                   <DropdownMenuItem disabled>No new notifications</DropdownMenuItem>
