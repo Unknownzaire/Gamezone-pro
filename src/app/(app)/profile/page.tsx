@@ -125,6 +125,9 @@ export default function ProfilePage() {
       const updatedFields: Partial<User> = {
         username,
         mobile,
+        primaryGame,
+        inGameUsername,
+        inGameId,
       };
       
       if (mobile !== currentUser.mobile) {
@@ -167,6 +170,9 @@ export default function ProfilePage() {
           mobile,
           email,
           emailVerified: false,
+          primaryGame,
+          inGameUsername,
+          inGameId,
       };
       
       updateUser(updatedFields);
@@ -374,9 +380,9 @@ export default function ProfilePage() {
                 <Label htmlFor="username">Username</Label>
                 <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} disabled={!isEditing} />
               </div>
-              <div className="space-y-2 opacity-70">
-                <Label htmlFor="primaryGame">Primary Game (Cannot be changed)</Label>
-                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={true}>
+              <div className="space-y-2">
+                <Label htmlFor="primaryGame">Primary Game</Label>
+                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={!isEditing}>
                     <SelectTrigger id="primaryGame">
                         <SelectValue placeholder="Select your main game" />
                     </SelectTrigger>
@@ -387,13 +393,13 @@ export default function ProfilePage() {
                     </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2 opacity-70">
-                <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username (Cannot be changed)</Label>
-                <Input id="inGameUsername" value={inGameUsername} readOnly placeholder="Your in-game name" disabled={true} />
+              <div className="space-y-2">
+                <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
+                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing} />
               </div>
-              <div className="space-y-2 opacity-70">
-                <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID (Cannot be changed)</Label>
-                <Input id="inGameId" value={inGameId} readOnly placeholder="Your numeric game ID" disabled={true} />
+              <div className="space-y-2">
+                <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
+                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing} />
               </div>
               <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
