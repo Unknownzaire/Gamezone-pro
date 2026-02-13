@@ -300,11 +300,14 @@ export default function ProfilePage() {
     addNotification({
       userId: userToInvite.id,
       title: 'Team Invitation',
-      description: `${currentUser.username} has invited you to join team "${teamName}". Go to your profile to accept.`,
-      link: '/profile'
+      description: `${currentUser.username} has invited you to join team "${teamName}".`,
+      type: 'team-invite',
+      payload: {
+          teamName: teamName,
+      }
     });
 
-    const inviteMessage = `Hi ${userToInvite.username}, join my team "${teamName}" on Gamezone Pro! Go to your profile, tap 'Edit Profile', and enter the team name.`;
+    const inviteMessage = `Hi ${userToInvite.username}, join my team "${teamName}" on Gamezone Pro! Go to your profile to accept.`;
     navigator.clipboard.writeText(inviteMessage);
     toast({
         title: "Invitation Sent!",

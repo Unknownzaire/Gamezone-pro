@@ -114,4 +114,8 @@ export type Notification = {
   createdAt: Date;
   read: boolean;
   link?: string;
+  type?: 'team-invite' | 'general';
+  payload?: {
+    teamName?: string;
+  };
 };

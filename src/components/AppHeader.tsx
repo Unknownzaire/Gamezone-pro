@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 
 export default function AppHeader() {
-  const { user, notifications, markNotificationsAsRead } = useUser();
+  const { user, notifications, markNotificationsAsRead, updateUser, toast } = useUser();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -38,6 +38,24 @@ export default function AppHeader() {
       setTimeout(() => markNotificationsAsRead(), 1000); // Mark as read after a short delay
     }
   };
+
+  const handleJoinTeam = (teamName?: string) => {
+      if (!user || !teamName) return;
+
+      if (user.teamName) {
+          toast({
+              variant: 'destructive',
+              title: 'Already in a team',
+              description: `You are already in team "${user.teamName}". Leave it before joining another.`,
+          });
+          return;
+      }
+      updateUser({ teamName });
+      toast({
+          title: 'Joined Team!',
+          description: `You are now a member of "${teamName}".`
+      });
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-10 border-b bg-background/80 backdrop-blur-sm">
@@ -90,13 +108,17 @@ export default function AppHeader() {
                                 <DialogClose asChild>
                                     <Button variant="outline">Close</Button>
                                 </DialogClose>
-                                {notification.link && (
+                                {notification.type === 'team-invite' ? (
+                                    <DialogClose asChild>
+                                        <Button onClick={() => handleJoinTeam(notification.payload?.teamName)}>Join Team</Button>
+                                    </DialogClose>
+                                ) : notification.link ? (
                                     <DialogClose asChild>
                                         <Link href={notification.link} passHref>
                                             <Button>Take Action</Button>
                                         </Link>
                                     </DialogClose>
-                                )}
+                                ) : null}
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
