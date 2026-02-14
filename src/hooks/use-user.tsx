@@ -430,9 +430,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     if (user.teamName) {
         if (user.teamName === teamName) {
-            toast({ title: 'Already a Member', description: `You are already in team "${teamName}".` });
+            toast({ title: 'Already in Team', description: 'You are already a member of this team.' });
         } else {
-            toast({ variant: 'destructive', title: 'Already in a Team', description: `You are already in team "${user.teamName}". Leave it before joining another.` });
+            toast({ variant: 'destructive', title: 'Already in a Team', description: 'You must leave your current team before joining a new one.' });
         }
         return 'already_in_team';
     }
