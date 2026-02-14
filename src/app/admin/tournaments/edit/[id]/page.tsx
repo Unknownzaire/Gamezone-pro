@@ -266,7 +266,7 @@ export default function EditTournamentPage() {
                         <Label htmlFor="gameName">Game Name</Label>
                         <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
                             <SelectTrigger id="game">
-                                <SelectValue placeholder="add other games column" />
+                                <SelectValue placeholder="Select a game" />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="BGMI">BGMI</SelectItem>

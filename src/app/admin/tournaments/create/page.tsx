@@ -219,7 +219,7 @@ export default function CreateTournamentPage() {
                                     <input type="hidden" name="game" value={gameName} />
                                     <Select value={gameName} onValueChange={setGameName} disabled={isSubmitting}>
                                         <SelectTrigger id="game">
-                                            <SelectValue placeholder="add other games column" />
+                                            <SelectValue placeholder="Select a game" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="BGMI">BGMI</SelectItem>
