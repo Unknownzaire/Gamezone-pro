@@ -29,7 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 
 export default function AppHeader() {
-  const { user, notifications, markNotificationsAsRead, updateUser, toast } = useUser();
+  const { user, allUsers, notifications, markNotificationsAsRead, updateUser, toast } = useUser();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -50,6 +50,17 @@ export default function AppHeader() {
           });
           return;
       }
+
+      const teamMembersCount = allUsers.filter(u => u.teamName === teamName).length;
+      if (teamMembersCount >= 4) {
+        toast({
+          variant: 'destructive',
+          title: 'Team is Full',
+          description: `The team "${teamName}" already has 4 members and cannot accept new players.`,
+        });
+        return;
+      }
+
       updateUser({ teamName });
       toast({
           title: 'Joined Team!',

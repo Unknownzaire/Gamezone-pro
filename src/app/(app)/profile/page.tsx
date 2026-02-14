@@ -308,6 +308,16 @@ export default function ProfilePage() {
   
   const handleGenerateInvite = (userToInvite: User) => {
     if (!teamName || !currentUser) return;
+
+    if (teamMembers.length >= 4) {
+      toast({
+        variant: 'destructive',
+        title: "Team is Full",
+        description: "Your team already has 4 members. You cannot invite more players.",
+      });
+      setIsInviteDialogOpen(false);
+      return;
+    }
     
     addNotification({
       userId: userToInvite.id,
@@ -540,7 +550,7 @@ export default function ProfilePage() {
 
                         <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
+                                <Button variant="outline" size="icon" disabled={!teamName || isEditing || teamMembers.length >= 4}>
                                     <Plus className="h-4 w-4" />
                                     <span className="sr-only">Send Invite Request</span>
                                 </Button>

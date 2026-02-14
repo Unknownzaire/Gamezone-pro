@@ -405,6 +405,17 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUser = (updatedFields: Partial<User>) => {
     if (user) {
+      if (updatedFields.teamName && updatedFields.teamName !== user.teamName) {
+        const teamMembersCount = allUsers.filter(u => u.teamName === updatedFields.teamName).length;
+        if (teamMembersCount >= 4) {
+          toast({
+            variant: 'destructive',
+            title: 'Team is Full',
+            description: `The team "${updatedFields.teamName}" already has 4 members.`,
+          });
+          return;
+        }
+      }
       const updatedUsers = allUsers.map(u => u.id === user.id ? {...u, ...updatedFields} : u);
       saveAllUsers(updatedUsers);
     }
