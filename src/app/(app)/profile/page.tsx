@@ -287,12 +287,6 @@ export default function ProfilePage() {
     logout();
     toast({ title: "Logged Out", description: "You have been successfully logged out." });
   };
-
-  const handleOpenInvite = () => {
-    setIsTeamDialogOpen(false);
-    setIsInviteDialogOpen(true);
-    setInviteSearch('');
-  }
   
   const handleGenerateInvite = (userToInvite: User) => {
     if (!teamName || !currentUser) return;
@@ -451,49 +445,87 @@ export default function ProfilePage() {
                 <div className="flex items-center gap-2">
                   <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
                   {teamName && (
-                    <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
-                          <Users className="h-4 w-4" />
-                          <span className="sr-only">View Team Members</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Team: {teamName}</DialogTitle>
-                          <DialogDescription>
-                            Members of your team.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <ScrollArea className="h-72">
-                          <div className="space-y-4 pr-4">
-                            {teamMembers.map(member => (
-                              <div key={member.id} className="flex items-center gap-4">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage src={member.avatarUrl} alt={member.username} />
-                                  <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-semibold">{member.username}</p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {member.inGameUsername} ({member.inGameId})
-                                  </p>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </ScrollArea>
-                         <DialogFooter>
-                            <Button variant="outline" onClick={handleOpenInvite}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Invite Player
+                    <>
+                        <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+                            <DialogTrigger asChild>
+                            <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
+                                <Users className="h-4 w-4" />
+                                <span className="sr-only">View Team Members</span>
                             </Button>
-                            <DialogClose asChild>
-                                <Button>Close</Button>
-                            </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                <DialogTitle>Team: {teamName}</DialogTitle>
+                                <DialogDescription>
+                                    Members of your team.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <ScrollArea className="h-72">
+                                <div className="space-y-4 pr-4">
+                                    {teamMembers.map(member => (
+                                    <div key={member.id} className="flex items-center gap-4">
+                                        <Avatar className="h-10 w-10">
+                                        <AvatarImage src={member.avatarUrl} alt={member.username} />
+                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                        <p className="font-semibold">{member.username}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {member.inGameUsername} ({member.inGameId})
+                                        </p>
+                                        </div>
+                                    </div>
+                                    ))}
+                                </div>
+                                </ScrollArea>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button>Close</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+
+                        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
+                                    <Plus className="h-4 w-4" />
+                                    <span className="sr-only">Send Invite Request</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Invite a player to '{teamName}'</DialogTitle>
+                                    <DialogDescription>Search for a user to create a personalized invite.</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                    <Input placeholder="Search for player by username..." value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} />
+                                    <ScrollArea className="h-72">
+                                        <div className="space-y-2 pr-4">
+                                            {searchedUsersToInvite.map(userToInvite => (
+                                                <div key={userToInvite.id} className="flex items-center justify-between p-2 rounded-md border">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={userToInvite.avatarUrl} alt={userToInvite.username} />
+                                                            <AvatarFallback>{userToInvite.username.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-semibold">{userToInvite.username}</p>
+                                                            <p className="text-xs text-muted-foreground">{userToInvite.primaryGame}</p>
+                                                        </div>
+                                                    </div>
+                                                    <Button size="sm" onClick={() => handleGenerateInvite(userToInvite)}>Invite</Button>
+                                                </div>
+                                            ))}
+                                            {searchedUsersToInvite.length === 0 && (
+                                                <p className="text-sm text-center text-muted-foreground py-8">No users found.</p>
+                                            )}
+                                        </div>
+                                    </ScrollArea>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
+                    </>
                   )}
                 </div>
               </div>
@@ -554,40 +586,6 @@ export default function ProfilePage() {
                     <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                     <Button onClick={handleEmailChange}>Confirm & Change Email</Button>
                 </DialogFooter>
-            </DialogContent>
-        </Dialog>
-        
-        <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Invite a player to '{teamName}'</DialogTitle>
-                    <DialogDescription>Search for a user to create a personalized invite.</DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4">
-                    <Input placeholder="Search for player by username..." value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} />
-                    <ScrollArea className="h-72">
-                        <div className="space-y-2 pr-4">
-                            {searchedUsersToInvite.map(userToInvite => (
-                                <div key={userToInvite.id} className="flex items-center justify-between p-2 rounded-md border">
-                                    <div className="flex items-center gap-3">
-                                        <Avatar className="h-8 w-8">
-                                            <AvatarImage src={userToInvite.avatarUrl} alt={userToInvite.username} />
-                                            <AvatarFallback>{userToInvite.username.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{userToInvite.username}</p>
-                                            <p className="text-xs text-muted-foreground">{userToInvite.primaryGame}</p>
-                                        </div>
-                                    </div>
-                                    <Button size="sm" onClick={() => handleGenerateInvite(userToInvite)}>Invite</Button>
-                                </div>
-                            ))}
-                            {searchedUsersToInvite.length === 0 && (
-                                <p className="text-sm text-center text-muted-foreground py-8">No users found.</p>
-                            )}
-                        </div>
-                    </ScrollArea>
-                </div>
             </DialogContent>
         </Dialog>
 
