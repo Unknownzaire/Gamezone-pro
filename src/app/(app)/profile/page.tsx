@@ -21,6 +21,7 @@ import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { compressImage } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon']; url:string }) => {
     const iconProps = { className: "h-6 w-6" };
@@ -99,6 +100,10 @@ export default function ProfilePage() {
     const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
     
   const teamMembers = currentUser?.teamName ? allUsers.filter(u => u.teamName === currentUser.teamName) : [];
+  const sortedTeamMembers = [...teamMembers].sort(
+    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+  );
+  const teamLeader = sortedTeamMembers.length > 0 ? sortedTeamMembers[0] : null;
 
   useEffect(() => {
     if (currentUser) {
@@ -462,18 +467,23 @@ export default function ProfilePage() {
                                 </DialogHeader>
                                 <ScrollArea className="h-72">
                                 <div className="space-y-4 pr-4">
-                                    {teamMembers.map(member => (
-                                    <div key={member.id} className="flex items-center gap-4">
-                                        <Avatar className="h-10 w-10">
-                                        <AvatarImage src={member.avatarUrl} alt={member.username} />
-                                        <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                        <p className="font-semibold">{member.username}</p>
-                                        <p className="text-sm text-muted-foreground">
-                                            {member.inGameUsername} ({member.inGameId})
-                                        </p>
+                                    {sortedTeamMembers.map(member => (
+                                    <div key={member.id} className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <Avatar className="h-10 w-10">
+                                            <AvatarImage src={member.avatarUrl} alt={member.username} />
+                                            <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                            <p className="font-semibold">{member.username}</p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {member.inGameUsername} ({member.inGameId})
+                                            </p>
+                                            </div>
                                         </div>
+                                        {teamLeader && member.id === teamLeader.id && (
+                                            <Badge>Leader</Badge>
+                                        )}
                                     </div>
                                     ))}
                                 </div>
