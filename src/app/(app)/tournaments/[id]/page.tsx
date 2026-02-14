@@ -35,6 +35,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import React, { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 
 
 export default function TournamentDetailsPage() {
@@ -42,15 +44,31 @@ export default function TournamentDetailsPage() {
   const id = params.id as string;
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, tournaments, joinTournament } = useUser();
+  const { user: currentUser, tournaments, joinTournament, allUsers } = useUser();
   const [isJoining, setIsJoining] = useState(false);
   const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
+  const [selectedTeammates, setSelectedTeammates] = useState<string[]>([]);
 
   useEffect(() => {
     const currentTournament = tournaments.find((t) => t.id === id);
     setTournament(currentTournament);
   }, [id, tournaments]);
 
+  const teammates = allUsers.filter(u => u.teamName === currentUser?.teamName && u.id !== currentUser?.id);
+  const requiredTeammates = tournament?.matchType === 'Duo' ? 1 : tournament?.matchType === 'Squad' ? 3 : 0;
+
+  const handleTeammateSelect = (teammateId: string) => {
+    setSelectedTeammates(prev => {
+        if (prev.includes(teammateId)) {
+            return prev.filter(id => id !== teammateId);
+        } else {
+            if (prev.length < requiredTeammates) {
+                return [...prev, teammateId];
+            }
+            return prev;
+        }
+    });
+  };
 
   if (!tournament) {
     // This handles both the initial loading state and the case where the tournament is not found after loading.
@@ -81,24 +99,43 @@ export default function TournamentDetailsPage() {
 
     setIsJoining(true);
 
+    const playersToJoin: User[] = [currentUser];
+    if (requiredTeammates > 0) {
+        selectedTeammates.forEach(teammateId => {
+            const teammate = allUsers.find(u => u.id === teammateId);
+            if (teammate) {
+                playersToJoin.push(teammate);
+            }
+        });
+    }
+
     try {
-      const result = joinTournament(tournament.id, currentUser);
+      const result = joinTournament(tournament.id, playersToJoin);
 
       if (result === 'success') {
         toast({
           title: "Successfully Joined!",
-          description: `You have joined the "${tournament.title}" tournament. ₹${tournament.entryFee} has been deducted.`,
+          description: `You and your team have joined the "${tournament.title}" tournament.`,
         });
-      } else {
-        // The joinTournament function will show specific toasts for failures.
-        // We might want a generic one here if it returns a generic false.
-        if (result === false) {
-           toast({
+        setSelectedTeammates([]); // Clear selection
+      } else if (typeof result === 'object' && result.error) {
+          toast({
               variant: 'destructive',
-              title: "Failed to Join",
-              description: "An unexpected error occurred. Please try again.",
-           });
-        }
+              title: `Join Failed: ${result.user.username}`,
+              description: result.error,
+          });
+      } else if (result === 'tournament_full') {
+          toast({
+              variant: 'destructive',
+              title: "Tournament Full",
+              description: "There isn't enough space for your team in this tournament.",
+          });
+      } else {
+         toast({
+            variant: 'destructive',
+            title: "Failed to Join",
+            description: "An unexpected error occurred. Please try again.",
+         });
       }
     } catch (error: any) {
         toast({
@@ -215,6 +252,7 @@ export default function TournamentDetailsPage() {
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   const isGameMismatch = currentUser && currentUser.primaryGame !== tournament.gameName;
+  const isTeamCorrectlySelected = requiredTeammates === 0 || selectedTeammates.length === requiredTeammates;
   
   const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining && !isGameMismatch;
 
@@ -404,12 +442,46 @@ export default function TournamentDetailsPage() {
                 Confirm Your Entry
               </AlertDialogTitle>
               <AlertDialogDescription>
-                An entry fee of ₹{tournament.entryFee} will be deducted from your wallet. Are you sure you want to join the "{tournament.title}" tournament? This action cannot be undone.
+                An entry fee of ₹{tournament.entryFee} will be deducted from your wallet for each player. Are you sure you want to join? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
+            
+            {requiredTeammates > 0 && (
+                <div className="space-y-4 py-2">
+                    <h4 className="font-semibold">Select Your Team</h4>
+                    <p className="text-sm text-muted-foreground">
+                        You need to select {requiredTeammates} teammate{requiredTeammates > 1 ? 's' : ''} to join this {tournament.matchType} tournament.
+                    </p>
+                    {teammates.length >= requiredTeammates ? (
+                        <div className="space-y-2">
+                            {teammates.map(teammate => (
+                                <div key={teammate.id} className="flex items-center space-x-2 rounded-md border p-3 has-[:disabled]:opacity-50">
+                                    <Checkbox
+                                        id={`teammate-${teammate.id}`}
+                                        checked={selectedTeammates.includes(teammate.id)}
+                                        onCheckedChange={() => handleTeammateSelect(teammate.id)}
+                                        disabled={!selectedTeammates.includes(teammate.id) && selectedTeammates.length >= requiredTeammates}
+                                    />
+                                    <Label htmlFor={`teammate-${teammate.id}`} className="flex-1 cursor-pointer">
+                                        <p className="font-medium">{teammate.username}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Balance: ₹{teammate.walletBalance.toFixed(2)}
+                                        </p>
+                                    </Label>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <p className="text-sm text-destructive text-center py-4">
+                            You don't have enough teammates to join this tournament. You need at least {requiredTeammates} more player(s) in your team.
+                        </p>
+                    )}
+                </div>
+            )}
+
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleJoin}>
+              <AlertDialogAction onClick={handleJoin} disabled={!isTeamCorrectlySelected}>
                 Confirm &amp; Join
               </AlertDialogAction>
             </AlertDialogFooter>

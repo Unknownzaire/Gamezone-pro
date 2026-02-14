@@ -10,7 +10,8 @@ import type { ReferralSettings } from '@/app/admin/settings/page';
 import { useFirebase } from '@/firebase';
 import { signOut } from 'firebase/auth';
 
-type JoinTournamentResult = 'success' | 'already_joined' | 'not_logged_in' | 'tournament_full' | 'insufficient_balance' | 'blocked' | 'game_mismatch' | false;
+type JoinTournamentFailure = { error: string; user: User };
+type JoinTournamentResult = 'success' | 'not_logged_in' | 'tournament_full' | false;
 
 
 interface UserContextType {
@@ -26,7 +27,7 @@ interface UserContextType {
   notifications: Notification[];
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateUser: (updatedFields: Partial<User>) => void;
-  joinTournament: (tournamentId: string, user: User) => JoinTournamentResult;
+  joinTournament: (tournamentId: string, usersToJoin: User[]) => JoinTournamentResult | JoinTournamentFailure;
   login: (email: string, password?: string) => boolean | 'blocked';
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
@@ -427,100 +428,110 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
   
 
-  const joinTournament = (tournamentId: string, userToJoin: User): JoinTournamentResult => {
-      const tournament = tournaments.find(t => t.id === tournamentId);
+  const joinTournament = (tournamentId: string, usersToJoin: User[]): JoinTournamentResult | JoinTournamentFailure => {
+    const tournament = tournaments.find(t => t.id === tournamentId);
 
-      if (!tournament) return false;
-      if (!userToJoin) {
-          toast({ variant: 'destructive', title: "Not Logged In", description: "Please log in to join a tournament." });
-          return 'not_logged_in';
-      }
-      if (userToJoin.isBlocked) {
-          toast({ variant: 'destructive', title: "Account Blocked", description: "Your account is blocked and cannot join tournaments." });
-          return 'blocked';
-      }
-      if (userToJoin.primaryGame !== tournament.gameName) {
-          toast({ 
-            variant: 'destructive', 
-            title: "Game Mismatch", 
-            description: `Only ${tournament.gameName} players can join this tournament.` 
-          });
-          return 'game_mismatch';
-      }
-      if (tournament.participants.some(p => p.user.id === userToJoin.id)) {
-          toast({ variant: 'destructive', title: "Already Joined", description: "You have already joined this tournament." });
-          return 'already_joined';
-      }
-      if (tournament.participants.length >= 100) {
-          toast({ variant: 'destructive', title: "Tournament Full", description: "This tournament has reached its maximum capacity." });
-          return 'tournament_full';
-      }
-      if (userToJoin.walletBalance < tournament.entryFee) {
-          toast({ variant: 'destructive', title: "Insufficient Balance", description: `You need ₹${tournament.entryFee} to join.` });
-          return 'insufficient_balance';
-      }
+    if (!tournament) return false;
 
-      const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
+    // First, run checks for all users before making any changes
+    for (const userToJoin of usersToJoin) {
+        if (!userToJoin) {
+            return 'not_logged_in';
+        }
+        if (userToJoin.isBlocked) {
+            return { error: `Account is blocked and cannot join tournaments.`, user: userToJoin };
+        }
+        if (userToJoin.primaryGame !== tournament.gameName) {
+            return { error: `Only ${tournament.gameName} players can join this tournament.`, user: userToJoin };
+        }
+        if (tournament.participants.some(p => p.user.id === userToJoin.id)) {
+            return { error: `Already joined this tournament.`, user: userToJoin };
+        }
+        if (userToJoin.walletBalance < tournament.entryFee) {
+            return { error: `Insufficient balance (needs ₹${tournament.entryFee}).`, user: userToJoin };
+        }
+    }
+    
+    if ((tournament.participants.length + usersToJoin.length) > 100) {
+        return 'tournament_full';
+    }
 
-      let updatedUsers = [...allUsers];
-      const updatedTournaments = tournaments.map(t => {
-          if (t.id === tournamentId) {
-              const newParticipant: Participant = {
-                  id: generateUniqueId(`p-${t.id}`, userToJoin.id),
-                  user: userToJoin,
-                  tournamentId: t.id,
-                  result: null,
-                  joinedAt: new Date(),
-              };
-              updatedUsers = updatedUsers.map(u => u.id === userToJoin.id ? { ...u, walletBalance: u.walletBalance - tournament.entryFee } : u);
-              return { ...t, participants: [...t.participants, newParticipant] };
-          }
-          return t;
-      });
-      
-      const newTransaction: Transaction = {
-          id: generateUniqueId('tx-join', userToJoin.id),
-          userId: userToJoin.id,
-          amount: tournament.entryFee,
-          type: 'debit',
-          description: `Joined "${tournament.title}"`,
-          createdAt: new Date(),
-          status: 'completed'
-      };
-      let updatedTransactions = [newTransaction, ...allTransactions];
-      
-      if (isFirstTournament && userToJoin.referredBy) {
-          const referrer = updatedUsers.find(u => u.id === userToJoin.referredBy);
-          if (referrer) {
-              const storedSettings = localStorage.getItem('referralSettings');
-              const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
-              const bonus = settings.referralBonus;
+    let updatedUsers = [...allUsers];
+    let updatedTransactions = [...allTransactions];
+    
+    const newParticipants: Participant[] = [];
 
-              updatedUsers = updatedUsers.map(u => {
-                  if (u.id === referrer.id) {
-                      return { ...u, referralBalance: (u.referralBalance || 0) + bonus };
-                  }
-                  return u;
-              });
+    // All checks passed, now perform the updates
+    for (const userToJoin of usersToJoin) {
+        const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
+        const updatedUser = { ...userToJoin, walletBalance: userToJoin.walletBalance - tournament.entryFee };
 
-              const bonusTransaction: Transaction = {
-                  id: generateUniqueId('tx-referral-bonus', referrer.id),
-                  userId: referrer.id,
-                  amount: bonus,
-                  type: 'credit',
-                  description: `Referral bonus for ${userToJoin.username}`,
-                  createdAt: new Date(),
-                  status: 'completed'
-              };
-              updatedTransactions = [bonusTransaction, ...updatedTransactions];
-          }
-      }
+        // Deduct balance
+        updatedUsers = updatedUsers.map(u => 
+            u.id === userToJoin.id ? updatedUser : u
+        );
 
-      saveAllUsers(updatedUsers);
-      saveAllTransactions(updatedTransactions);
-      saveAllTournaments(updatedTournaments);
+        // Add transaction
+        const newTransaction: Transaction = {
+            id: generateUniqueId('tx-join', userToJoin.id),
+            userId: userToJoin.id,
+            amount: tournament.entryFee,
+            type: 'debit',
+            description: `Joined "${tournament.title}"`,
+            createdAt: new Date(),
+            status: 'completed'
+        };
+        updatedTransactions.push(newTransaction);
+        
+        // Create participant record
+        newParticipants.push({
+            id: generateUniqueId(`p-${tournament.id}`, userToJoin.id),
+            user: updatedUser,
+            tournamentId: tournament.id,
+            result: null,
+            joinedAt: new Date(),
+        });
+        
+        // Handle referral bonus for the referrer if it's the user's first tournament
+        if (isFirstTournament && userToJoin.referredBy) {
+            const referrer = updatedUsers.find(u => u.id === userToJoin.referredBy);
+            if (referrer) {
+                const storedSettings = localStorage.getItem('referralSettings');
+                const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
+                const bonus = settings.referralBonus;
 
-      return 'success';
+                updatedUsers = updatedUsers.map(u => {
+                    if (u.id === referrer.id) {
+                        return { ...u, referralBalance: (u.referralBalance || 0) + bonus };
+                    }
+                    return u;
+                });
+
+                const bonusTransaction: Transaction = {
+                    id: generateUniqueId('tx-referral-bonus', referrer.id),
+                    userId: referrer.id,
+                    amount: bonus,
+                    type: 'credit',
+                    description: `Referral bonus for ${userToJoin.username}`,
+                    createdAt: new Date(),
+                    status: 'completed'
+                };
+                updatedTransactions.push(bonusTransaction);
+            }
+        }
+    }
+
+    const updatedTournaments = tournaments.map(t => 
+        t.id === tournamentId 
+            ? { ...t, participants: [...t.participants, ...newParticipants] } 
+            : t
+    );
+
+    saveAllUsers(updatedUsers);
+    saveAllTransactions(updatedTransactions);
+    saveAllTournaments(updatedTournaments);
+
+    return 'success';
   };
   
   const moveReferralBonusToWallet = () => {
