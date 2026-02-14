@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
@@ -39,6 +40,7 @@ interface UserContextType {
   addMessageToTicket: (ticketId: string, message: string, imageUrl?: string) => void;
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
   markNotificationsAsRead: () => void;
+  removeUserFromTeam: (userId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -417,6 +419,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     );
   };
   
+  const removeUserFromTeam = (userId: string) => {
+    const userToRemove = allUsers.find(u => u.id === userId);
+    if (!userToRemove) return;
+
+    const updatedUsers = allUsers.map(u => 
+        u.id === userId ? { ...u, teamName: undefined } : u
+    );
+    saveAllUsers(updatedUsers);
+    
+    toast({
+        title: 'Member Removed',
+        description: `${userToRemove.username} has been removed from the team.`,
+    });
+  };
 
   const joinTournament = (tournamentId: string, usersToJoin: User[]): JoinTournamentResult | JoinTournamentFailure => {
     const tournament = tournaments.find(t => t.id === tournamentId);
@@ -630,7 +646,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam }}>
       {!loading && children}
     </UserContext.Provider>
   );

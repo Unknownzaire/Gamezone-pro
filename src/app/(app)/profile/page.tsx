@@ -1,4 +1,5 @@
 
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -8,10 +9,21 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus, Trash2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import Image from 'next/image';
 import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
@@ -68,7 +80,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateUser, logout, allUsers, addNotification } = useUser();
+  const { user: currentUser, updateUser, logout, allUsers, addNotification, removeUserFromTeam } = useUser();
   const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
@@ -104,6 +116,7 @@ export default function ProfilePage() {
     (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
   );
   const teamLeader = sortedTeamMembers.length > 0 ? sortedTeamMembers[0] : null;
+  const isLeader = currentUser?.id === teamLeader?.id;
 
   useEffect(() => {
     if (currentUser) {
@@ -314,6 +327,10 @@ export default function ProfilePage() {
     });
     setIsInviteDialogOpen(false);
   };
+  
+  const handleRemoveMember = (memberId: string) => {
+    removeUserFromTeam(memberId);
+  };
 
   const usersToInvite = allUsers.filter(u => u.id !== currentUser?.id && u.teamName !== teamName);
   const searchedUsersToInvite = inviteSearch ? usersToInvite.filter(u => u.username.toLowerCase().includes(inviteSearch.toLowerCase())) : usersToInvite;
@@ -481,9 +498,34 @@ export default function ProfilePage() {
                                             </p>
                                             </div>
                                         </div>
-                                        {teamLeader && member.id === teamLeader.id && (
-                                            <Badge>Leader</Badge>
-                                        )}
+                                        <div className="flex items-center gap-2">
+                                            {teamLeader && member.id === teamLeader.id && (
+                                                <Badge>Leader</Badge>
+                                            )}
+                                            {isLeader && member.id !== currentUser.id && (
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                            <Trash2 className="h-4 w-4 text-destructive" />
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogHeader>
+                                                            <AlertDialogTitle>Remove {member.username}?</AlertDialogTitle>
+                                                            <AlertDialogDescription>
+                                                                Are you sure you want to remove {member.username} from your team? They will need a new invite to rejoin.
+                                                            </AlertDialogDescription>
+                                                        </AlertDialogHeader>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">
+                                                                Remove
+                                                            </AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            )}
+                                        </div>
                                     </div>
                                     ))}
                                 </div>
