@@ -354,7 +354,7 @@ export default function EditTournamentPage() {
                                     <DialogHeader>
                                         <DialogTitle>Manage Games</DialogTitle>
                                         <DialogDescription>
-                                            Edit or delete game names from the list.
+                                            Edit or delete game names from the list. Deletion is blocked if users have the game selected.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <ScrollArea className="h-72">
@@ -375,8 +375,18 @@ export default function EditTournamentPage() {
                                                       size="icon"
                                                       type="button"
                                                       onClick={() => {
-                                                          const newList = tempGameList.filter((_, i) => i !== index);
-                                                          setTempGameList(newList);
+                                                          const gameToDelete = tempGameList[index];
+                                                          const userCount = getUserCountForGame(gameToDelete);
+                                                          if (userCount > 0) {
+                                                              toast({
+                                                                  variant: 'destructive',
+                                                                  title: 'Cannot Delete Game',
+                                                                  description: `"${gameToDelete}" cannot be deleted as ${userCount} user(s) have it as their primary game.`,
+                                                              });
+                                                          } else {
+                                                              const newList = tempGameList.filter((_, i) => i !== index);
+                                                              setTempGameList(newList);
+                                                          }
                                                       }}
                                                   >
                                                       <Trash2 className="h-4 w-4 text-destructive" />
@@ -528,3 +538,5 @@ export default function EditTournamentPage() {
     </div>
   );
 }
+
+    
