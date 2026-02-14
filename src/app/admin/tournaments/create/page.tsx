@@ -15,6 +15,7 @@ import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { compressImage } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -34,6 +35,8 @@ export default function CreateTournamentPage() {
     const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD', 'OTHER']);
     const [isAddGameDialogOpen, setIsAddGameDialogOpen] = useState(false);
     const [newGameName, setNewGameName] = useState('');
+    const [isEditGameDialogOpen, setIsEditGameDialogOpen] = useState(false);
+    const [tempGameList, setTempGameList] = useState<string[]>([]);
 
     useEffect(() => {
         const storedGames = localStorage.getItem('gameList');
@@ -121,6 +124,28 @@ export default function CreateTournamentPage() {
         toast({ title: 'Game added successfully.' });
         setNewGameName('');
         setIsAddGameDialogOpen(false);
+    };
+
+    const handleSaveGameList = () => {
+        const trimmedList = tempGameList.map(g => g.trim());
+        if (trimmedList.some(g => g === '')) {
+            toast({ variant: 'destructive', title: 'Invalid Name', description: 'Game names cannot be empty.' });
+            return;
+        }
+        const lowercasedSet = new Set(trimmedList.map(g => g.toLowerCase()));
+        if (lowercasedSet.size !== trimmedList.length) {
+            toast({ variant: 'destructive', title: 'Duplicate Names', description: 'Game names must be unique.' });
+            return;
+        }
+    
+        if (gameName && !trimmedList.includes(gameName)) {
+            setGameName('');
+        }
+        
+        setGameList(trimmedList);
+        localStorage.setItem('gameList', JSON.stringify(trimmedList));
+        toast({ title: 'Game List Updated' });
+        setIsEditGameDialogOpen(false);
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -259,9 +284,59 @@ export default function CreateTournamentPage() {
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
+                                        <Dialog open={isEditGameDialogOpen} onOpenChange={(isOpen) => {
+                                            if (isOpen) setTempGameList(gameList);
+                                            setIsEditGameDialogOpen(isOpen);
+                                        }}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Manage Games</DialogTitle>
+                                                    <DialogDescription>
+                                                        Edit or delete game names. Core games (BGMI, FREE FIRE, COD, OTHER) cannot be deleted.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <ScrollArea className="h-72">
+                                                    <div className="space-y-2 pr-4">
+                                                        {tempGameList.map((game, index) => (
+                                                            <div key={index} className="flex items-center gap-2">
+                                                                <Input
+                                                                    value={game}
+                                                                    onChange={(e) => {
+                                                                        const newList = [...tempGameList];
+                                                                        newList[index] = e.target.value;
+                                                                        setTempGameList(newList);
+                                                                    }}
+                                                                    disabled={['BGMI', 'FREE FIRE', 'COD', 'OTHER'].includes(game)}
+                                                                />
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newList = tempGameList.filter((_, i) => i !== index);
+                                                                        setTempGameList(newList);
+                                                                    }}
+                                                                    disabled={['BGMI', 'FREE FIRE', 'COD', 'OTHER'].includes(game)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                                </Button>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </ScrollArea>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline" type="button">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button onClick={handleSaveGameList} type="button">Save Changes</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
                                         <Dialog open={isAddGameDialogOpen} onOpenChange={setIsAddGameDialogOpen}>
                                             <DialogTrigger asChild>
                                                 <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
