@@ -90,20 +90,14 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
     </Card>
 );
 
-const GameContent = ({gameName, tournaments, allGames}: {gameName: string, tournaments: Tournament[], allGames: string[]}) => {
-    const gameTournaments = tournaments.filter(t => {
-        if (gameName.toUpperCase() === 'OTHER') {
-            const mainGames = allGames.filter(g => g.toUpperCase() !== 'OTHER').map(g => g.toUpperCase());
-            return !mainGames.includes(t.gameName.toUpperCase());
-        }
-        return t.gameName.toUpperCase() === gameName.toUpperCase();
-    });
+const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: Tournament[]}) => {
+    const gameTournaments = tournaments.filter(t => t.gameName.toUpperCase() === gameName.toUpperCase());
     const upcoming = gameTournaments.filter(t => t.status === 'Upcoming');
     const live = gameTournaments.filter(t => t.status === 'Live');
     const completed = gameTournaments.filter(t => t.status === 'Completed');
 
     if (gameTournaments.length === 0) {
-        return <p className="text-muted-foreground text-center py-8">No {gameName === 'OTHER' ? 'other' : gameName} tournaments.</p>;
+        return <p className="text-muted-foreground text-center py-8">No {gameName} tournaments.</p>;
     }
 
     return (
@@ -134,7 +128,7 @@ const GameContent = ({gameName, tournaments, allGames}: {gameName: string, tourn
 
 export default function HomePage() {
   const { user, tournaments, promotionalAds } = useUser();
-  const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD', 'OTHER']);
+  const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD']);
   const activeAds = promotionalAds.filter(ad => ad.status === 'active');
   
   useEffect(() => {
@@ -150,7 +144,6 @@ export default function HomePage() {
         }
 
         const otherFiltered = gamesToShow.filter(g => g.toUpperCase() !== 'OTHER');
-        otherFiltered.push('OTHER');
         setGameList(otherFiltered);
     };
     
@@ -213,7 +206,7 @@ export default function HomePage() {
             </TabsList>
             {gameList.map(game => (
                 <TabsContent key={game} value={game.toLowerCase().replace(/ /g, '')} className="mt-4">
-                    <GameContent gameName={game} tournaments={tournaments} allGames={gameList} />
+                    <GameContent gameName={game} tournaments={tournaments} />
                 </TabsContent>
             ))}
         </Tabs>
