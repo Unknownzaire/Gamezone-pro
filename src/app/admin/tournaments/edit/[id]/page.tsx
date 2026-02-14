@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { Tournament, PrizeDistribution } from '@/lib/types';
-import { mockTournaments as initialMockTournaments } from '@/lib/mock-data';
+import { Tournament, PrizeDistribution, User } from '@/lib/types';
+import { mockTournaments as initialMockTournaments, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -16,6 +16,7 @@ import { compressImage } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 export default function EditTournamentPage() {
   const params = useParams();
@@ -44,11 +45,18 @@ export default function EditTournamentPage() {
     const [newGameName, setNewGameName] = useState('');
     const [isEditGameDialogOpen, setIsEditGameDialogOpen] = useState(false);
     const [tempGameList, setTempGameList] = useState<string[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
         const storedGames = localStorage.getItem('gameList');
         if (storedGames) {
             setGameList(JSON.parse(storedGames));
+        }
+        const storedUsers = localStorage.getItem('allUsers');
+        if (storedUsers) {
+            setUsers(JSON.parse(storedUsers));
+        } else {
+            setUsers(mockUsers);
         }
     }, []);
    
@@ -205,6 +213,10 @@ export default function EditTournamentPage() {
         setIsEditGameDialogOpen(false);
     };
 
+    const getUserCountForGame = (gameName: string) => {
+        return users.filter(user => user.primaryGame === gameName).length;
+    };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -357,6 +369,7 @@ export default function EditTournamentPage() {
                                                           setTempGameList(newList);
                                                       }}
                                                   />
+                                                  <Badge variant="secondary" className="whitespace-nowrap">{getUserCountForGame(game)} users</Badge>
                                                   <Button
                                                       variant="ghost"
                                                       size="icon"

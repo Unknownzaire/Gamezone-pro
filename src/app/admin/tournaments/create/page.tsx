@@ -9,13 +9,14 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, Loader2, Pencil, Plus } from "lucide-react";
 import React, { useState, useEffect } from "react";
-import type { Tournament, PrizeDistribution } from "@/lib/types";
-import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
+import type { Tournament, PrizeDistribution, User } from "@/lib/types";
+import { mockTournaments as initialMockTournaments, mockUsers } from "@/lib/mock-data";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { compressImage } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -37,6 +38,7 @@ export default function CreateTournamentPage() {
     const [newGameName, setNewGameName] = useState('');
     const [isEditGameDialogOpen, setIsEditGameDialogOpen] = useState(false);
     const [tempGameList, setTempGameList] = useState<string[]>([]);
+    const [users, setUsers] = useState<User[]>([]);
 
     useEffect(() => {
         const storedGames = localStorage.getItem('gameList');
@@ -44,6 +46,12 @@ export default function CreateTournamentPage() {
             setGameList(JSON.parse(storedGames));
         } else {
             localStorage.setItem('gameList', JSON.stringify(gameList));
+        }
+        const storedUsers = localStorage.getItem('allUsers');
+        if (storedUsers) {
+            setUsers(JSON.parse(storedUsers));
+        } else {
+            setUsers(mockUsers);
         }
     }, []);
 
@@ -146,6 +154,10 @@ export default function CreateTournamentPage() {
         localStorage.setItem('gameList', JSON.stringify(trimmedList));
         toast({ title: 'Game List Updated' });
         setIsEditGameDialogOpen(false);
+    };
+    
+    const getUserCountForGame = (gameName: string) => {
+        return users.filter(user => user.primaryGame === gameName).length;
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -312,6 +324,7 @@ export default function CreateTournamentPage() {
                                                                         setTempGameList(newList);
                                                                     }}
                                                                 />
+                                                                <Badge variant="secondary" className="whitespace-nowrap">{getUserCountForGame(game)} users</Badge>
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
