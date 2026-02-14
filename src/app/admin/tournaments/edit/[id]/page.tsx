@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Trash2, Loader2 } from 'lucide-react';
+import { ArrowLeft, Trash2, Loader2, Pencil, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 import { compressImage } from '@/lib/utils';
@@ -264,17 +263,25 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="gameName">Game Name</Label>
-                        <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
-                            <SelectTrigger id="game">
-                                <SelectValue placeholder="Select a game" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="BGMI">BGMI</SelectItem>
-                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                                <SelectItem value="COD">COD</SelectItem>
-                                <SelectItem value="OTHER">OTHER</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-2">
+                          <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
+                              <SelectTrigger id="gameName">
+                                  <SelectValue placeholder="Select a game" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="BGMI">BGMI</SelectItem>
+                                  <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                                  <SelectItem value="COD">COD</SelectItem>
+                                  <SelectItem value="OTHER">OTHER</SelectItem>
+                              </SelectContent>
+                          </Select>
+                          <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                              <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                              <Plus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="matchTime">Match Time</Label>

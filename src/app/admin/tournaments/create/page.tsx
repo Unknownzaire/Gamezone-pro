@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trash2, Loader2 } from "lucide-react";
+import { ArrowLeft, Trash2, Loader2, Pencil, Plus } from "lucide-react";
 import React, { useState } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
@@ -216,18 +215,26 @@ export default function CreateTournamentPage() {
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="game">Game Name</Label>
-                                    <input type="hidden" name="game" value={gameName} />
-                                    <Select value={gameName} onValueChange={setGameName} disabled={isSubmitting}>
-                                        <SelectTrigger id="game">
-                                            <SelectValue placeholder="Select a game" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="BGMI">BGMI</SelectItem>
-                                            <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                                            <SelectItem value="COD">COD</SelectItem>
-                                            <SelectItem value="OTHER">OTHER</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="flex items-center gap-2">
+                                        <input type="hidden" name="game" value={gameName} />
+                                        <Select value={gameName} onValueChange={setGameName} disabled={isSubmitting}>
+                                            <SelectTrigger id="game">
+                                                <SelectValue placeholder="Select a game" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="BGMI">BGMI</SelectItem>
+                                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
+                                                <SelectItem value="COD">COD</SelectItem>
+                                                <SelectItem value="OTHER">OTHER</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                                            <Pencil className="h-4 w-4" />
+                                        </Button>
+                                        <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                                            <Plus className="h-4 w-4" />
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="match-time">Match Time</Label>
