@@ -319,8 +319,6 @@ export default function ProfilePage() {
       return;
     }
     
-    const joinLink = `${window.location.origin}/login?action=join&team=${encodeURIComponent(teamName)}`;
-
     addNotification({
       userId: userToInvite.id,
       title: 'Team Invitation',
@@ -329,14 +327,11 @@ export default function ProfilePage() {
       payload: {
           teamName: teamName,
       },
-      link: joinLink,
     });
 
-    const inviteMessage = `Hi ${userToInvite.username}, join my team "${teamName}" on Gamezone Pro! Tap this link to join: ${joinLink}`;
-    navigator.clipboard.writeText(inviteMessage);
     toast({
-        title: "Invitation Sent & Link Copied!",
-        description: `A notification has been sent to ${userToInvite.username}. A join link is copied to your clipboard.`,
+        title: "Invitation Sent!",
+        description: `A notification has been sent to ${userToInvite.username}.`,
     });
     setIsInviteDialogOpen(false);
   };
