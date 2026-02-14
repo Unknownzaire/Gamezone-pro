@@ -8,12 +8,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Trash2, Loader2, Pencil, Plus } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import type { Tournament, PrizeDistribution } from "@/lib/types";
 import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { DateTimePicker } from "@/components/ui/datetime-picker";
 import { compressImage } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
 
 export default function CreateTournamentPage() {
     const router = useRouter();
@@ -29,6 +30,19 @@ export default function CreateTournamentPage() {
         { rank: '3', percentage: 15 },
         { rank: '4-10', percentage: 10 },
     ]);
+    
+    const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD', 'OTHER']);
+    const [isAddGameDialogOpen, setIsAddGameDialogOpen] = useState(false);
+    const [newGameName, setNewGameName] = useState('');
+
+    useEffect(() => {
+        const storedGames = localStorage.getItem('gameList');
+        if (storedGames) {
+            setGameList(JSON.parse(storedGames));
+        } else {
+            localStorage.setItem('gameList', JSON.stringify(gameList));
+        }
+    }, []);
 
     const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
 
@@ -89,6 +103,24 @@ export default function CreateTournamentPage() {
     const removePrizeRow = (index: number) => {
         const newDistributions = prizeDistributions.filter((_, i) => i !== index);
         setPrizeDistributions(newDistributions);
+    };
+
+    const handleAddNewGame = () => {
+        if (newGameName.trim() === '') {
+            toast({ variant: 'destructive', title: 'Game name cannot be empty.' });
+            return;
+        }
+        if (gameList.some(game => game.toLowerCase() === newGameName.trim().toLowerCase())) {
+            toast({ variant: 'destructive', title: 'Game already exists.' });
+            return;
+        }
+        const updatedGameList = [...gameList, newGameName.trim()];
+        setGameList(updatedGameList);
+        localStorage.setItem('gameList', JSON.stringify(updatedGameList));
+        setGameName(newGameName.trim()); // also select the new game
+        toast({ title: 'Game added successfully.' });
+        setNewGameName('');
+        setIsAddGameDialogOpen(false);
     };
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -222,18 +254,39 @@ export default function CreateTournamentPage() {
                                                 <SelectValue placeholder="Select a game" />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="BGMI">BGMI</SelectItem>
-                                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                                                <SelectItem value="COD">COD</SelectItem>
-                                                <SelectItem value="OTHER">OTHER</SelectItem>
+                                                {gameList.map(game => (
+                                                    <SelectItem key={game} value={game}>{game}</SelectItem>
+                                                ))}
                                             </SelectContent>
                                         </Select>
                                         <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
                                             <Pencil className="h-4 w-4" />
                                         </Button>
-                                        <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
-                                            <Plus className="h-4 w-4" />
-                                        </Button>
+                                        <Dialog open={isAddGameDialogOpen} onOpenChange={setIsAddGameDialogOpen}>
+                                            <DialogTrigger asChild>
+                                                <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
+                                                    <Plus className="h-4 w-4" />
+                                                </Button>
+                                            </DialogTrigger>
+                                            <DialogContent>
+                                                <DialogHeader>
+                                                    <DialogTitle>Add a New Game</DialogTitle>
+                                                    <DialogDescription>
+                                                        Enter the name of the new game to add it to the list.
+                                                    </DialogDescription>
+                                                </DialogHeader>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="new-game-name">Game Name</Label>
+                                                    <Input id="new-game-name" value={newGameName} onChange={(e) => setNewGameName(e.target.value)} />
+                                                </div>
+                                                <DialogFooter>
+                                                    <DialogClose asChild>
+                                                        <Button variant="outline">Cancel</Button>
+                                                    </DialogClose>
+                                                    <Button onClick={handleAddNewGame}>Add Game</Button>
+                                                </DialogFooter>
+                                            </DialogContent>
+                                        </Dialog>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
