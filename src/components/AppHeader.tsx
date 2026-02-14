@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { Wallet, Bell } from "lucide-react";
@@ -29,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { format, formatDistanceToNow } from "date-fns";
 
 export default function AppHeader() {
-  const { user, allUsers, notifications, markNotificationsAsRead, updateUser, toast } = useUser();
+  const { user, notifications, markNotificationsAsRead, joinTeam } = useUser();
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -38,35 +39,6 @@ export default function AppHeader() {
       setTimeout(() => markNotificationsAsRead(), 1000); // Mark as read after a short delay
     }
   };
-
-  const handleJoinTeam = (teamName?: string) => {
-      if (!user || !teamName) return;
-
-      if (user.teamName) {
-          toast({
-              variant: 'destructive',
-              title: 'Already in a team',
-              description: `You are already in team "${user.teamName}". Leave it before joining another.`,
-          });
-          return;
-      }
-
-      const teamMembersCount = allUsers.filter(u => u.teamName === teamName).length;
-      if (teamMembersCount >= 4) {
-        toast({
-          variant: 'destructive',
-          title: 'Team is Full',
-          description: `The team "${teamName}" already has 4 members and cannot accept new players.`,
-        });
-        return;
-      }
-
-      updateUser({ teamName });
-      toast({
-          title: 'Joined Team!',
-          description: `You are now a member of "${teamName}".`
-      });
-  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-10 border-b bg-background/80 backdrop-blur-sm">
@@ -119,15 +91,15 @@ export default function AppHeader() {
                                 <DialogClose asChild>
                                     <Button variant="outline">Close</Button>
                                 </DialogClose>
-                                {notification.type === 'team-invite' ? (
-                                    <DialogClose asChild>
-                                        <Button onClick={() => handleJoinTeam(notification.payload?.teamName)}>Join Team</Button>
-                                    </DialogClose>
-                                ) : notification.link ? (
+                                {notification.link ? (
                                     <DialogClose asChild>
                                         <Link href={notification.link} passHref>
-                                            <Button>Take Action</Button>
+                                            <Button>{notification.type === 'team-invite' ? 'Join Team' : 'Take Action'}</Button>
                                         </Link>
+                                    </DialogClose>
+                                ) : notification.type === 'team-invite' ? (
+                                    <DialogClose asChild>
+                                        <Button onClick={() => joinTeam(notification.payload?.teamName!)}>Join Team</Button>
                                     </DialogClose>
                                 ) : null}
                             </DialogFooter>

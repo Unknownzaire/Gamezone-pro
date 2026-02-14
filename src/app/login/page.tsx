@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,13 @@ export default function LoginPage() {
   const { toast } = useToast();
   
   const referralCodeFromUrl = searchParams.get('ref');
-  const initialTab = referralCodeFromUrl ? 'signup' : 'login';
+  const joinTeamName = searchParams.get('team');
+  const action = searchParams.get('action');
+
+  const initialTab = referralCodeFromUrl || (action === 'join' && joinTeamName) ? 'signup' : 'login';
   
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { login, signup, user, allUsers } = useUser();
+  const { login, signup, user, allUsers, joinTeam } = useUser();
   const { auth } = useFirebase();
   
   const [loginForm, setLoginForm] = useState({
@@ -63,9 +67,14 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (user) {
-      router.push('/home');
+      if (action === 'join' && joinTeamName) {
+        joinTeam(joinTeamName);
+        router.push('/profile');
+      } else {
+        router.push('/home');
+      }
     }
-  }, [user, router]);
+  }, [user, router, action, joinTeamName, joinTeam]);
   
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
     if (e.key === 'Enter') {
@@ -120,11 +129,7 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
       const loggedIn = login(loginForm.email, loginForm.password);
       if (loggedIn === true) {
-        toast({
-          title: 'Login Successful',
-          description: 'Welcome back!',
-        });
-        router.push('/home');
+        // Successful login is handled by useEffect
       } else if (loggedIn === 'blocked') {
         toast({
           variant: 'destructive',
@@ -239,7 +244,7 @@ export default function LoginPage() {
 
       if (existingUser) {
         if (login(existingUser.email, existingUser.password!)) {
-          router.push('/home');
+          // Successful login handled by useEffect
         } else {
            toast({
             variant: 'destructive',
@@ -266,7 +271,7 @@ export default function LoginPage() {
               title: 'Welcome!',
               description: 'Your account has been created.',
             });
-            router.push('/home');
+            // Successful login handled by useEffect
           }
         } else {
             toast({

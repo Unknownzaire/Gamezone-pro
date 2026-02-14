@@ -29,6 +29,7 @@ interface UserContextType {
   addTransaction: (tx: Omit<Transaction, 'id' | 'createdAt' | 'userId'>) => void;
   updateUser: (updatedFields: Partial<User>) => void;
   joinTournament: (tournamentId: string, usersToJoin: User[]) => JoinTournamentResult | JoinTournamentFailure;
+  joinTeam: (teamName: string) => 'success' | 'already_in_team' | 'team_full' | 'error';
   login: (email: string, password?: string) => boolean | 'blocked';
   signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
@@ -421,6 +422,30 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const joinTeam = (teamName: string) => {
+    if (!user) {
+        toast({ variant: 'destructive', title: 'Not Logged In', description: 'You must be logged in to join a team.' });
+        router.push(`/login?action=join&team=${encodeURIComponent(teamName)}`);
+        return 'error';
+    }
+    if (user.teamName) {
+        if (user.teamName === teamName) {
+            toast({ title: 'Already a Member', description: `You are already in team "${teamName}".` });
+        } else {
+            toast({ variant: 'destructive', title: 'Already in a Team', description: `You are already in team "${user.teamName}". Leave it before joining another.` });
+        }
+        return 'already_in_team';
+    }
+    const teamMembersCount = allUsers.filter(u => u.teamName === teamName).length;
+    if (teamMembersCount >= 4) {
+        toast({ variant: 'destructive', title: 'Team is Full', description: `The team "${teamName}" is full.` });
+        return 'team_full';
+    }
+    updateUser({ teamName });
+    toast({ title: 'Joined Team!', description: `You are now a member of "${teamName}".` });
+    return 'success';
+  };
+
   const hasUserJoinedTournament = (userId: string): boolean => {
     return allTransactions.some(tx => 
         tx.userId === userId && 
@@ -657,7 +682,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam }}>
+    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam, joinTeam }}>
       {!loading && children}
     </UserContext.Provider>
   );
