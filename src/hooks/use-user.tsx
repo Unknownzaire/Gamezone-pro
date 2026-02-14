@@ -152,16 +152,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                   read: true,
                   link: '/wallet',
                 },
-                {
-                  id: 'notif-4',
-                  userId: 'user-1',
-                  title: 'Team Invitation',
-                  description: 'Player42 has invited you to join "The Winners".',
-                  createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-                  read: true,
-                  type: 'team-invite',
-                  payload: { teamName: 'The Winners' }
-                },
             ];
             localStorage.setItem('allNotifications', JSON.stringify(mockNotifications));
             setAllNotifications(mockNotifications);
