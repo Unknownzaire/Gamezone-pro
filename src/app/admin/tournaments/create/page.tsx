@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ export default function CreateTournamentPage() {
     const [matchTime, setMatchTime] = useState<Date | undefined>(new Date());
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [gameName, setGameName] = useState('');
+    const [matchType, setMatchType] = useState<'Solo' | 'Duo' | 'Squad'>('Solo');
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -207,6 +209,7 @@ export default function CreateTournamentPage() {
                 id: `t-${Date.now()}`,
                 title: formData.get('title') as string,
                 gameName: gameNameFromForm,
+                matchType: matchType,
                 matchTime: matchTime,
                 entryFee: entryFee,
                 prizePool: prizePool,
@@ -309,7 +312,7 @@ export default function CreateTournamentPage() {
                                                 <DialogHeader>
                                                     <DialogTitle>Manage Games</DialogTitle>
                                                     <DialogDescription>
-                                                        Edit or delete game names from the list. Deletion is blocked if users have the game selected.
+                                                        Edit or delete game names from the list. You cannot delete a game if users have it set as their primary game.
                                                     </DialogDescription>
                                                 </DialogHeader>
                                                 <ScrollArea className="h-72">
@@ -384,6 +387,19 @@ export default function CreateTournamentPage() {
                                             </DialogContent>
                                         </Dialog>
                                     </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="matchType">Match Type</Label>
+                                    <Select value={matchType} onValueChange={(value) => setMatchType(value as 'Solo' | 'Duo' | 'Squad')} disabled={isSubmitting}>
+                                        <SelectTrigger id="matchType">
+                                            <SelectValue placeholder="Select match type" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Solo">Solo</SelectItem>
+                                            <SelectItem value="Duo">Duo</SelectItem>
+                                            <SelectItem value="Squad">Squad</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="match-time">Match Time</Label>

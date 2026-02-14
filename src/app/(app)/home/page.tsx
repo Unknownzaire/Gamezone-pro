@@ -7,7 +7,7 @@ import { Tournament } from "@/lib/types";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Clock, Trophy, Users, PlayCircle } from "lucide-react";
+import { Clock, Trophy, Users, PlayCircle, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
@@ -50,6 +50,10 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                         <div className="flex items-center gap-2">
                             <Users className="h-3 w-3 text-primary" />
                             <span>Entry: ₹{tournament.entryFee}</span>
+                        </div>
+                         <div className="flex items-center gap-2">
+                            {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3 text-primary" /> : <Users className="h-3 w-3 text-primary" />}
+                            <span>{tournament.matchType}</span>
                         </div>
                          <div className="flex items-center gap-2">
                             <Clock className="h-3 w-3 text-primary" />

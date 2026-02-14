@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -28,6 +29,7 @@ export default function EditTournamentPage() {
   const [formData, setFormData] = useState<Partial<Omit<Tournament, 'matchTime' | 'prizeDistribution'>>>({
     title: '',
     gameName: '',
+    matchType: 'Solo',
     entryFee: 0,
     prizePool: 0,
     commissionPercentage: 0,
@@ -354,7 +356,7 @@ export default function EditTournamentPage() {
                                     <DialogHeader>
                                         <DialogTitle>Manage Games</DialogTitle>
                                         <DialogDescription>
-                                            Edit or delete game names from the list. Deletion is blocked if users have the game selected.
+                                            Edit or delete game names from the list. You cannot delete a game if users have it set as their primary game.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <ScrollArea className="h-72">
@@ -429,6 +431,19 @@ export default function EditTournamentPage() {
                                 </DialogContent>
                             </Dialog>
                         </div>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="matchType">Match Type</Label>
+                          <Select value={formData.matchType} onValueChange={(value) => handleSelectChange('matchType', value as 'Solo' | 'Duo' | 'Squad')} disabled={isSubmitting}>
+                              <SelectTrigger id="matchType">
+                                  <SelectValue placeholder="Select match type" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="Solo">Solo</SelectItem>
+                                  <SelectItem value="Duo">Duo</SelectItem>
+                                  <SelectItem value="Squad">Squad</SelectItem>
+                              </SelectContent>
+                          </Select>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="matchTime">Match Time</Label>

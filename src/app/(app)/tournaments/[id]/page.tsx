@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight, PlayCircle } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight, PlayCircle, User as UserIcon } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament, PrizeDistribution, User } from '@/lib/types';
@@ -289,11 +289,11 @@ export default function TournamentDetailsPage() {
                     <Users className="h-4 w-4 text-primary" />
                     <span>Entry: ₹{tournament.entryFee}</span>
                 </div>
-                <div className="flex items-center gap-2 col-span-2">
-                    <Clock className="h-4 w-4 text-primary" />
-                    <span>{format(new Date(tournament.matchTime), "PPp")}</span>
+                <div className="flex items-center gap-2">
+                    {tournament.matchType === 'Solo' ? <UserIcon className="h-4 w-4 text-primary" /> : <Users className="h-4 w-4 text-primary" />}
+                    <span>{tournament.matchType}</span>
                 </div>
-                 <div className="flex items-center gap-2 col-span-2">
+                 <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
                     <span>Players: {tournament.participants.length} / 100 joined</span>
                      <Dialog>
@@ -329,6 +329,10 @@ export default function TournamentDetailsPage() {
                         </ScrollArea>
                       </DialogContent>
                     </Dialog>
+                </div>
+                <div className="flex items-center gap-2 col-span-2">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span>{format(new Date(tournament.matchTime), "PPp")}</span>
                 </div>
             </div>
             

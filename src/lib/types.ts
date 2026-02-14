@@ -33,6 +33,7 @@ export type Tournament = {
   id: string;
   title: string;
   gameName: string;
+  matchType: 'Solo' | 'Duo' | 'Squad';
   entryFee: number;
   prizePool: number;
   matchTime: Date;
