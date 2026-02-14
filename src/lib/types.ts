@@ -90,6 +90,7 @@ export type User = {
   inGameUsername?: string;
   inGameId?: string;
   teamName?: string;
+  teamJoinedAt?: Date;
   isBlocked?: boolean;
   createdAt: Date;
   totalDeposits?: number;

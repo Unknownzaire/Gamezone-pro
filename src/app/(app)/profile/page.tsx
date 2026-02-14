@@ -113,7 +113,15 @@ export default function ProfilePage() {
     
   const teamMembers = currentUser?.teamName ? allUsers.filter(u => u.teamName === currentUser.teamName) : [];
   const sortedTeamMembers = [...teamMembers].sort(
-    (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    (a, b) => {
+        if (a.teamJoinedAt && b.teamJoinedAt) {
+            return new Date(a.teamJoinedAt).getTime() - new Date(b.teamJoinedAt).getTime();
+        }
+        if (a.teamJoinedAt) return -1;
+        if (b.teamJoinedAt) return 1;
+        // Fallback for old data that might not have teamJoinedAt
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    }
   );
   const teamLeader = sortedTeamMembers.length > 0 ? sortedTeamMembers[0] : null;
   const isLeader = currentUser?.id === teamLeader?.id;

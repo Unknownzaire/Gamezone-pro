@@ -31,7 +31,7 @@ interface UserContextType {
   joinTournament: (tournamentId: string, usersToJoin: User[]) => JoinTournamentResult | JoinTournamentFailure;
   joinTeam: (teamName: string) => 'success' | 'already_in_team' | 'team_full' | 'error';
   login: (email: string, password?: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -90,7 +90,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         let storedUsers = localStorage.getItem('allUsers');
         let currentUsers: User[];
         if (storedUsers) {
-            currentUsers = JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
+            currentUsers = JSON.parse(storedUsers).map((u: any) => ({
+                ...u, 
+                createdAt: u.createdAt ? new Date(u.createdAt) : new Date(),
+                teamJoinedAt: u.teamJoinedAt ? new Date(u.teamJoinedAt) : undefined,
+            }));
         } else {
             localStorage.setItem('allUsers', JSON.stringify(mockUsers));
             currentUsers = mockUsers;
@@ -239,7 +243,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
     
     if (userDetails.email && allUsers.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
@@ -416,6 +420,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           });
           return;
         }
+        updatedFields.teamJoinedAt = new Date();
+      }
+      if ('teamName' in updatedFields && !updatedFields.teamName) {
+        updatedFields.teamJoinedAt = undefined;
       }
       const updatedUsers = allUsers.map(u => u.id === user.id ? {...u, ...updatedFields} : u);
       saveAllUsers(updatedUsers);
@@ -430,7 +438,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     if (user.teamName) {
         if (user.teamName === teamName) {
-            toast({ title: 'Already in Team', description: 'You are already a member of this team.' });
+            toast({ title: 'Already in Team', description: `You are already a member of team "${teamName}".` });
         } else {
             toast({ variant: 'destructive', title: 'Already in a Team', description: 'You must leave your current team before joining a new one.' });
         }
@@ -460,7 +468,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!userToRemove) return;
 
     const updatedUsers = allUsers.map(u => 
-        u.id === userId ? { ...u, teamName: undefined } : u
+        u.id === userId ? { ...u, teamName: undefined, teamJoinedAt: undefined } : u
     );
     saveAllUsers(updatedUsers);
     

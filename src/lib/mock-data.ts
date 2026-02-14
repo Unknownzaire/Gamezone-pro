@@ -3,6 +3,7 @@ import { User, Tournament, Participant, Transaction } from './types';
 
 const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
   const gameId = `5${Math.floor(100000000 + Math.random() * 900000000)}`;
+  const createdAt = new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000);
   return {
     id: `user-${i + 1}`,
     username: `Player${i + 1}`,
@@ -16,7 +17,8 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
     inGameUsername: `Player${i + 1}BGMI`,
     inGameId: gameId,
     teamName: `Team ${i % 10 + 1}`,
-    createdAt: new Date(new Date().getTime() - (100 - i) * 24 * 60 * 60 * 1000), // Staggered registration dates
+    teamJoinedAt: new Date(createdAt.getTime() + i * 60000), // Staggered join times
+    createdAt: createdAt, // Staggered registration dates
     referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
     referralCode: gameId,
   }
