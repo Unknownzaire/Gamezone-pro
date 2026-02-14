@@ -342,7 +342,7 @@ export default function EditTournamentPage() {
                                     <DialogHeader>
                                         <DialogTitle>Manage Games</DialogTitle>
                                         <DialogDescription>
-                                            Edit or delete game names. Core games (BGMI, FREE FIRE, COD, OTHER) cannot be deleted.
+                                            Edit or delete game names from the list.
                                         </DialogDescription>
                                     </DialogHeader>
                                     <ScrollArea className="h-72">
@@ -356,7 +356,6 @@ export default function EditTournamentPage() {
                                                           newList[index] = e.target.value;
                                                           setTempGameList(newList);
                                                       }}
-                                                      disabled={['BGMI', 'FREE FIRE', 'COD', 'OTHER'].includes(game)}
                                                   />
                                                   <Button
                                                       variant="ghost"
@@ -366,7 +365,6 @@ export default function EditTournamentPage() {
                                                           const newList = tempGameList.filter((_, i) => i !== index);
                                                           setTempGameList(newList);
                                                       }}
-                                                      disabled={['BGMI', 'FREE FIRE', 'COD', 'OTHER'].includes(game)}
                                                   >
                                                       <Trash2 className="h-4 w-4 text-destructive" />
                                                   </Button>
