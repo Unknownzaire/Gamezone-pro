@@ -80,7 +80,7 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateUser, logout, allUsers, addNotification, removeUserFromTeam } = useUser();
+  const { user: currentUser, updateUser, logout, allUsers, addNotification, removeUserFromTeam, joinTeam } = useUser();
   const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
@@ -510,7 +510,7 @@ export default function ProfilePage() {
                                             <div>
                                             <p className="font-semibold">{member.username}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {member.inGameUsername} ({member.inGameId})
+                                                {member.inGameUsername || 'No in-game name'}{member.inGameId && ` (${member.inGameId})`}
                                             </p>
                                             </div>
                                         </div>
