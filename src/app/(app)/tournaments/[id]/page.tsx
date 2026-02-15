@@ -174,7 +174,7 @@ export default function TournamentDetailsPage() {
     {
       title: "Eligibility",
       points: [
-        "Participants must register with their correct BGMI Username and BGMI ID.",
+        `Participants must register with their correct ${tournament.gameName} Username and ID.`,
         "Multiple accounts are not allowed.",
         "Players must be 18 years or older (or have parental consent if under 18).",
       ],
@@ -190,7 +190,7 @@ export default function TournamentDetailsPage() {
     {
       title: "Gameplay Rules",
       points: [
-        "Players must use the official BGMI app only (no modded APKs, scripts, or cheats).",
+        `Players must use the official ${tournament.gameName} app only (no modded APKs, scripts, or cheats).`,
         "Teaming, hacking, exploiting, or use of third-party software will result in immediate disqualification.",
         "Players must join the custom room with the correct ID and password provided by organizers.",
       ],
