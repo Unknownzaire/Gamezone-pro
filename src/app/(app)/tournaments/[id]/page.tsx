@@ -236,7 +236,6 @@ export default function TournamentDetailsPage() {
     {
       title: "Liability Disclaimer",
       points: [
-        "The tournament is not affiliated with or endorsed by Krafton, BGMI, or PUBG Mobile.",
         "Organizers are not responsible for network issues, technical glitches, or player device problems.",
       ],
     },
