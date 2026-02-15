@@ -40,8 +40,9 @@ export default function AdminUsersPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isFundDialogOpen, setIsFundDialogOpen] = useState(false);
   const [fundAmount, setFundAmount] = useState('');
-  const [gameFilter, setGameFilter] = useState<'ALL' | 'BGMI' | 'FREE FIRE' | 'COD' | 'OTHER'>('ALL');
+  const [gameFilter, setGameFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [gameList, setGameList] = useState<string[]>([]);
 
   const { toast } = useToast();
 
@@ -68,12 +69,21 @@ export default function AdminUsersPage() {
     } else {
       setTournaments(initialMockTournaments);
     }
+
+    const storedGames = localStorage.getItem('gameList');
+    if (storedGames) {
+      setGameList(JSON.parse(storedGames));
+    } else {
+      const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
+      setGameList(defaultGames);
+      localStorage.setItem('gameList', JSON.stringify(defaultGames));
+    }
   }, []);
 
   useEffect(() => {
     loadData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allUsers' || event.key === 'allTransactions' || event.key === 'allTournaments') {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'gameList'].includes(event.key || '')) {
         loadData();
       }
     };
@@ -180,12 +190,6 @@ export default function AdminUsersPage() {
   };
 
   const getParticipationCount = (userId: string, gameName: string) => {
-    if (gameName === 'OTHER') {
-        return tournaments.filter(t => 
-          !['BGMI', 'FREE FIRE', 'COD'].includes(t.gameName.toUpperCase()) && 
-          t.participants.some(p => p.user.id === userId)
-        ).length;
-    }
     return tournaments.filter(t => 
       t.gameName.toUpperCase() === gameName.toUpperCase() && 
       t.participants.some(p => p.user.id === userId)
@@ -193,13 +197,13 @@ export default function AdminUsersPage() {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesGame = gameFilter === 'ALL' || (gameFilter === 'OTHER' ? !['BGMI', 'FREE FIRE', 'COD'].includes(u.primaryGame || '') : u.primaryGame === gameFilter);
+    const matchesGame = gameFilter === 'ALL' || u.primaryGame === gameFilter;
     const searchLower = searchTerm.toLowerCase();
     const matchesSearch = 
         u.username.toLowerCase().includes(searchLower) ||
         u.email.toLowerCase().includes(searchLower) ||
-        (u.inGameUsername && u.inGameUsername.toLowerCase().includes(searchLower)) ||
-        (u.inGameId && u.inGameId.toLowerCase().includes(searchLower));
+        (u.primaryGame && u.gameProfiles?.[u.primaryGame]?.inGameUsername?.toLowerCase().includes(searchLower)) ||
+        (u.primaryGame && u.gameProfiles?.[u.primaryGame]?.inGameId?.toLowerCase().includes(searchLower));
     
     return matchesGame && matchesSearch;
   });
@@ -220,34 +224,25 @@ export default function AdminUsersPage() {
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-            <Button 
-                variant={gameFilter === 'BGMI' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setGameFilter(gameFilter === 'BGMI' ? 'ALL' : 'BGMI')}
-            >
-                BGMI user
-            </Button>
-            <Button 
-                variant={gameFilter === 'FREE FIRE' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setGameFilter(gameFilter === 'FREE FIRE' ? 'ALL' : 'FREE FIRE')}
-            >
-                FREE FIRE user
-            </Button>
-            <Button 
-                variant={gameFilter === 'COD' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setGameFilter(gameFilter === 'COD' ? 'ALL' : 'COD')}
-            >
-                COD user
-            </Button>
-            <Button 
-                variant={gameFilter === 'OTHER' ? 'default' : 'outline'} 
-                size="sm" 
-                onClick={() => setGameFilter(gameFilter === 'OTHER' ? 'ALL' : 'OTHER')}
-            >
-                OTHER user
-            </Button>
+            {gameList.filter(g => g.toUpperCase() !== 'OTHER').map(game => (
+                <Button 
+                    key={game}
+                    variant={gameFilter === game ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setGameFilter(gameFilter === game ? 'ALL' : game)}
+                >
+                    {game} user
+                </Button>
+            ))}
+            {gameList.some(g => g.toUpperCase() === 'OTHER') && (
+                 <Button 
+                    variant={gameFilter === 'OTHER' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setGameFilter(gameFilter === 'OTHER' ? 'ALL' : 'OTHER')}
+                >
+                    OTHER user
+                </Button>
+            )}
             <Button variant="outline" size="icon" onClick={() => loadData()}>
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh users</span>
@@ -275,10 +270,9 @@ export default function AdminUsersPage() {
                   <TableHead>Available Balance</TableHead>
                   <TableHead>Total Balance</TableHead>
                   <TableHead>Total Deposits</TableHead>
-                  <TableHead className="text-center">BGMI</TableHead>
-                  <TableHead className="text-center">FREE FIRE</TableHead>
-                  <TableHead className="text-center">COD</TableHead>
-                  <TableHead className="text-center">OTHER</TableHead>
+                  {gameList.map(game => (
+                    <TableHead key={game} className="text-center">{game.toUpperCase()}</TableHead>
+                  ))}
                   <TableHead>Game Info</TableHead>
                   <TableHead>OTP Authentication</TableHead>
                   <TableHead>Mobile</TableHead>
@@ -310,15 +304,14 @@ export default function AdminUsersPage() {
                     <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'BGMI')}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'FREE FIRE')}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'COD')}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{getParticipationCount(user.id, 'OTHER')}</TableCell>
+                    {gameList.map(game => (
+                      <TableCell key={game} className="text-center font-bold text-primary">{getParticipationCount(user.id, game)}</TableCell>
+                    ))}
                     <TableCell>
                       <div className="text-xs">
                         <p className="font-bold">{user.primaryGame}</p>
-                        <p>{user.inGameUsername}</p>
-                        <p className="text-muted-foreground">{user.inGameId}</p>
+                        <p>{user.primaryGame && user.gameProfiles?.[user.primaryGame]?.inGameUsername}</p>
+                        <p className="text-muted-foreground">{user.primaryGame && user.gameProfiles?.[user.primaryGame]?.inGameId}</p>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -428,4 +421,5 @@ export default function AdminUsersPage() {
       </Dialog>
     </div>
   );
-}
+
+    
