@@ -253,9 +253,18 @@ export default function AdminSupportPage() {
                                     )}
                                     <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'admin' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                        {message.imageUrl && (
-                                          <div className="relative h-32 w-48 mb-2 rounded-md overflow-hidden">
-                                            <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="cover" />
-                                          </div>
+                                          <Dialog>
+                                            <DialogTrigger asChild>
+                                              <div className="relative h-32 w-48 mb-2 rounded-md overflow-hidden cursor-pointer">
+                                                <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="cover" />
+                                              </div>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-3xl p-2">
+                                              <div className="relative aspect-video">
+                                                <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="contain" />
+                                              </div>
+                                            </DialogContent>
+                                          </Dialog>
                                         )}
                                         <p>{message.text}</p>
                                         <p className="text-xs opacity-70 mt-1">{format(message.createdAt, 'p')}</p>

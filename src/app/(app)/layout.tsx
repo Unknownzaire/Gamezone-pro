@@ -122,9 +122,18 @@ function AppContent({ children }: { children: React.ReactNode }) {
               rows={5}
             />
             {previewImage && (
-              <div className="relative h-32 w-32 rounded-md overflow-hidden">
-                <Image src={previewImage} alt="Image preview" layout="fill" objectFit="cover" />
-              </div>
+              <Dialog>
+                <DialogTrigger asChild>
+                  <div className="relative h-32 w-32 rounded-md overflow-hidden cursor-pointer">
+                    <Image src={previewImage} alt="Image preview" layout="fill" objectFit="cover" />
+                  </div>
+                </DialogTrigger>
+                <DialogContent className="max-w-3xl p-2">
+                    <div className="relative aspect-video">
+                        <Image src={previewImage} alt="Image preview" layout="fill" objectFit="contain" />
+                    </div>
+                </DialogContent>
+              </Dialog>
             )}
             <Input id="support-image" type="file" accept="image/*" onChange={handleFileChange} className="text-xs" />
             <DialogFooter>
