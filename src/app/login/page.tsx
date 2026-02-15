@@ -43,7 +43,7 @@ export default function LoginPage() {
 
   const [signupForm, setSignupForm] = useState({
       username: '',
-      primaryGame: 'BGMI' as 'BGMI' | 'FREE FIRE' | 'COD' | 'OTHER',
+      primaryGame: '',
       inGameUsername: '',
       inGameId: '',
       mobile: '',
@@ -54,6 +54,7 @@ export default function LoginPage() {
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [gameList, setGameList] = useState<string[]>([]);
   
   const usernameRef = useRef<HTMLInputElement>(null);
   const inGameUsernameRef = useRef<HTMLInputElement>(null);
@@ -75,6 +76,26 @@ export default function LoginPage() {
       }
     }
   }, [user, router, action, joinTeamName, joinTeam]);
+
+  useEffect(() => {
+    const storedGames = localStorage.getItem('gameList');
+    const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
+    let gamesToShow: string[] = [];
+
+    if (storedGames) {
+        try {
+            gamesToShow = JSON.parse(storedGames);
+        } catch (e) {
+            gamesToShow = defaultGames;
+        }
+    } else {
+        gamesToShow = defaultGames;
+    }
+    setGameList(gamesToShow);
+    if (gamesToShow.length > 0) {
+        setSignupForm(prev => ({ ...prev, primaryGame: gamesToShow[0] }));
+    }
+  }, []);
   
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
     if (e.key === 'Enter') {
@@ -115,7 +136,7 @@ export default function LoginPage() {
   const handleSignupSelectChange = (value: string) => {
       setSignupForm({
           ...signupForm,
-          primaryGame: value as any
+          primaryGame: value
       });
   }
 
@@ -204,7 +225,7 @@ export default function LoginPage() {
         setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
         setSignupForm({
             username: '',
-            primaryGame: 'BGMI',
+            primaryGame: gameList.length > 0 ? gameList[0] : '',
             inGameUsername: '',
             inGameId: '',
             mobile: '',
@@ -376,10 +397,9 @@ export default function LoginPage() {
                                 <SelectValue placeholder="Select your primary game" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="BGMI">BGMI</SelectItem>
-                                <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                                <SelectItem value="COD">COD</SelectItem>
-                                <SelectItem value="OTHER">OTHER</SelectItem>
+                                {gameList.map(game => (
+                                    <SelectItem key={game} value={game}>{game}</SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>
