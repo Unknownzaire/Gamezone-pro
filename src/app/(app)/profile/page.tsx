@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -476,11 +477,11 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
-                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing} />
+                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing || !!currentUser.inGameUsername} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
-                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing} />
+                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || !!currentUser.inGameId} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="teamName">Team Name</Label>
@@ -748,3 +749,5 @@ export default function ProfilePage() {
     </div>
   );
 }
+
+    
