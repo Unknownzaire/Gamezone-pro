@@ -1,5 +1,3 @@
-
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -85,7 +83,7 @@ export default function ProfilePage() {
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
-  const [primaryGame, setPrimaryGame] = useState<'BGMI' | 'FREE FIRE' | 'COD' | undefined>();
+  const [primaryGame, setPrimaryGame] = useState<string | undefined>();
   const [inGameUsername, setInGameUsername] = useState('');
   const [inGameId, setInGameId] = useState('');
   const [teamName, setTeamName] = useState('');
@@ -110,6 +108,7 @@ export default function ProfilePage() {
         supportEmail: 'support@gamezonepro.com',
     });
     const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
+    const [gameList, setGameList] = useState<string[]>([]);
     
   const teamMembers = currentUser?.teamName ? allUsers.filter(u => u.teamName === currentUser.teamName) : [];
   const sortedTeamMembers = [...teamMembers].sort(
@@ -127,10 +126,15 @@ export default function ProfilePage() {
   const isLeader = currentUser?.id === teamLeader?.id;
 
   useEffect(() => {
+    const storedGames = localStorage.getItem('gameList');
+    const games = storedGames ? JSON.parse(storedGames) : ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
+    const filteredGames = games.filter((g: string) => g !== 'OTHER');
+    setGameList(filteredGames);
+
     if (currentUser) {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
-      setPrimaryGame(currentUser.primaryGame);
+      setPrimaryGame(currentUser.primaryGame || (filteredGames.length > 0 ? filteredGames[0] : undefined));
       setInGameUsername(currentUser.inGameUsername || '');
       setInGameId(currentUser.inGameId || '');
       setTeamName(currentUser.teamName || '');
@@ -181,7 +185,7 @@ export default function ProfilePage() {
     if (currentUser) {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
-      setPrimaryGame(currentUser.primaryGame);
+      setPrimaryGame(currentUser.primaryGame || (gameList.length > 0 ? gameList[0] : undefined));
       setInGameUsername(currentUser.inGameUsername || '');
       setInGameId(currentUser.inGameId || '');
       setTeamName(currentUser.teamName || '');
@@ -459,14 +463,14 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="primaryGame">Primary Game</Label>
-                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value as any)} disabled={!isEditing}>
+                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value)} disabled={!isEditing}>
                     <SelectTrigger id="primaryGame">
                         <SelectValue placeholder="Select your main game" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="BGMI">BGMI</SelectItem>
-                        <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                        <SelectItem value="COD">COD</SelectItem>
+                        {gameList.map(game => (
+                            <SelectItem key={game} value={game}>{game}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
               </div>
