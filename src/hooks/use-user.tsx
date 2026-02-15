@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification, GameProfile } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
@@ -31,7 +31,7 @@ interface UserContextType {
   joinTournament: (tournamentId: string, usersToJoin: User[]) => JoinTournamentResult | JoinTournamentFailure;
   joinTeam: (teamName: string) => 'success' | 'already_in_team' | 'team_full' | 'error';
   login: (email: string, password?: string) => boolean | 'blocked';
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => "success" | "error";
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -243,7 +243,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
   
-  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt'>, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
+  const signup = (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): 'success' | 'error' => {
     
     if (userDetails.email && allUsers.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Exists', description: 'An account with this email already exists.' });
@@ -253,8 +253,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
         return 'error';
     }
-    if (userDetails.inGameUsername && allUsers.some(u => u.inGameUsername?.toLowerCase() === userDetails.inGameUsername?.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Game Username Taken', description: 'This game username is already in use.' });
+    if (userDetails.inGameUsername && allUsers.some(u => u.gameProfiles && Object.values(u.gameProfiles).some(p => p.inGameUsername?.toLowerCase() === userDetails.inGameUsername?.toLowerCase()))) {
+        toast({ variant: 'destructive', title: 'In-Game Username Taken', description: 'This in-game username is already in use.' });
+        return 'error';
+    }
+     if (userDetails.inGameId && allUsers.some(u => u.gameProfiles && Object.values(u.gameProfiles).some(p => p.inGameId === userDetails.inGameId))) {
+        toast({ variant: 'destructive', title: 'In-Game User ID Taken', description: 'This in-game User ID is already in use.' });
         return 'error';
     }
     
@@ -289,7 +293,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     const newUserId = userDetails.googleId || generateUniqueId('user', '');
     const newUser: User = {
-        ...userDetails,
+        username: userDetails.username,
+        email: userDetails.email,
+        mobile: userDetails.mobile,
+        primaryGame: userDetails.primaryGame,
+        referralCode: generateUniqueReferralCode(),
+        googleId: userDetails.googleId,
+        otp: userDetails.otp,
         password: password,
         id: newUserId,
         walletBalance: newUserBonus,
@@ -298,9 +308,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         isBlocked: false,
         createdAt: new Date(),
         referredBy,
-        referralCode: generateUniqueReferralCode(),
         emailVerified: emailVerified,
         mobileVerified: mobileVerified,
+        gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
+          [userDetails.primaryGame]: {
+            inGameUsername: userDetails.inGameUsername,
+            inGameId: userDetails.inGameId,
+          }
+        } : {},
     };
     
     let updatedTransactions = [...allTransactions];
@@ -607,7 +622,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       description: 'Referral earnings moved to wallet',
       status: 'completed'
     });
-  }
+  };
   
   const addSupportTicket = (message: string, imageUrl?: string) => {
     if (!user) return;

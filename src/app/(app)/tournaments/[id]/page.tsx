@@ -357,7 +357,7 @@ export default function TournamentDetailsPage() {
                                 <div>
                                   <p className="font-semibold">{p.user.username}</p>
                                   <p className="text-xs text-muted-foreground">
-                                    {p.user.inGameUsername} ({p.user.inGameId})
+                                    {p.user.gameProfiles?.[tournament.gameName]?.inGameUsername || 'N/A'} ({p.user.gameProfiles?.[tournament.gameName]?.inGameId || 'N/A'})
                                   </p>
                                 </div>
                                 </div>
