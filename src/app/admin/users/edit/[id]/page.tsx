@@ -12,6 +12,8 @@ import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import Image from 'next/image';
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function EditUserPage() {
   const params = useParams();
@@ -103,6 +105,17 @@ export default function EditUserPage() {
       </div>
 
       <Card>
+        <div className="relative h-32 bg-muted/50">
+            {formData.coverImageUrl && (
+                <Image src={formData.coverImageUrl} alt="Cover image" layout="fill" objectFit="cover" className="rounded-t-lg" />
+            )}
+        </div>
+        <div className="-mt-12 flex justify-center">
+             <Avatar className="h-24 w-24 border-4 border-card">
+                <AvatarImage src={formData.avatarUrl} alt={formData.username || ''} />
+                <AvatarFallback>{formData.username?.charAt(0).toUpperCase() || 'U'}</AvatarFallback>
+            </Avatar>
+        </div>
         <form onSubmit={handleSubmit}>
           <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
