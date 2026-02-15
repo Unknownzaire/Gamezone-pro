@@ -170,9 +170,18 @@ export default function MyTicketsPage() {
                       </ScrollArea>
                       <div className="p-4 border-t space-y-2">
                           {previewImage && (
-                            <div className="relative h-20 w-20 rounded-md overflow-hidden">
-                              <Image src={previewImage} alt="Reply preview" layout="fill" objectFit="cover" />
-                            </div>
+                            <Dialog>
+                                <DialogTrigger asChild>
+                                    <div className="relative h-20 w-20 rounded-md overflow-hidden cursor-pointer">
+                                        <Image src={previewImage} alt="Reply preview" layout="fill" objectFit="cover" />
+                                    </div>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-3xl p-2">
+                                    <div className="relative aspect-video">
+                                        <Image src={previewImage} alt="Reply preview" layout="fill" objectFit="contain" />
+                                    </div>
+                                </DialogContent>
+                            </Dialog>
                           )}
                           <div className="flex items-center gap-2">
                             <Textarea 
