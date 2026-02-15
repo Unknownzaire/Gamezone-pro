@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { User, Transaction } from '@/lib/types';
+import { User, Transaction, GameProfile } from '@/lib/types';
 import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,8 +29,14 @@ export default function EditUserPage() {
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gameList, setGameList] = useState<string[]>([]);
 
   useEffect(() => {
+    const storedGames = localStorage.getItem('gameList');
+    if (storedGames) {
+      setGameList(JSON.parse(storedGames));
+    }
+
     if (!id) return;
     const storedUsers = localStorage.getItem('allUsers');
     const allUsers: User[] = storedUsers ? JSON.parse(storedUsers) : mockUsers;
@@ -75,6 +81,20 @@ export default function EditUserPage() {
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleGameProfileChange = (game: string, field: 'inGameUsername' | 'inGameId', value: string) => {
+    setFormData(prev => {
+      const newGameProfiles = { ...(prev.gameProfiles || {}) };
+      newGameProfiles[game] = {
+        ...(newGameProfiles[game] || { inGameUsername: '', inGameId: '' }),
+        [field]: value,
+      };
+      return {
+        ...prev,
+        gameProfiles: newGameProfiles,
+      };
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -196,19 +216,11 @@ export default function EditUserPage() {
                         <SelectValue placeholder="Select a game" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="BGMI">BGMI</SelectItem>
-                        <SelectItem value="FREE FIRE">FREE FIRE</SelectItem>
-                        <SelectItem value="COD">COD</SelectItem>
+                        {gameList.map(game => (
+                          <SelectItem key={game} value={game}>{game}</SelectItem>
+                        ))}
                     </SelectContent>
                 </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inGameUsername">In-Game Username</Label>
-              <Input id="inGameUsername" name="inGameUsername" value={formData.inGameUsername || ''} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="inGameId">In-Game ID</Label>
-              <Input id="inGameId" name="inGameId" value={formData.inGameId || ''} onChange={handleChange} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="referralCode">Referral Code</Label>
@@ -218,6 +230,36 @@ export default function EditUserPage() {
                 <Label htmlFor="totalReferrals">Total Referrals</Label>
                 <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
             </div>
+
+            <div className="md:col-span-2 space-y-4">
+              <Label className="text-base font-medium">Game Profiles</Label>
+              <div className="mt-2 space-y-4 rounded-md border p-4">
+                {gameList.filter(g => g.toUpperCase() !== 'OTHER').map(game => (
+                  <div key={game} className="space-y-2">
+                    <Label className="font-semibold">{game}</Label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-1">
+                        <Label htmlFor={`${game}-username`} className="text-xs">Username</Label>
+                        <Input 
+                          id={`${game}-username`} 
+                          value={formData.gameProfiles?.[game]?.inGameUsername || ''}
+                          onChange={(e) => handleGameProfileChange(game, 'inGameUsername', e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label htmlFor={`${game}-id`} className="text-xs">User ID</Label>
+                        <Input 
+                          id={`${game}-id`}
+                          value={formData.gameProfiles?.[game]?.inGameId || ''}
+                          onChange={(e) => handleGameProfileChange(game, 'inGameId', e.target.value)}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className="md:col-span-2 flex justify-end">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
