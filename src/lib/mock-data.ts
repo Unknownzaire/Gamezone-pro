@@ -14,8 +14,12 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
     avatarUrl: `https://picsum.photos/seed/u${i + 1}/100/100`,
     mobile: `${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 900) + 100}-${Math.floor(Math.random() * 9000) + 1000}`,
     primaryGame: 'BGMI',
-    inGameUsername: `Player${i + 1}BGMI`,
-    inGameId: gameId,
+    gameProfiles: {
+      'BGMI': {
+        inGameUsername: `Player${i + 1}BGMI`,
+        inGameId: gameId,
+      }
+    },
     teamName: `Team ${i % 10 + 1}`,
     teamJoinedAt: new Date(createdAt.getTime() + i * 60000), // Staggered join times
     createdAt: createdAt, // Staggered registration dates

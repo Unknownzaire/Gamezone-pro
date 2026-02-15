@@ -75,6 +75,11 @@ export type Transaction = {
   }
 };
 
+export type GameProfile = {
+  inGameUsername: string;
+  inGameId: string;
+};
+
 export type User = {
   id: string;
   username: string;
@@ -86,8 +91,7 @@ export type User = {
   coverImageUrl?: string;
   mobile?: string;
   primaryGame?: string;
-  inGameUsername?: string;
-  inGameId?: string;
+  gameProfiles?: { [key: string]: GameProfile };
   teamName?: string;
   teamJoinedAt?: Date;
   isBlocked?: boolean;

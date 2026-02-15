@@ -24,7 +24,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Image from 'next/image';
-import type { User, SocialLink } from '@/lib/types';
+import type { User, SocialLink, GameProfile } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
@@ -85,8 +85,7 @@ export default function ProfilePage() {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [primaryGame, setPrimaryGame] = useState<string | undefined>();
-  const [inGameUsername, setInGameUsername] = useState('');
-  const [inGameId, setInGameId] = useState('');
+  const [gameProfiles, setGameProfiles] = useState<{ [key: string]: Partial<GameProfile> }>({});
   const [teamName, setTeamName] = useState('');
   const [mobile, setMobile] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -136,8 +135,7 @@ export default function ProfilePage() {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
       setPrimaryGame(currentUser.primaryGame || (filteredGames.length > 0 ? filteredGames[0] : undefined));
-      setInGameUsername(currentUser.inGameUsername || '');
-      setInGameId(currentUser.inGameId || '');
+      setGameProfiles(currentUser.gameProfiles || {});
       setTeamName(currentUser.teamName || '');
       setMobile(currentUser.mobile || '');
     }
@@ -151,6 +149,16 @@ export default function ProfilePage() {
     }
   }, [currentUser]);
   
+  const handleGameProfileChange = (game: string, field: 'inGameUsername' | 'inGameId', value: string) => {
+    setGameProfiles(prev => ({
+      ...prev,
+      [game]: {
+        ...prev[game],
+        [field]: value
+      }
+    }));
+  };
+
   const handleUpdateProfile = () => {
     if (!isEditing) {
         setIsEditing(true);
@@ -167,9 +175,8 @@ export default function ProfilePage() {
         username,
         mobile,
         primaryGame,
-        inGameUsername,
-        inGameId,
         teamName,
+        gameProfiles: gameProfiles,
       };
       
       if (mobile !== currentUser.mobile) {
@@ -187,8 +194,7 @@ export default function ProfilePage() {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
       setPrimaryGame(currentUser.primaryGame || (gameList.length > 0 ? gameList[0] : undefined));
-      setInGameUsername(currentUser.inGameUsername || '');
-      setInGameId(currentUser.inGameId || '');
+      setGameProfiles(currentUser.gameProfiles || {});
       setTeamName(currentUser.teamName || '');
       setMobile(currentUser.mobile || '');
     }
@@ -214,8 +220,7 @@ export default function ProfilePage() {
           email,
           emailVerified: false,
           primaryGame,
-          inGameUsername,
-          inGameId,
+          gameProfiles,
           teamName,
       };
       
@@ -375,6 +380,9 @@ export default function ProfilePage() {
       </div>
     );
   }
+  
+  const currentInGameUsername = (primaryGame && gameProfiles[primaryGame]?.inGameUsername) || '';
+  const currentInGameId = (primaryGame && gameProfiles[primaryGame]?.inGameId) || '';
 
   return (
     <div className="space-y-6">
@@ -477,11 +485,11 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
-                <Input id="inGameUsername" value={inGameUsername} onChange={(e) => setInGameUsername(e.target.value)} placeholder="Your in-game name" disabled={!isEditing || !!currentUser.inGameUsername} />
+                <Input id="inGameUsername" value={currentInGameUsername} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameUsername', e.target.value)} placeholder="Your in-game name" disabled={!isEditing || !primaryGame || !!(currentUser.gameProfiles?.[primaryGame]?.inGameUsername)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
-                <Input id="inGameId" value={inGameId} onChange={(e) => setInGameId(e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || !!currentUser.inGameId} />
+                <Input id="inGameId" value={currentInGameId} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameId', e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || !primaryGame || !!(currentUser.gameProfiles?.[primaryGame]?.inGameId)} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="teamName">Team Name</Label>
@@ -515,7 +523,7 @@ export default function ProfilePage() {
                                             <div>
                                             <p className="font-semibold">{member.username}</p>
                                             <p className="text-sm text-muted-foreground">
-                                                {member.inGameUsername || 'No in-game name'}{member.inGameId && ` (${member.inGameId})`}
+                                                {member.gameProfiles?.[primaryGame || '']?.inGameUsername || 'No in-game name'}{member.gameProfiles?.[primaryGame || '']?.inGameId && ` (${member.gameProfiles?.[primaryGame || '']?.inGameId})`}
                                             </p>
                                             </div>
                                         </div>
@@ -749,5 +757,3 @@ export default function ProfilePage() {
     </div>
   );
 }
-
-    
