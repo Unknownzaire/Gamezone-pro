@@ -9,11 +9,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { compressImage } from '@/lib/utils';
 
 export default function EditUserPage() {
   const params = useParams();
@@ -25,6 +26,9 @@ export default function EditUserPage() {
   const [formData, setFormData] = useState<Partial<User>>({});
   const [totalDeposits, setTotalDeposits] = useState(0);
   const [totalReferrals, setTotalReferrals] = useState(0);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -56,34 +60,67 @@ export default function EditUserPage() {
     const { name, value, type } = e.target;
     setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
+  
+  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAvatarFile(e.target.files[0]);
+    }
+  };
+
+  const handleCoverImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setCoverImageFile(e.target.files[0]);
+    }
+  };
 
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const storedUsersJSON = localStorage.getItem('allUsers');
-    let allUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
-
-    const updatedUsers = allUsers.map(u => {
-      if (u.id === id) {
-        return { 
-          ...u, 
-          ...formData, 
-          totalDeposits: totalDeposits 
-        };
-      }
-      return u;
-    });
-
-    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    setIsSubmitting(true);
     
-    toast({
-      title: "User Updated",
-      description: `Details for ${formData.username} have been updated.`,
-    });
-    router.push('/admin/users');
+    try {
+      let finalAvatarUrl = formData.avatarUrl;
+      if (avatarFile) {
+        finalAvatarUrl = await compressImage(avatarFile, { maxWidth: 200, maxHeight: 200, quality: 0.8 });
+      }
+
+      let finalCoverImageUrl = formData.coverImageUrl;
+      if (coverImageFile) {
+        finalCoverImageUrl = await compressImage(coverImageFile, { maxWidth: 1000, maxHeight: 400, quality: 0.7 });
+      }
+
+      const storedUsersJSON = localStorage.getItem('allUsers');
+      let allUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
+
+      const updatedUsers = allUsers.map(u => {
+        if (u.id === id) {
+          return { 
+            ...u, 
+            ...formData, 
+            avatarUrl: finalAvatarUrl,
+            coverImageUrl: finalCoverImageUrl,
+            totalDeposits: totalDeposits 
+          };
+        }
+        return u;
+      });
+
+      localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+      
+      toast({
+        title: "User Updated",
+        description: `Details for ${formData.username} have been updated.`,
+      });
+      router.push('/admin/users');
+    } catch (error) {
+      console.error("User update error:", error);
+      toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process an uploaded image.' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (!user) {
@@ -134,13 +171,15 @@ export default function EditUserPage() {
               <Label htmlFor="mobile">Mobile</Label>
               <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
             </div>
-             <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="avatarUrl">Avatar URL</Label>
-              <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl || ''} onChange={handleChange} />
+             <div className="space-y-2">
+              <Label htmlFor="avatarFile">Avatar Image</Label>
+              <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} disabled={isSubmitting} />
+              <p className="text-xs text-muted-foreground">Upload a new file to replace the current avatar.</p>
             </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="coverImageUrl">Cover Image URL</Label>
-              <Input id="coverImageUrl" name="coverImageUrl" value={formData.coverImageUrl || ''} onChange={handleChange} />
+            <div className="space-y-2">
+              <Label htmlFor="coverImageFile">Cover Image</Label>
+              <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} disabled={isSubmitting} />
+              <p className="text-xs text-muted-foreground">Upload a new file to replace the current cover image.</p>
             </div>
             <div className="space-y-2">
                 <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
@@ -180,7 +219,10 @@ export default function EditUserPage() {
                 <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
             </div>
             <div className="md:col-span-2 flex justify-end">
-              <Button type="submit">Save Changes</Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Save Changes
+              </Button>
             </div>
           </CardContent>
         </form>
