@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -121,6 +120,14 @@ export default function EditUserPage() {
             <div className="space-y-2">
               <Label htmlFor="mobile">Mobile</Label>
               <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
+            </div>
+             <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="avatarUrl">Avatar URL</Label>
+              <Input id="avatarUrl" name="avatarUrl" value={formData.avatarUrl || ''} onChange={handleChange} />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="coverImageUrl">Cover Image URL</Label>
+              <Input id="coverImageUrl" name="coverImageUrl" value={formData.coverImageUrl || ''} onChange={handleChange} />
             </div>
             <div className="space-y-2">
                 <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
