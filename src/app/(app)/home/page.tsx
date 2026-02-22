@@ -17,7 +17,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden group relative aspect-[16/10] flex flex-col justify-end text-white">
+    <Card key={tournament.id} className="overflow-hidden group relative aspect-[4/5] flex flex-col justify-end text-white">
         {/* Clickable Link Overlay */}
         <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
             <span className="sr-only">View tournament details</span>
@@ -113,20 +113,20 @@ const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: To
                 <TabsTrigger value="live">Live</TabsTrigger>
                 <TabsTrigger value="completed">Completed</TabsTrigger>
             </TabsList>
-            <TabsContent value="upcoming" className="mt-4 space-y-4">
+            <TabsContent value="upcoming" className="mt-4 grid grid-cols-2 gap-4">
                 {upcoming.length > 0 ? upcoming.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No upcoming {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No upcoming {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="live" className="mt-4 space-y-4">
+            <TabsContent value="live" className="mt-4 grid grid-cols-2 gap-4">
                 {live.length > 0 ? live.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No live {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No live {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="completed" className="mt-4 space-y-4">
+            <TabsContent value="completed" className="mt-4 grid grid-cols-2 gap-4">
                 {completed.length > 0 ? completed.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No completed {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No completed {gameName} tournaments.</p>}
             </TabsContent>
         </Tabs>
     );
