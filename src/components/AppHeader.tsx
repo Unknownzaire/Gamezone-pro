@@ -2,7 +2,7 @@
 
 "use client";
 
-import { Wallet, Bell } from "lucide-react";
+import { Wallet, Bell, Ticket } from "lucide-react";
 import Logo from "./Logo";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user.tsx";
@@ -52,6 +52,13 @@ export default function AppHeader() {
             ) : (
               <Skeleton className="h-5 w-12" />
             )}
+          </Link>
+
+          <Link href="/royal-pass">
+            <Button variant="ghost" size="icon">
+                <Ticket className="h-5 w-5" />
+                <span className="sr-only">Royal Pass</span>
+            </Button>
           </Link>
           
           <DropdownMenu onOpenChange={handleOpenChange}>
