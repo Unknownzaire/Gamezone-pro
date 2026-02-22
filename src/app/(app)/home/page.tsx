@@ -36,7 +36,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
 
         {/* Content */}
-        <div className="relative z-20 p-3 space-y-2">
+        <div className="relative p-3 space-y-2">
              <h3 className="font-headline text-base font-bold truncate">{tournament.title}</h3>
             
              <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-white/90">
