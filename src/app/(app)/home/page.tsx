@@ -17,78 +17,76 @@ import Autoplay from "embla-carousel-autoplay";
 import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative">
-        <div className="flex">
-            {/* Main card link overlay - increased z-index to ensure it captures taps across the column */}
-            <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
-                <span className="sr-only">after tap this live button go live</span>
-            </Link>
-            
-            <div className="relative w-36 aspect-square flex-shrink-0 z-10">
-                <Image
-                    src={tournament.imageUrl}
-                    alt={tournament.title}
-                    fill
-                    className="object-cover"
-                    data-ai-hint={tournament.imageHint}
-                />
-                <Badge
-                    variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-                    className="absolute right-1 top-1"
-                >
-                    {tournament.status}
-                </Badge>
-            </div>
-            <div className="flex-1 p-4 flex flex-col justify-between z-10">
-                <div>
-                    <h3 className="font-headline font-semibold">{tournament.title}</h3>
-                    <div className="mt-2 space-y-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-2">
-                            <Trophy className="h-3 w-3 text-primary" />
-                            <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Users className="h-3 w-3 text-primary" />
-                            <span>Entry: ₹{tournament.entryFee}</span>
-                        </div>
-                         <div className="flex items-center gap-2">
-                            {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3 text-primary" /> : <Users className="h-3 w-3 text-primary" />}
-                            <span>{tournament.matchType}</span>
-                        </div>
-                         <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-primary" />
-                            <span>{format(new Date(tournament.matchTime), "PPp")}</span>
-                        </div>
+    <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative flex flex-col">
+        {/* Main card link overlay */}
+        <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
+            <span className="sr-only">View tournament details</span>
+        </Link>
+        
+        <div className="relative w-full aspect-square">
+            <Image
+                src={tournament.imageUrl}
+                alt={tournament.title}
+                fill
+                className="object-cover"
+                data-ai-hint={tournament.imageHint}
+            />
+            <Badge
+                variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                className="absolute right-2 top-2 z-10"
+            >
+                {tournament.status}
+            </Badge>
+        </div>
+        <div className="flex-1 p-3 flex flex-col justify-between z-10">
+            <div>
+                <h3 className="font-headline font-semibold truncate">{tournament.title}</h3>
+                <div className="mt-1 space-y-1 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                        <Trophy className="h-3 w-3 text-primary" />
+                        <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Users className="h-3 w-3 text-primary" />
+                        <span>Entry: ₹{tournament.entryFee}</span>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3 text-primary" /> : <Users className="h-3 w-3 text-primary" />}
+                        <span>{tournament.matchType}</span>
+                    </div>
+                     <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 text-primary" />
+                        <span className='truncate'>{format(new Date(tournament.matchTime), "PPp")}</span>
                     </div>
                 </div>
-                
-                <div className="mt-auto">
-                    {tournament.status === 'Live' && tournament.liveStreamLink ? (
-                        <Button 
-                            size="sm" 
-                            variant="secondary" 
-                            className="mt-2 w-full bg-red-600 hover:bg-red-700 text-white border-none h-8 text-xs relative z-30"
-                            asChild
+            </div>
+            
+            <div className="mt-2 pt-2">
+                {tournament.status === 'Live' && tournament.liveStreamLink ? (
+                    <Button 
+                        size="sm" 
+                        variant="secondary" 
+                        className="w-full bg-red-600 hover:bg-red-700 text-white border-none h-7 text-xs relative z-30"
+                        asChild
+                    >
+                        <a 
+                            href={tournament.liveStreamLink} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
                         >
-                            <a 
-                                href={tournament.liveStreamLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()} // Allow button to work independently
-                            >
-                                <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
-                                Watch Live
-                            </a>
-                        </Button>
-                    ) : tournament.status !== 'Completed' && (
-                        <div className="mt-2 space-y-1">
-                            <div className="flex justify-between text-xs text-muted-foreground">
-                                <span>{tournament.participants.length} / 100</span>
-                            </div>
-                            <Progress value={tournament.participants.length} className="h-2" />
+                            <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
+                            Watch Live
+                        </a>
+                    </Button>
+                ) : tournament.status !== 'Completed' && (
+                    <div className="space-y-1">
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>{tournament.participants.length} / 100</span>
                         </div>
-                    )}
-                </div>
+                        <Progress value={tournament.participants.length} className="h-1.5" />
+                    </div>
+                )}
             </div>
         </div>
     </Card>
@@ -111,20 +109,20 @@ const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: To
                 <TabsTrigger value="live">Live</TabsTrigger>
                 <TabsTrigger value="completed">Completed</TabsTrigger>
             </TabsList>
-            <TabsContent value="upcoming" className="mt-4 space-y-4">
+            <TabsContent value="upcoming" className="mt-4 grid grid-cols-2 gap-4">
                 {upcoming.length > 0 ? upcoming.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No upcoming {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No upcoming {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="live" className="mt-4 space-y-4">
+            <TabsContent value="live" className="mt-4 grid grid-cols-2 gap-4">
                 {live.length > 0 ? live.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No live {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No live {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="completed" className="mt-4 space-y-4">
+            <TabsContent value="completed" className="mt-4 grid grid-cols-2 gap-4">
                 {completed.length > 0 ? completed.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8">No completed {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No completed {gameName} tournaments.</p>}
             </TabsContent>
         </Tabs>
     );
