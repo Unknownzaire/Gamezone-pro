@@ -17,13 +17,13 @@ import Autoplay from "embla-carousel-autoplay";
 import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative flex flex-col">
+    <Card key={tournament.id} className="overflow-hidden hover:bg-muted/50 transition-colors relative flex items-stretch">
         {/* Main card link overlay */}
         <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
             <span className="sr-only">View tournament details</span>
         </Link>
         
-        <div className="relative w-full aspect-square">
+        <div className="relative w-28 flex-shrink-0">
             <Image
                 src={tournament.imageUrl}
                 alt={tournament.title}
@@ -33,7 +33,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
             />
             <Badge
                 variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-                className="absolute right-2 top-2 z-10"
+                className="absolute right-1 top-1 z-10"
             >
                 {tournament.status}
             </Badge>
@@ -109,20 +109,20 @@ const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: To
                 <TabsTrigger value="live">Live</TabsTrigger>
                 <TabsTrigger value="completed">Completed</TabsTrigger>
             </TabsList>
-            <TabsContent value="upcoming" className="mt-4 grid grid-cols-2 gap-4">
+            <TabsContent value="upcoming" className="mt-4 space-y-4">
                 {upcoming.length > 0 ? upcoming.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No upcoming {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8">No upcoming {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="live" className="mt-4 grid grid-cols-2 gap-4">
+            <TabsContent value="live" className="mt-4 space-y-4">
                 {live.length > 0 ? live.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No live {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8">No live {gameName} tournaments.</p>}
             </TabsContent>
-            <TabsContent value="completed" className="mt-4 grid grid-cols-2 gap-4">
+            <TabsContent value="completed" className="mt-4 space-y-4">
                 {completed.length > 0 ? completed.map((t) => (
                     <TournamentCard key={t.id} tournament={t} />
-                )) : <p className="text-muted-foreground text-center py-8 col-span-2">No completed {gameName} tournaments.</p>}
+                )) : <p className="text-muted-foreground text-center py-8">No completed {gameName} tournaments.</p>}
             </TabsContent>
         </Tabs>
     );
