@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament, PromotionalAd, SupportTicket } from '@/lib/types';
-import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy } from "lucide-react";
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -27,6 +27,7 @@ export default function AdminDashboardPage() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [activeAdsCount, setActiveAdsCount] = useState(0);
   const [openSupportTicketsCount, setOpenSupportTicketsCount] = useState(0);
+  const [activeRoyalPassCount, setActiveRoyalPassCount] = useState(0);
 
 
   const { toast } = useToast();
@@ -63,6 +64,8 @@ export default function AdminDashboardPage() {
       const storedTickets = localStorage.getItem('supportTickets');
       const tickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
       setOpenSupportTicketsCount(tickets.filter(ticket => ticket.status === 'open').length);
+
+      setActiveRoyalPassCount(users.filter(u => u.hasRoyalPass).length);
 
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
@@ -110,6 +113,7 @@ export default function AdminDashboardPage() {
   const stats = [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
+    { title: "Active Royal Passes", value: activeRoyalPassCount, icon: Ticket, href: '/admin/royal-pass'},
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];
@@ -203,7 +207,7 @@ export default function AdminDashboardPage() {
           </Button>
         </Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
         {stats.map((stat, index) => {
           const cardContent = (
             <Card key={index} className="hover:bg-muted/50 transition-colors">
@@ -530,5 +534,6 @@ export default function AdminDashboardPage() {
     
 
     
+
 
 

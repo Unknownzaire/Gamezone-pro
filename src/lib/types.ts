@@ -103,6 +103,7 @@ export type User = {
   mobileVerified?: boolean;
   otp?: string;
   googleId?: string;
+  hasRoyalPass?: boolean;
 };
 
 export type SocialLink = {

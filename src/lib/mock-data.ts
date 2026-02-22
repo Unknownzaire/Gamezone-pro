@@ -25,6 +25,7 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
     createdAt: createdAt, // Staggered registration dates
     referredBy: i >= 95 ? 'user-1' : (i >= 90 ? 'user-2' : undefined), // Last 10 users were referred
     referralCode: gameId,
+    hasRoyalPass: i < 5,
   }
 });
 
