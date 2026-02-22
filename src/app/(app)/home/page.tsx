@@ -24,7 +24,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                 <span className="sr-only">after tap this live button go live</span>
             </Link>
             
-            <div className="relative h-36 w-36 flex-shrink-0 z-10">
+            <div className="relative w-36 flex-shrink-0 z-10">
                 <Image
                     src={tournament.imageUrl}
                     alt={tournament.title}
