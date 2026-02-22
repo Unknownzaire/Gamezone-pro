@@ -17,7 +17,7 @@ import Autoplay from "embla-carousel-autoplay";
 import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden group relative aspect-[4/5] flex flex-col justify-end text-white">
+    <Card key={tournament.id} className="overflow-hidden group relative aspect-video flex flex-col justify-end text-white">
         {/* Clickable Link Overlay */}
         <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
             <span className="sr-only">View tournament details</span>
@@ -36,25 +36,25 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
 
         {/* Content */}
-        <div className="relative z-20 p-4 space-y-3">
-             <h3 className="font-headline text-lg font-bold truncate">{tournament.title}</h3>
+        <div className="relative z-20 p-3 space-y-2">
+             <h3 className="font-headline text-base font-bold truncate">{tournament.title}</h3>
             
-             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-white/90">
-                <div className="flex items-center gap-2">
-                    <Trophy className="h-3.5 w-3.5" />
+             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-white/90">
+                <div className="flex items-center gap-1.5">
+                    <Trophy className="h-3 w-3" />
                     <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
                 </div>
-                 <div className="flex items-center gap-2">
-                    <Users className="h-3.5 w-3.5" />
+                 <div className="flex items-center gap-1.5">
+                    <Users className="h-3 w-3" />
                     <span>Entry: ₹{tournament.entryFee}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    {tournament.matchType === 'Solo' ? <UserIcon className="h-3.5 w-3.5" /> : <Users className="h-3.5 w-3.5" />}
+                <div className="flex items-center gap-1.5">
+                    {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3" /> : <Users className="h-3 w-3" />}
                     <span>{tournament.matchType}</span>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span className='truncate'>{format(new Date(tournament.matchTime), "PPp")}</span>
+                <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" />
+                    <span className='truncate'>{format(new Date(tournament.matchTime), "P p")}</span>
                 </div>
             </div>
 
@@ -63,7 +63,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                     <Button 
                         size="sm" 
                         variant="secondary" 
-                        className="w-full bg-red-600 hover:bg-red-700 text-white border-none h-8 text-xs relative z-30"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white border-none h-7 text-[10px] relative z-30"
                         asChild
                     >
                         <a 
@@ -72,16 +72,16 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <PlayCircle className="mr-1.5 h-3.5 w-3.5" />
+                            <PlayCircle className="mr-1 h-3 w-3" />
                             Watch Live
                         </a>
                     </Button>
                 ) : tournament.status !== 'Completed' && (
                     <div className="space-y-1">
-                        <div className="flex justify-between text-xs text-white/90">
+                        <div className="flex justify-between text-[10px] text-white/90">
                             <span>{tournament.participants.length} / 100 joined</span>
                         </div>
-                        <Progress value={tournament.participants.length} className="h-1.5 bg-white/20" />
+                        <Progress value={tournament.participants.length} className="h-1 bg-white/20" />
                     </div>
                 )}
             </div>
@@ -89,7 +89,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
         {/* Status Badge */}
         <Badge
             variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-            className="absolute right-4 top-4 z-30"
+            className="absolute right-2 top-2 z-30 text-[10px] px-1.5 py-0.5"
         >
             {tournament.status}
         </Badge>
