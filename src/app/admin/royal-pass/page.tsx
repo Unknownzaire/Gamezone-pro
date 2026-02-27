@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -44,6 +43,7 @@ export default function AdminRoyalPassPage() {
 
     const [jackpotAmount, setJackpotAmount] = useState(5000);
     const [entryFee, setEntryFee] = useState(10);
+    const [maxEntries, setMaxEntries] = useState(5);
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     
     const [recentWinners, setRecentWinners] = useState([
@@ -51,6 +51,16 @@ export default function AdminRoyalPassPage() {
         { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "2026-02-25" },
         { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "2026-02-24" },
     ]);
+
+    useEffect(() => {
+        const settings = localStorage.getItem('luckyDrawSettings');
+        if (settings) {
+            const parsed = JSON.parse(settings);
+            setJackpotAmount(parsed.jackpotAmount || 5000);
+            setEntryFee(parsed.entryFee || 10);
+            setMaxEntries(parsed.maxEntries || 5);
+        }
+    }, []);
 
     // Calculate daily entries from transactions
     const dailyEntries = allTransactions.filter(tx => 
@@ -127,6 +137,11 @@ export default function AdminRoyalPassPage() {
     };
 
     const handleUpdateSettings = () => {
+        localStorage.setItem('luckyDrawSettings', JSON.stringify({
+            jackpotAmount,
+            entryFee,
+            maxEntries
+        }));
         toast({
             title: "Settings Saved",
             description: "Lucky Draw configuration has been updated.",
@@ -212,7 +227,7 @@ export default function AdminRoyalPassPage() {
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                    <DialogDescription>Update the daily jackpot amount and entry fee.</DialogDescription>
+                                    <DialogDescription>Update the daily jackpot amount, entry fee, and entry limits.</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-2">
@@ -233,6 +248,15 @@ export default function AdminRoyalPassPage() {
                                             onChange={(e) => setEntryFee(Number(e.target.value))} 
                                         />
                                     </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="maxEntries">Max Entries Per User</Label>
+                                        <Input 
+                                            id="maxEntries" 
+                                            type="number" 
+                                            value={maxEntries} 
+                                            onChange={(e) => setMaxEntries(Number(e.target.value))} 
+                                        />
+                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <DialogClose asChild>
@@ -244,14 +268,18 @@ export default function AdminRoyalPassPage() {
                         </Dialog>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-3 gap-4">
                             <div className="rounded-lg border bg-muted/30 p-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Entry Fee</p>
-                                <p className="text-2xl font-black">₹{entryFee}</p>
+                                <p className="text-xl font-black">₹{entryFee}</p>
                             </div>
                             <div className="rounded-lg border bg-muted/30 p-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Prize Pool</p>
-                                <p className="text-2xl font-black text-primary">₹{jackpotAmount.toLocaleString()}</p>
+                                <p className="text-xl font-black text-primary">₹{jackpotAmount.toLocaleString()}</p>
+                            </div>
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Max/User</p>
+                                <p className="text-xl font-black">{maxEntries}</p>
                             </div>
                         </div>
                         

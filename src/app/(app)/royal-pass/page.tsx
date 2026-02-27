@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-import { useUser } from "@/hooks/use-user.tsx";
+import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from "react";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -22,6 +23,22 @@ import {
 export default function RoyalPassPage() {
     const { user, updateUser, addTransaction, transactions } = useUser();
     const { toast } = useToast();
+    const [settings, setSettings] = useState({
+        jackpotAmount: 5000,
+        entryFee: 10,
+        maxEntries: 5
+    });
+
+    useEffect(() => {
+        const stored = localStorage.getItem('luckyDrawSettings');
+        if (stored) {
+            try {
+                setSettings(JSON.parse(stored));
+            } catch (e) {
+                console.error("Failed to parse luckyDrawSettings", e);
+            }
+        }
+    }, []);
 
     // Calculate today's entries for the current user
     const todayEntriesCount = (transactions || []).filter(tx => 
@@ -40,30 +57,30 @@ export default function RoyalPassPage() {
             return;
         }
 
-        if (todayEntriesCount >= 5) {
+        if (todayEntriesCount >= settings.maxEntries) {
             toast({
                 variant: 'destructive',
                 title: "Limit Reached",
-                description: "You can only join the lucky draw 5 times per day.",
+                description: `You can only join the lucky draw ${settings.maxEntries} times per day.`,
             });
             return;
         }
 
-        if (user.walletBalance < 10) {
+        if (user.walletBalance < settings.entryFee) {
             toast({
                 variant: 'destructive',
                 title: "Insufficient Balance",
-                description: "You need at least ₹10 to join the lucky draw.",
+                description: `You need at least ₹${settings.entryFee} to join the lucky draw.`,
             });
             return;
         }
 
         // Deduct balance
-        updateUser({ walletBalance: user.walletBalance - 10 });
+        updateUser({ walletBalance: user.walletBalance - settings.entryFee });
 
         // Add transaction
         addTransaction({
-            amount: 10,
+            amount: settings.entryFee,
             type: 'debit',
             description: 'Joined Daily Lucky Draw',
             status: 'completed',
@@ -108,7 +125,7 @@ export default function RoyalPassPage() {
                         <div className="relative rounded-xl bg-card/80 border border-white/10 p-6 text-center space-y-2">
                             <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">Current Jackpot</p>
                             <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent drop-shadow-sm">
-                                ₹5,000
+                                ₹{settings.jackpotAmount.toLocaleString()}
                             </p>
                         </div>
                     </div>
@@ -116,12 +133,12 @@ export default function RoyalPassPage() {
                     <div className="space-y-3">
                         <div className="flex justify-between text-xs font-medium uppercase text-muted-foreground">
                             <span>Your Entries Today</span>
-                            <span>{todayEntriesCount} / 5</span>
+                            <span>{todayEntriesCount} / {settings.maxEntries}</span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden border border-white/5">
                             <div 
                                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500" 
-                                style={{ width: `${(todayEntriesCount / 5) * 100}%` }} 
+                                style={{ width: `${(todayEntriesCount / settings.maxEntries) * 100}%` }} 
                             />
                         </div>
                     </div>
@@ -131,10 +148,10 @@ export default function RoyalPassPage() {
                             <AlertDialogTrigger asChild>
                                 <Button 
                                     className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group"
-                                    disabled={todayEntriesCount >= 5}
+                                    disabled={todayEntriesCount >= settings.maxEntries}
                                 >
                                     <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                                    {todayEntriesCount >= 5 ? 'LIMIT REACHED' : `JOIN DRAW (₹10)`}
+                                    {todayEntriesCount >= settings.maxEntries ? 'LIMIT REACHED' : `JOIN DRAW (₹${settings.entryFee})`}
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -144,7 +161,7 @@ export default function RoyalPassPage() {
                                         Confirm Entry
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to join today's lucky draw? ₹10 will be deducted from your wallet balance. You have joined {todayEntriesCount} times today (Max 5).
+                                        Are you sure you want to join today's lucky draw? ₹{settings.entryFee} will be deducted from your wallet balance. You have joined {todayEntriesCount} times today (Max {settings.maxEntries} allowed).
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -156,7 +173,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winners announced daily at 9:00 PM IST • Max 5 entries per user
+                            Winners announced daily at 9:00 PM IST • Max {settings.maxEntries} entries per user
                         </p>
                     </div>
                 </CardContent>
