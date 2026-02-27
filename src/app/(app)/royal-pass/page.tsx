@@ -2,13 +2,62 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function RoyalPassPage() {
-    const { user } = useUser();
+    const { user, updateUser, addTransaction } = useUser();
+    const { toast } = useToast();
+
+    const handleJoinDraw = () => {
+        if (!user) {
+            toast({
+                variant: 'destructive',
+                title: "Not Logged In",
+                description: "Please log in to join the lucky draw.",
+            });
+            return;
+        }
+
+        if (user.walletBalance < 10) {
+            toast({
+                variant: 'destructive',
+                title: "Insufficient Balance",
+                description: "You need at least ₹10 to join the lucky draw.",
+            });
+            return;
+        }
+
+        // Deduct balance
+        updateUser({ walletBalance: user.walletBalance - 10 });
+
+        // Add transaction
+        addTransaction({
+            amount: 10,
+            type: 'debit',
+            description: 'Joined Daily Lucky Draw',
+            status: 'completed',
+        });
+
+        toast({
+            title: "Joined Successfully!",
+            description: "You have been entered into today's lucky draw.",
+        });
+    };
 
     return (
         <div className="space-y-6">
@@ -59,10 +108,31 @@ export default function RoyalPassPage() {
                     </div>
 
                     <div className="grid grid-cols-1 gap-3">
-                        <Button className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group">
-                            <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                            JOIN DRAW (₹10)
-                        </Button>
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group">
+                                    <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                                    JOIN DRAW (₹10)
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle className="flex items-center gap-2">
+                                        <AlertTriangle className="h-5 w-5 text-primary" />
+                                        Confirm Entry
+                                    </AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Are you sure you want to join today's lucky draw? ₹10 will be deducted from your wallet balance. This action cannot be undone.
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={handleJoinDraw}>
+                                        Confirm & Join
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
                             Winners announced daily at 9:00 PM IST
                         </p>
