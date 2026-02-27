@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -10,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, CheckCircle } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, CheckCircle, Clock } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Transaction, User } from '@/lib/types';
@@ -28,7 +29,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminRoyalPassPage() {
-    const { allUsers, allTransactions = [], addNotification, updateUser, addTransaction, reload } = useUser();
+    const { allUsers, allTransactions = [], addNotification, reload } = useUser();
     const { toast } = useToast();
 
     const [jackpotAmount, setJackpotAmount] = useState(5000);
@@ -68,9 +69,6 @@ export default function AdminRoyalPassPage() {
         // For this prototype, we'll simulate the win.
         
         // 1. Credit the winner's wallet
-        const updatedBalance = winner.walletBalance + jackpotAmount;
-        // Note: updateUser only works for 'currentUser' in the current hook implementation
-        // We'll simulate finding the user in 'allUsers' and updating them via localStorage
         const localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
         const userIndex = localAllUsers.findIndex((u: any) => u.id === winner.id);
         if (userIndex !== -1) {
@@ -122,6 +120,8 @@ export default function AdminRoyalPassPage() {
             description: "Lucky Draw configuration has been updated.",
         });
     };
+
+    const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
 
     return (
         <div className="space-y-6">
@@ -245,33 +245,104 @@ export default function AdminRoyalPassPage() {
                         <CardDescription>Past winners displayed on the mobile app.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
+                        <ScrollArea className="h-64">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>User</TableHead>
+                                        <TableHead>Amount</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentWinners.map((winner) => (
+                                        <TableRow key={winner.id}>
+                                            <TableCell className="font-medium">{winner.name}</TableCell>
+                                            <TableCell>₹{winner.amount.toLocaleString()}</TableCell>
+                                            <TableCell>{format(new Date(winner.date), "MMM d")}</TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" onClick={() => setRecentWinners(recentWinners.filter(w => w.id !== winner.id))}>
+                                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </ScrollArea>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Today's Entries Section */}
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline text-xl flex items-center gap-2">
+                        <Clock className="h-5 w-5 text-primary" />
+                        Today's Lucky Draw Entries
+                    </CardTitle>
+                    <CardDescription>
+                        List of all users who have joined today's draw. Total: {dailyEntries.length}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <ScrollArea className="h-96">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
-                                    <TableHead>Amount</TableHead>
-                                    <TableHead>Date</TableHead>
+                                    <TableHead>Joined At</TableHead>
+                                    <TableHead>Balance</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {recentWinners.map((winner) => (
-                                    <TableRow key={winner.id}>
-                                        <TableCell className="font-medium">{winner.name}</TableCell>
-                                        <TableCell>₹{winner.amount.toLocaleString()}</TableCell>
-                                        <TableCell>{format(new Date(winner.date), "MMM d")}</TableCell>
-                                        <TableCell className="text-right">
-                                            <Button variant="ghost" size="icon" onClick={() => setRecentWinners(recentWinners.filter(w => w.id !== winner.id))}>
-                                                <Trash2 className="h-4 w-4 text-destructive" />
-                                            </Button>
+                                {dailyEntries.map((entry) => {
+                                    const entryUser = getUserById(entry.userId);
+                                    return (
+                                        <TableRow key={entry.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={entryUser?.avatarUrl} alt={entryUser?.username} />
+                                                        <AvatarFallback>{entryUser?.username?.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="font-semibold">{entryUser?.username || 'Unknown'}</p>
+                                                        <p className="text-xs text-muted-foreground">{entryUser?.email}</p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span>{format(new Date(entry.createdAt), "hh:mm a")}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{format(new Date(entry.createdAt), "MMM d, yyyy")}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                ₹{entryUser?.walletBalance?.toLocaleString() || 0}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Link href={`/admin/users/edit/${entryUser?.id}`}>
+                                                    <Button variant="outline" size="sm">Manage</Button>
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                                {dailyEntries.length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                            No entries for today's lucky draw yet.
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                )}
                             </TableBody>
                         </Table>
-                    </CardContent>
-                </Card>
-            </div>
+                    </ScrollArea>
+                </CardContent>
+            </Card>
 
             {/* Royal Pass Users */}
             <Card>
