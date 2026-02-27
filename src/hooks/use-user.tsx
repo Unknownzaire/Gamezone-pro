@@ -1,5 +1,3 @@
-
-
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
@@ -19,6 +17,7 @@ interface UserContextType {
   user: User | null;
   setUser: Dispatch<SetStateAction<User | null>>;
   transactions: Transaction[];
+  allTransactions: Transaction[];
   tournaments: Tournament[];
   setTournaments: Dispatch<SetStateAction<Tournament[]>>;
   promotionalAds: PromotionalAd[];
@@ -705,7 +704,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam, joinTeam }}>
+    <UserContext.Provider value={{ user, setUser, transactions, allTransactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam, joinTeam }}>
       {!loading && children}
     </UserContext.Provider>
   );

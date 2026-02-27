@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -29,7 +28,7 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminRoyalPassPage() {
-    const { allUsers, allTransactions, addNotification, updateUser, addTransaction, reload } = useUser();
+    const { allUsers, allTransactions = [], addNotification, updateUser, addTransaction, reload } = useUser();
     const { toast } = useToast();
 
     const [jackpotAmount, setJackpotAmount] = useState(5000);
