@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, CheckCircle, Clock, Pencil } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Transaction, User } from '@/lib/types';
@@ -26,6 +26,16 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+} from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 export default function AdminRoyalPassPage() {
@@ -34,6 +44,8 @@ export default function AdminRoyalPassPage() {
 
     const [jackpotAmount, setJackpotAmount] = useState(5000);
     const [entryFee, setEntryFee] = useState(10);
+    const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
+    
     const [recentWinners, setRecentWinners] = useState([
         { id: 'w1', name: "SkyKiller99", amount: 2500, date: "2026-02-26" },
         { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "2026-02-25" },
@@ -119,6 +131,7 @@ export default function AdminRoyalPassPage() {
             title: "Settings Saved",
             description: "Lucky Draw configuration has been updated.",
         });
+        setIsConfigDialogOpen(false);
     };
 
     const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -181,35 +194,66 @@ export default function AdminRoyalPassPage() {
             <div className="grid gap-6 md:grid-cols-2">
                 {/* Configuration Section */}
                 <Card>
-                    <CardHeader>
-                        <CardTitle className="font-headline text-xl flex items-center gap-2">
-                            <Sparkles className="h-5 w-5 text-primary" />
-                            Jackpot Configuration
-                        </CardTitle>
-                        <CardDescription>Adjust the prize and entry costs.</CardDescription>
+                    <CardHeader className="flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="font-headline text-xl flex items-center gap-2">
+                                <Sparkles className="h-5 w-5 text-primary" />
+                                Jackpot Configuration
+                            </CardTitle>
+                            <CardDescription>Adjust the prize and entry costs.</CardDescription>
+                        </div>
+                        <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                    <Pencil className="h-4 w-4" />
+                                    <span className="sr-only">Edit Jackpot Settings</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Edit Jackpot Configuration</DialogTitle>
+                                    <DialogDescription>Update the daily jackpot amount and entry fee.</DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
+                                        <Input 
+                                            id="jackpot" 
+                                            type="number" 
+                                            value={jackpotAmount} 
+                                            onChange={(e) => setJackpotAmount(Number(e.target.value))} 
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fee">Entry Fee (₹)</Label>
+                                        <Input 
+                                            id="fee" 
+                                            type="number" 
+                                            value={entryFee} 
+                                            onChange={(e) => setEntryFee(Number(e.target.value))} 
+                                        />
+                                    </div>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button variant="outline">Cancel</Button>
+                                    </DialogClose>
+                                    <Button onClick={handleUpdateSettings}>Save Changes</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-4 sm:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
-                                <Input 
-                                    id="jackpot" 
-                                    type="number" 
-                                    value={jackpotAmount} 
-                                    onChange={(e) => setJackpotAmount(Number(e.target.value))} 
-                                />
+                    <CardContent className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Entry Fee</p>
+                                <p className="text-2xl font-black">₹{entryFee}</p>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="fee">Entry Fee (₹)</Label>
-                                <Input 
-                                    id="fee" 
-                                    type="number" 
-                                    value={entryFee} 
-                                    onChange={(e) => setEntryFee(Number(e.target.value))} 
-                                />
+                            <div className="rounded-lg border bg-muted/30 p-4">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Prize Pool</p>
+                                <p className="text-2xl font-black text-primary">₹{jackpotAmount.toLocaleString()}</p>
                             </div>
                         </div>
-                        <Button className="w-full" onClick={handleUpdateSettings}>Save Settings</Button>
                         
                         <div className="pt-4 border-t">
                             <AlertDialog>
