@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +29,7 @@ export default function RoyalPassPage() {
         entryFee: 10,
         maxEntries: 5
     });
+    const [winners, setWinners] = useState<any[]>([]);
 
     useEffect(() => {
         const stored = localStorage.getItem('luckyDrawSettings');
@@ -37,6 +39,18 @@ export default function RoyalPassPage() {
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettings", e);
             }
+        }
+
+        const storedWinners = localStorage.getItem('luckyDrawWinners');
+        if (storedWinners) {
+            setWinners(JSON.parse(storedWinners));
+        } else {
+            const initialWinners = [
+                { name: "SkyKiller99", amount: 2500, date: "Feb 26", color: "text-primary" },
+                { name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", color: "text-muted-foreground" },
+                { name: "Legend_Zaire", amount: 5000, date: "Feb 24", color: "text-yellow-400" },
+            ];
+            setWinners(initialWinners);
         }
     }, []);
 
@@ -189,11 +203,7 @@ export default function RoyalPassPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y divide-white/5">
-                        {[
-                            { name: "SkyKiller99", amount: 2500, date: "Feb 26", color: "text-primary" },
-                            { name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", color: "text-muted-foreground" },
-                            { name: "Legend_Zaire", amount: 5000, date: "Feb 24", color: "text-yellow-400" },
-                        ].map((winner, i) => (
+                        {winners.map((winner, i) => (
                             <div key={i} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold text-xs">
@@ -205,11 +215,16 @@ export default function RoyalPassPage() {
                                     </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className={`font-black text-lg ${winner.color}`}>₹{winner.amount.toLocaleString()}</p>
+                                    <p className={`font-black text-lg ${winner.color || 'text-primary'}`}>₹{winner.amount.toLocaleString()}</p>
                                     <p className="text-[8px] text-muted-foreground uppercase font-bold">Winner</p>
                                 </div>
                             </div>
                         ))}
+                        {winners.length === 0 && (
+                            <div className="p-8 text-center text-muted-foreground text-sm">
+                                No winners declared yet. Be the first!
+                            </div>
+                        )}
                     </div>
                 </CardContent>
             </Card>

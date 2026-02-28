@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
@@ -46,19 +47,32 @@ export default function AdminRoyalPassPage() {
     const [maxEntries, setMaxEntries] = useState(5);
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     
-    const [recentWinners, setRecentWinners] = useState([
-        { id: 'w1', name: "SkyKiller99", amount: 2500, date: "2026-02-26" },
-        { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "2026-02-25" },
-        { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "2026-02-24" },
-    ]);
+    const [recentWinners, setRecentWinners] = useState<any[]>([]);
 
     useEffect(() => {
         const settings = localStorage.getItem('luckyDrawSettings');
         if (settings) {
-            const parsed = JSON.parse(settings);
-            setJackpotAmount(parsed.jackpotAmount || 5000);
-            setEntryFee(parsed.entryFee || 10);
-            setMaxEntries(parsed.maxEntries || 5);
+            try {
+                const parsed = JSON.parse(settings);
+                setJackpotAmount(parsed.jackpotAmount || 5000);
+                setEntryFee(parsed.entryFee || 10);
+                setMaxEntries(parsed.maxEntries || 5);
+            } catch (e) {
+                console.error("Failed to parse luckyDrawSettings", e);
+            }
+        }
+
+        const storedWinners = localStorage.getItem('luckyDrawWinners');
+        if (storedWinners) {
+            setRecentWinners(JSON.parse(storedWinners));
+        } else {
+            const initialWinners = [
+                { id: 'w1', name: "SkyKiller99", amount: 2500, date: "2026-02-26" },
+                { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "2026-02-25" },
+                { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "2026-02-24" },
+            ];
+            setRecentWinners(initialWinners);
+            localStorage.setItem('luckyDrawWinners', JSON.stringify(initialWinners));
         }
     }, []);
 
@@ -87,9 +101,6 @@ export default function AdminRoyalPassPage() {
 
         if (!winner) return;
 
-        // In a real app, you'd update the database here.
-        // For this prototype, we'll simulate the win.
-        
         // 1. Credit the winner's wallet
         const localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
         const userIndex = localAllUsers.findIndex((u: any) => u.id === winner.id);
@@ -98,7 +109,20 @@ export default function AdminRoyalPassPage() {
             localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
         }
 
-        // 2. Record the winning transaction
+        // 2. Record the winning transaction AND Reset all daily entries
+        const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
+        
+        // Reset descriptions of today's entries so they don't count for the next draw
+        const updatedTransactions = localAllTransactions.map((tx: any) => {
+            const isTodayDraw = tx.description === 'Joined Daily Lucky Draw' && 
+                               tx.status === 'completed' &&
+                               new Date(tx.createdAt).toDateString() === new Date().toDateString();
+            if (isTodayDraw) {
+                return { ...tx, description: 'Joined Daily Lucky Draw (Draw Completed)' };
+            }
+            return tx;
+        });
+
         const prizeTx: Transaction = {
             id: `tx-win-${Date.now()}`,
             userId: winner.id,
@@ -108,17 +132,19 @@ export default function AdminRoyalPassPage() {
             createdAt: new Date(),
             status: 'completed'
         };
-        const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-        localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...localAllTransactions]));
+        
+        localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...updatedTransactions]));
 
         // 3. Add to hall of fame
         const newWinnerRecord = {
             id: `hall-${Date.now()}`,
             name: winner.username,
             amount: jackpotAmount,
-            date: new Date().toISOString().split('T')[0]
+            date: format(new Date(), "MMM d")
         };
-        setRecentWinners([newWinnerRecord, ...recentWinners]);
+        const updatedWinners = [newWinnerRecord, ...recentWinners];
+        setRecentWinners(updatedWinners);
+        localStorage.setItem('luckyDrawWinners', JSON.stringify(updatedWinners));
 
         // 4. Send notification
         addNotification({
@@ -130,7 +156,7 @@ export default function AdminRoyalPassPage() {
 
         toast({
             title: "Winner Declared!",
-            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()}.`,
+            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()} and entries have been reset.`,
         });
         
         reload();
@@ -147,6 +173,13 @@ export default function AdminRoyalPassPage() {
             description: "Lucky Draw configuration has been updated.",
         });
         setIsConfigDialogOpen(false);
+    };
+
+    const handleDeleteWinner = (winnerId: string) => {
+        const updatedWinners = recentWinners.filter(w => w.id !== winnerId);
+        setRecentWinners(updatedWinners);
+        localStorage.setItem('luckyDrawWinners', JSON.stringify(updatedWinners));
+        toast({ title: "Winner removed from Hall of Fame" });
     };
 
     const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
@@ -173,7 +206,6 @@ export default function AdminRoyalPassPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-3">
-                {/* Stats Cards */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <CardTitle className="text-sm font-medium">Daily Entries</CardTitle>
@@ -207,7 +239,6 @@ export default function AdminRoyalPassPage() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-                {/* Configuration Section */}
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
                         <div>
@@ -295,7 +326,9 @@ export default function AdminRoyalPassPage() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will randomly select one user from today's {dailyEntries.length} entries and award them ₹{jackpotAmount.toLocaleString()}. This action is permanent and will notify the user.
+                                            This will randomly select one user from today's {dailyEntries.length} entries and award them ₹{jackpotAmount.toLocaleString()}. 
+                                            <br/><br/>
+                                            <strong>Note: This will reset all current entries for a fresh draw.</strong>
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -310,7 +343,6 @@ export default function AdminRoyalPassPage() {
                     </CardContent>
                 </Card>
 
-                {/* Hall of Fame Management */}
                 <Card>
                     <CardHeader>
                         <CardTitle className="font-headline text-xl">Hall of Fame Management</CardTitle>
@@ -332,9 +364,9 @@ export default function AdminRoyalPassPage() {
                                         <TableRow key={winner.id}>
                                             <TableCell className="font-medium">{winner.name}</TableCell>
                                             <TableCell>₹{winner.amount.toLocaleString()}</TableCell>
-                                            <TableCell>{format(new Date(winner.date), "MMM d")}</TableCell>
+                                            <TableCell>{winner.date}</TableCell>
                                             <TableCell className="text-right">
-                                                <Button variant="ghost" size="icon" onClick={() => setRecentWinners(recentWinners.filter(w => w.id !== winner.id))}>
+                                                <Button variant="ghost" size="icon" onClick={() => handleDeleteWinner(winner.id)}>
                                                     <Trash2 className="h-4 w-4 text-destructive" />
                                                 </Button>
                                             </TableCell>
@@ -347,7 +379,6 @@ export default function AdminRoyalPassPage() {
                 </Card>
             </div>
 
-            {/* Today's Entries Section */}
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline text-xl flex items-center gap-2">
@@ -416,7 +447,6 @@ export default function AdminRoyalPassPage() {
                 </CardContent>
             </Card>
 
-            {/* Royal Pass Users */}
             <Card>
                 <CardHeader>
                     <CardTitle className="font-headline text-xl">Royal Pass Holders</CardTitle>
