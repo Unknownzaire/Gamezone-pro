@@ -27,7 +27,7 @@ export default function RoyalPassPage() {
     const [settings, setSettings] = useState({
         jackpotAmount: 5000,
         entryFee: 10,
-        maxEntries: 5
+        maxEntries: 1
     });
     const [winners, setWinners] = useState<any[]>([]);
 
@@ -41,17 +41,23 @@ export default function RoyalPassPage() {
             }
         }
 
-        const storedWinners = localStorage.getItem('luckyDrawWinners');
-        if (storedWinners) {
-            setWinners(JSON.parse(storedWinners));
-        } else {
-            const initialWinners = [
-                { name: "SkyKiller99", amount: 2500, date: "Feb 26", color: "text-primary" },
-                { name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", color: "text-muted-foreground" },
-                { name: "Legend_Zaire", amount: 5000, date: "Feb 24", color: "text-yellow-400" },
-            ];
-            setWinners(initialWinners);
-        }
+        const loadWinners = () => {
+            const storedWinners = localStorage.getItem('luckyDrawWinners');
+            if (storedWinners) {
+                setWinners(JSON.parse(storedWinners));
+            } else {
+                const initialWinners = [
+                    { id: 'w1', name: "SkyKiller99", amount: 2500, date: "Feb 26", color: "text-primary" },
+                    { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", color: "text-muted-foreground" },
+                    { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "Feb 24", color: "text-yellow-400" },
+                ];
+                setWinners(initialWinners);
+            }
+        };
+
+        loadWinners();
+        window.addEventListener('storage', loadWinners);
+        return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
     // Calculate today's entries for the current user
@@ -75,7 +81,7 @@ export default function RoyalPassPage() {
             toast({
                 variant: 'destructive',
                 title: "Limit Reached",
-                description: `You can only join the lucky draw ${settings.maxEntries} times per day.`,
+                description: `You can only join the lucky draw ${settings.maxEntries} time per day.`,
             });
             return;
         }
@@ -187,7 +193,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winners announced daily at 9:00 PM IST • Max {settings.maxEntries} entries per user
+                            Winners announced daily at 9:00 PM IST • Only 1 entry per user
                         </p>
                     </div>
                 </CardContent>

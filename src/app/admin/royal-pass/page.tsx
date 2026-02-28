@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,10 +11,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, CheckCircle, Clock, Pencil } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
-import { Transaction, User } from '@/lib/types';
+import { Transaction } from '@/lib/types';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,7 +44,7 @@ export default function AdminRoyalPassPage() {
 
     const [jackpotAmount, setJackpotAmount] = useState(5000);
     const [entryFee, setEntryFee] = useState(10);
-    const [maxEntries, setMaxEntries] = useState(5);
+    const [maxEntries, setMaxEntries] = useState(1);
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
@@ -56,7 +56,7 @@ export default function AdminRoyalPassPage() {
                 const parsed = JSON.parse(settings);
                 setJackpotAmount(parsed.jackpotAmount || 5000);
                 setEntryFee(parsed.entryFee || 10);
-                setMaxEntries(parsed.maxEntries || 5);
+                setMaxEntries(parsed.maxEntries || 1);
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettings", e);
             }
