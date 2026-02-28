@@ -42,6 +42,7 @@ export default function AdminRoyalPassPage() {
     const { allUsers, allTransactions = [], addNotification, reload } = useUser();
     const { toast } = useToast();
 
+    const [jackpotName, setJackpotName] = useState("Daily Lucky Draw");
     const [jackpotAmount, setJackpotAmount] = useState(5000);
     const [entryFee, setEntryFee] = useState(10);
     const [maxEntries, setMaxEntries] = useState(1);
@@ -54,6 +55,7 @@ export default function AdminRoyalPassPage() {
         if (settings) {
             try {
                 const parsed = JSON.parse(settings);
+                setJackpotName(parsed.jackpotName || "Daily Lucky Draw");
                 setJackpotAmount(parsed.jackpotAmount || 5000);
                 setEntryFee(parsed.entryFee || 10);
                 setMaxEntries(parsed.maxEntries || 1);
@@ -67,18 +69,18 @@ export default function AdminRoyalPassPage() {
             setRecentWinners(JSON.parse(storedWinners));
         } else {
             const initialWinners = [
-                { id: 'w1', name: "SkyKiller99", amount: 2500, date: "2026-02-26" },
-                { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "2026-02-25" },
-                { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "2026-02-24" },
+                { id: 'w1', name: "SkyKiller99", amount: 2500, date: "Feb 26" },
+                { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25" },
+                { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "Feb 24" },
             ];
             setRecentWinners(initialWinners);
             localStorage.setItem('luckyDrawWinners', JSON.stringify(initialWinners));
         }
     }, []);
 
-    // Calculate daily entries from transactions
+    // Calculate daily entries from transactions (checking for "Joined Lucky Draw")
     const dailyEntries = allTransactions.filter(tx => 
-        tx.description === 'Joined Daily Lucky Draw' && 
+        tx.description.startsWith('Joined Lucky Draw') && 
         tx.status === 'completed' &&
         new Date(tx.createdAt).toDateString() === new Date().toDateString()
     );
@@ -114,11 +116,11 @@ export default function AdminRoyalPassPage() {
         
         // Reset descriptions of today's entries so they don't count for the next draw
         const updatedTransactions = localAllTransactions.map((tx: any) => {
-            const isTodayDraw = tx.description === 'Joined Daily Lucky Draw' && 
+            const isTodayDraw = tx.description.startsWith('Joined Lucky Draw') && 
                                tx.status === 'completed' &&
                                new Date(tx.createdAt).toDateString() === new Date().toDateString();
             if (isTodayDraw) {
-                return { ...tx, description: 'Joined Daily Lucky Draw (Draw Completed)' };
+                return { ...tx, description: `${tx.description} (Draw Completed)` };
             }
             return tx;
         });
@@ -128,7 +130,7 @@ export default function AdminRoyalPassPage() {
             userId: winner.id,
             amount: jackpotAmount,
             type: 'credit',
-            description: 'Won Daily Lucky Draw Jackpot!',
+            description: `Won ${jackpotName} Jackpot!`,
             createdAt: new Date(),
             status: 'completed'
         };
@@ -150,7 +152,7 @@ export default function AdminRoyalPassPage() {
         addNotification({
             userId: winner.id,
             title: '🎉 JACKPOT WINNER!',
-            description: `Congratulations! You won the Daily Lucky Draw Jackpot of ₹${jackpotAmount.toLocaleString()}!`,
+            description: `Congratulations! You won the ${jackpotName} of ₹${jackpotAmount.toLocaleString()}!`,
             type: 'general'
         });
 
@@ -164,6 +166,7 @@ export default function AdminRoyalPassPage() {
 
     const handleUpdateSettings = () => {
         localStorage.setItem('luckyDrawSettings', JSON.stringify({
+            jackpotName,
             jackpotAmount,
             entryFee,
             maxEntries
@@ -223,7 +226,7 @@ export default function AdminRoyalPassPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">₹{jackpotAmount.toLocaleString()}</div>
-                        <p className="text-xs text-muted-foreground">Admin set value</p>
+                        <p className="text-xs text-muted-foreground">{jackpotName}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -258,9 +261,17 @@ export default function AdminRoyalPassPage() {
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                    <DialogDescription>Update the daily jackpot amount, entry fee, and entry limits.</DialogDescription>
+                                    <DialogDescription>Update the daily jackpot name, amount, entry fee, and entry limits.</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="jackpotName">Jackpot Name</Label>
+                                        <Input 
+                                            id="jackpotName" 
+                                            value={jackpotName} 
+                                            onChange={(e) => setJackpotName(e.target.value)} 
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
                                         <Input 
@@ -299,6 +310,12 @@ export default function AdminRoyalPassPage() {
                         </Dialog>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            <div className="col-span-2 rounded-lg border bg-muted/30 p-4">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
+                                <p className="text-xl font-black">{jackpotName}</p>
+                            </div>
+                        </div>
                         <div className="grid grid-cols-3 gap-4">
                             <div className="rounded-lg border bg-muted/30 p-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Entry Fee</p>

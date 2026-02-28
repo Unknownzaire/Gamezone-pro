@@ -25,6 +25,7 @@ export default function RoyalPassPage() {
     const { user, updateUser, addTransaction, transactions } = useUser();
     const { toast } = useToast();
     const [settings, setSettings] = useState({
+        jackpotName: 'Daily Lucky Draw',
         jackpotAmount: 5000,
         entryFee: 10,
         maxEntries: 1
@@ -60,9 +61,9 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
-    // Calculate today's entries for the current user
+    // Calculate today's entries for the current user (checking for "Joined Lucky Draw")
     const todayEntriesCount = (transactions || []).filter(tx => 
-        tx.description === 'Joined Daily Lucky Draw' && 
+        tx.description.startsWith('Joined Lucky Draw') && 
         tx.status === 'completed' &&
         new Date(tx.createdAt).toDateString() === new Date().toDateString()
     ).length;
@@ -102,13 +103,13 @@ export default function RoyalPassPage() {
         addTransaction({
             amount: settings.entryFee,
             type: 'debit',
-            description: 'Joined Daily Lucky Draw',
+            description: `Joined Lucky Draw: ${settings.jackpotName}`,
             status: 'completed',
         });
 
         toast({
             title: "Joined Successfully!",
-            description: "You have been entered into today's lucky draw.",
+            description: `You have been entered into ${settings.jackpotName}.`,
         });
     };
 
@@ -133,7 +134,7 @@ export default function RoyalPassPage() {
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2 font-headline text-2xl">
                             <Sparkles className="h-6 w-6 text-yellow-400 animate-pulse" />
-                            Daily Lucky Draw
+                            {settings.jackpotName}
                         </CardTitle>
                         <Badge className="bg-accent hover:bg-accent/90 text-white font-bold">LIVE</Badge>
                     </div>
@@ -181,7 +182,7 @@ export default function RoyalPassPage() {
                                         Confirm Entry
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to join today's lucky draw? ₹{settings.entryFee} will be deducted from your wallet balance. You have joined {todayEntriesCount} times today (Max {settings.maxEntries} allowed).
+                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. You have joined {todayEntriesCount} times today (Max {settings.maxEntries} allowed).
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
