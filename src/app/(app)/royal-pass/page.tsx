@@ -193,7 +193,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winners announced daily at 9:00 PM IST • Only 1 entry per user
+                            Winners announced once entries are full • Only 1 entry per user
                         </p>
                     </div>
                 </CardContent>
