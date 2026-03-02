@@ -61,7 +61,7 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
-    // Calculate today's entries for the current user (checking for "Joined Lucky Draw")
+    // Calculate today's entries for the current user
     const todayEntriesCount = (transactions || []).filter(tx => 
         tx.description.startsWith('Joined Lucky Draw') && 
         tx.status === 'completed' &&
@@ -78,11 +78,11 @@ export default function RoyalPassPage() {
             return;
         }
 
-        if (todayEntriesCount >= settings.maxEntries) {
+        if (todayEntriesCount >= 1) {
             toast({
                 variant: 'destructive',
                 title: "Limit Reached",
-                description: `You can only join the lucky draw ${settings.maxEntries} time per day.`,
+                description: "You have already joined this lucky draw. One player can only join once.",
             });
             return;
         }
@@ -96,10 +96,8 @@ export default function RoyalPassPage() {
             return;
         }
 
-        // Deduct balance
         updateUser({ walletBalance: user.walletBalance - settings.entryFee });
 
-        // Add transaction
         addTransaction({
             amount: settings.entryFee,
             type: 'debit',
@@ -153,13 +151,13 @@ export default function RoyalPassPage() {
                     
                     <div className="space-y-3">
                         <div className="flex justify-between text-xs font-medium uppercase text-muted-foreground">
-                            <span>Your Entries Today</span>
-                            <span>{todayEntriesCount} / {settings.maxEntries}</span>
+                            <span>Status</span>
+                            <span>{todayEntriesCount >= 1 ? 'ALREADY JOINED' : 'NOT ENTERED'}</span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden border border-white/5">
                             <div 
                                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500" 
-                                style={{ width: `${(todayEntriesCount / settings.maxEntries) * 100}%` }} 
+                                style={{ width: todayEntriesCount >= 1 ? '100%' : '0%' }} 
                             />
                         </div>
                     </div>
@@ -169,10 +167,10 @@ export default function RoyalPassPage() {
                             <AlertDialogTrigger asChild>
                                 <Button 
                                     className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group"
-                                    disabled={todayEntriesCount >= settings.maxEntries}
+                                    disabled={todayEntriesCount >= 1}
                                 >
                                     <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                                    {todayEntriesCount >= settings.maxEntries ? 'LIMIT REACHED' : `JOIN DRAW (₹${settings.entryFee})`}
+                                    {todayEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -182,7 +180,7 @@ export default function RoyalPassPage() {
                                         Confirm Entry
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. You have joined {todayEntriesCount} times today (Max {settings.maxEntries} allowed).
+                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. One player can only join once per draw.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -194,7 +192,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winners announced once entries are full • Only 1 entry per user
+                            Winners announced once entries are full • One player one time join only
                         </p>
                     </div>
                 </CardContent>

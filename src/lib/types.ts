@@ -104,6 +104,7 @@ export type User = {
   otp?: string;
   googleId?: string;
   hasRoyalPass?: boolean;
+  hasElitePass?: boolean;
 };
 
 export type SocialLink = {

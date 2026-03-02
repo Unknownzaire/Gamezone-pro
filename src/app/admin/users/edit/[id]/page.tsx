@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -15,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { compressImage } from '@/lib/utils';
+import { Switch } from '@/components/ui/switch';
 
 export default function EditUserPage() {
   const params = useParams();
@@ -83,6 +85,10 @@ export default function EditUserPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleSwitchChange = (name: string, value: boolean) => {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
   const handleGameProfileChange = (game: string, field: 'inGameUsername' | 'inGameId', value: string) => {
     setFormData(prev => {
       const newGameProfiles = { ...(prev.gameProfiles || {}) };
@@ -144,7 +150,7 @@ export default function EditUserPage() {
   };
 
   if (!user) {
-    return <div>Loading...</div>; // Or a skeleton loader
+    return <div>Loading...</div>;
   }
 
   return (
@@ -174,42 +180,86 @@ export default function EditUserPage() {
             </Avatar>
         </div>
         <form onSubmit={handleSubmit}>
-          <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" name="username" value={formData.username || ''} onChange={handleChange} />
+          <CardContent className="pt-6 grid gap-6 md:grid-cols-2">
+            <div className="space-y-4 md:col-span-2">
+                <h3 className="font-bold text-lg border-b pb-2">Premium Status</h3>
+                <div className="flex flex-wrap gap-8">
+                    <div className="flex items-center space-x-2">
+                        <Switch 
+                            id="hasRoyalPass" 
+                            checked={!!formData.hasRoyalPass} 
+                            onCheckedChange={(val) => handleSwitchChange('hasRoyalPass', val)} 
+                        />
+                        <Label htmlFor="hasRoyalPass" className="font-medium cursor-pointer">Royal Pass Active</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Switch 
+                            id="hasElitePass" 
+                            checked={!!formData.hasElitePass} 
+                            onCheckedChange={(val) => handleSwitchChange('hasElitePass', val)} 
+                        />
+                        <Label htmlFor="hasElitePass" className="font-medium cursor-pointer">Elite Pass Active</Label>
+                    </div>
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} />
+
+            <div className="space-y-4">
+                <h3 className="font-bold text-lg border-b pb-2">Basic Info</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="username">Username</Label>
+                    <Input id="username" name="username" value={formData.username || ''} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <Input id="password" name="password" value={formData.password || ''} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="mobile">Mobile</Label>
+                    <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" value={formData.password || ''} onChange={handleChange} />
+
+            <div className="space-y-4">
+                <h3 className="font-bold text-lg border-b pb-2">Wallet & Referrals</h3>
+                <div className="space-y-2">
+                    <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
+                    <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance || 0} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="totalDeposits">Total Deposits (₹)</Label>
+                    <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} onChange={(e) => setTotalDeposits(Number(e.target.value))} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="referralCode">Referral Code</Label>
+                    <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} />
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="totalReferrals">Total Referrals</Label>
+                    <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
+                </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="mobile">Mobile</Label>
-              <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
+
+            <div className="space-y-4 md:col-span-2">
+                <h3 className="font-bold text-lg border-b pb-2">Profile Assets</h3>
+                <div className="grid md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="avatarFile">Avatar Image</Label>
+                        <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} disabled={isSubmitting} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="coverImageFile">Cover Image</Label>
+                        <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} disabled={isSubmitting} />
+                    </div>
+                </div>
             </div>
-             <div className="space-y-2">
-              <Label htmlFor="avatarFile">Avatar Image</Label>
-              <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} disabled={isSubmitting} />
-              <p className="text-xs text-muted-foreground">Upload a new file to replace the current avatar.</p>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="coverImageFile">Cover Image</Label>
-              <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} disabled={isSubmitting} />
-              <p className="text-xs text-muted-foreground">Upload a new file to replace the current cover image.</p>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
-                <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance || 0} onChange={handleChange} />
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="totalDeposits">Total Deposits (₹)</Label>
-                <Input id="totalDeposits" name="totalDeposits" type="number" value={totalDeposits} onChange={(e) => setTotalDeposits(Number(e.target.value))} />
-            </div>
-            <div className="space-y-2">
+
+            <div className="md:col-span-2 space-y-4">
+              <h3 className="font-bold text-lg border-b pb-2">Game Profiles</h3>
+              <div className="space-y-2">
                 <Label htmlFor="primaryGame">Primary Game</Label>
                 <Select name="primaryGame" value={formData.primaryGame} onValueChange={(value) => handleSelectChange('primaryGame', value)}>
                     <SelectTrigger>
@@ -221,18 +271,7 @@ export default function EditUserPage() {
                         ))}
                     </SelectContent>
                 </Select>
-            </div>
-            <div className="space-y-2">
-                <Label htmlFor="referralCode">Referral Code</Label>
-                <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="totalReferrals">Total Referrals</Label>
-                <Input id="totalReferrals" name="totalReferrals" type="number" value={totalReferrals} onChange={(e) => setTotalReferrals(Number(e.target.value))} />
-            </div>
-
-            <div className="md:col-span-2 space-y-4">
-              <Label className="text-base font-medium">Game Profiles</Label>
+              </div>
               <div className="mt-2 space-y-4 rounded-md border p-4">
                 {gameList.filter(g => g.toUpperCase() !== 'OTHER').map(game => (
                   <div key={game} className="space-y-2">
@@ -261,7 +300,7 @@ export default function EditUserPage() {
             </div>
 
             <div className="md:col-span-2 flex justify-end">
-              <Button type="submit" disabled={isSubmitting}>
+              <Button type="submit" size="lg" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Save Changes
               </Button>

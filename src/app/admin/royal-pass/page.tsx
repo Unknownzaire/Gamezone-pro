@@ -11,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil, Search } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Transaction } from '@/lib/types';
@@ -49,6 +49,7 @@ export default function AdminRoyalPassPage() {
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const settings = localStorage.getItem('luckyDrawSettings');
@@ -78,16 +79,21 @@ export default function AdminRoyalPassPage() {
         }
     }, []);
 
-    // Calculate daily entries from transactions (checking for "Joined Lucky Draw")
     const dailyEntries = allTransactions.filter(tx => 
         tx.description.startsWith('Joined Lucky Draw') && 
         tx.status === 'completed' &&
         new Date(tx.createdAt).toDateString() === new Date().toDateString()
     );
 
+    const filteredEntries = dailyEntries.filter(entry => {
+        const user = allUsers.find(u => u.id === entry.userId);
+        return user?.username.toLowerCase().includes(searchTerm.toLowerCase()) || 
+               user?.email.toLowerCase().includes(searchTerm.toLowerCase());
+    });
+
     const royalPassUsers = allUsers.filter(u => u.hasRoyalPass);
 
-    const handlePickWinner = () => {
+    const handlePickWinner = (manualWinnerId?: string) => {
         if (dailyEntries.length === 0) {
             toast({
                 variant: 'destructive',
@@ -97,9 +103,13 @@ export default function AdminRoyalPassPage() {
             return;
         }
 
-        // Pick a random transaction from daily entries
-        const winningTx = dailyEntries[Math.floor(Math.random() * dailyEntries.length)];
-        const winner = allUsers.find(u => u.id === winningTx.userId);
+        let winner;
+        if (manualWinnerId) {
+            winner = allUsers.find(u => u.id === manualWinnerId);
+        } else {
+            const winningTx = dailyEntries[Math.floor(Math.random() * dailyEntries.length)];
+            winner = allUsers.find(u => u.id === winningTx.userId);
+        }
 
         if (!winner) return;
 
@@ -111,18 +121,15 @@ export default function AdminRoyalPassPage() {
             localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
         }
 
-        // 2. Record the winning transaction AND Reset all daily entries
+        // 2. Award prize transaction & DELETE all today's entries
         const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         
-        // Reset descriptions of today's entries so they don't count for the next draw
-        const updatedTransactions = localAllTransactions.map((tx: any) => {
+        // Remove today's entries to reset the count for all players
+        const remainingTransactions = localAllTransactions.filter((tx: any) => {
             const isTodayDraw = tx.description.startsWith('Joined Lucky Draw') && 
                                tx.status === 'completed' &&
                                new Date(tx.createdAt).toDateString() === new Date().toDateString();
-            if (isTodayDraw) {
-                return { ...tx, description: `${tx.description} (Draw Completed)` };
-            }
-            return tx;
+            return !isTodayDraw;
         });
 
         const prizeTx: Transaction = {
@@ -135,7 +142,7 @@ export default function AdminRoyalPassPage() {
             status: 'completed'
         };
         
-        localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...updatedTransactions]));
+        localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...remainingTransactions]));
 
         // 3. Add to hall of fame
         const newWinnerRecord = {
@@ -158,7 +165,7 @@ export default function AdminRoyalPassPage() {
 
         toast({
             title: "Winner Declared!",
-            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()} and entries have been reset.`,
+            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()} and entries have been deleted.`,
         });
         
         reload();
@@ -169,7 +176,7 @@ export default function AdminRoyalPassPage() {
             jackpotName,
             jackpotAmount,
             entryFee,
-            maxEntries
+            maxEntries: 1 // Strictly enforce 1 entry
         }));
         toast({
             title: "Settings Saved",
@@ -216,7 +223,7 @@ export default function AdminRoyalPassPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{dailyEntries.length}</div>
-                        <p className="text-xs text-muted-foreground">Today's pool: ₹{(dailyEntries.length * entryFee).toLocaleString()}</p>
+                        <p className="text-xs text-muted-foreground">Active entries in current pool</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -261,7 +268,7 @@ export default function AdminRoyalPassPage() {
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                    <DialogDescription>Update the daily jackpot name, amount, entry fee, and entry limits.</DialogDescription>
+                                    <DialogDescription>Update the daily jackpot details. Entries are limited to 1 per user.</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-2">
@@ -290,15 +297,6 @@ export default function AdminRoyalPassPage() {
                                             onChange={(e) => setEntryFee(Number(e.target.value))} 
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="maxEntries">Max Entries Per User</Label>
-                                        <Input 
-                                            id="maxEntries" 
-                                            type="number" 
-                                            value={maxEntries} 
-                                            onChange={(e) => setMaxEntries(Number(e.target.value))} 
-                                        />
-                                    </div>
                                 </div>
                                 <DialogFooter>
                                     <DialogClose asChild>
@@ -310,13 +308,11 @@ export default function AdminRoyalPassPage() {
                         </Dialog>
                     </CardHeader>
                     <CardContent className="space-y-6">
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            <div className="col-span-2 rounded-lg border bg-muted/30 p-4">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
-                                <p className="text-xl font-black">{jackpotName}</p>
-                            </div>
+                        <div className="rounded-lg border bg-muted/30 p-4">
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
+                            <p className="text-xl font-black">{jackpotName}</p>
                         </div>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                             <div className="rounded-lg border bg-muted/30 p-4">
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Entry Fee</p>
                                 <p className="text-xl font-black">₹{entryFee}</p>
@@ -325,10 +321,6 @@ export default function AdminRoyalPassPage() {
                                 <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Prize Pool</p>
                                 <p className="text-xl font-black text-primary">₹{jackpotAmount.toLocaleString()}</p>
                             </div>
-                            <div className="rounded-lg border bg-muted/30 p-4">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Max/User</p>
-                                <p className="text-xl font-black">{maxEntries}</p>
-                            </div>
                         </div>
                         
                         <div className="pt-4 border-t">
@@ -336,7 +328,7 @@ export default function AdminRoyalPassPage() {
                                 <AlertDialogTrigger asChild>
                                     <Button variant="destructive" className="w-full h-12 text-lg font-bold">
                                         <Trophy className="mr-2 h-5 w-5" />
-                                        PICK TODAY'S WINNER
+                                        RANDOM PICK WINNER
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -345,12 +337,12 @@ export default function AdminRoyalPassPage() {
                                         <AlertDialogDescription>
                                             This will randomly select one user from today's {dailyEntries.length} entries and award them ₹{jackpotAmount.toLocaleString()}. 
                                             <br/><br/>
-                                            <strong>Note: This will reset all current entries for a fresh draw.</strong>
+                                            <strong>Note: This will DELETE all current entries to reset the pool.</strong>
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handlePickWinner}>
+                                        <AlertDialogAction onClick={() => handlePickWinner()}>
                                             Confirm & Pick
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -398,13 +390,26 @@ export default function AdminRoyalPassPage() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline text-xl flex items-center gap-2">
-                        <Clock className="h-5 w-5 text-primary" />
-                        Today's Lucky Draw Entries
-                    </CardTitle>
-                    <CardDescription>
-                        List of all users who have joined today's draw. Total: {dailyEntries.length}
-                    </CardDescription>
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div>
+                            <CardTitle className="font-headline text-xl flex items-center gap-2">
+                                <Clock className="h-5 w-5 text-primary" />
+                                Today's Lucky Draw Entries ({dailyEntries.length})
+                            </CardTitle>
+                            <CardDescription>
+                                Manage participants for the current draw.
+                            </CardDescription>
+                        </div>
+                        <div className="relative w-full md:w-64">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search entries..." 
+                                className="pl-8" 
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <ScrollArea className="h-96">
@@ -418,7 +423,7 @@ export default function AdminRoyalPassPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {dailyEntries.map((entry) => {
+                                {filteredEntries.map((entry) => {
                                     const entryUser = getUserById(entry.userId);
                                     return (
                                         <TableRow key={entry.id}>
@@ -444,17 +449,41 @@ export default function AdminRoyalPassPage() {
                                                 ₹{entryUser?.walletBalance?.toLocaleString() || 0}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <Link href={`/admin/users/edit/${entryUser?.id}`}>
-                                                    <Button variant="outline" size="sm">Manage</Button>
-                                                </Link>
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
+                                                                <Trophy className="mr-1 h-3 w-3" />
+                                                                Pick Winner
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Award Jackpot to {entryUser?.username}?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    This will award the ₹{jackpotAmount.toLocaleString()} jackpot to this specific user and DELETE all other entries for a fresh start.
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handlePickWinner(entryUser?.id)}>
+                                                                    Confirm Winner
+                                                                </AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                    <Link href={`/admin/users/edit/${entryUser?.id}`}>
+                                                        <Button variant="ghost" size="sm">Manage</Button>
+                                                    </Link>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
                                 })}
-                                {dailyEntries.length === 0 && (
+                                {filteredEntries.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                                            No entries for today's lucky draw yet.
+                                            {searchTerm ? "No entries match your search." : "No entries for today's lucky draw yet."}
                                         </TableCell>
                                     </TableRow>
                                 )}

@@ -7,7 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments as initialMockTournaments } from "@/lib/mock-data";
-import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone, Search } from "lucide-react";
+import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone, Search, Star, ShieldCheck } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
 import {
@@ -234,15 +234,6 @@ export default function AdminUsersPage() {
                     {game} user
                 </Button>
             ))}
-            {gameList.some(g => g.toUpperCase() === 'OTHER') && (
-                 <Button 
-                    variant={gameFilter === 'OTHER' ? 'default' : 'outline'} 
-                    size="sm" 
-                    onClick={() => setGameFilter(gameFilter === 'OTHER' ? 'ALL' : 'OTHER')}
-                >
-                    OTHER user
-                </Button>
-            )}
             <Button variant="outline" size="icon" onClick={() => loadData()}>
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh users</span>
@@ -266,19 +257,14 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead>Password</TableHead>
-                  <TableHead>Available Balance</TableHead>
-                  <TableHead>Total Balance</TableHead>
+                  <TableHead className="text-center">Royal Pass</TableHead>
+                  <TableHead className="text-center">Elite Pass</TableHead>
+                  <TableHead>Balance</TableHead>
                   <TableHead>Total Deposits</TableHead>
                   {gameList.map(game => (
                     <TableHead key={game} className="text-center">{game.toUpperCase()}</TableHead>
                   ))}
                   <TableHead>Game Info</TableHead>
-                  <TableHead>OTP Authentication</TableHead>
-                  <TableHead>Mobile</TableHead>
-                  <TableHead>Referred By</TableHead>
-                  <TableHead>Total Referrals</TableHead>
-                  <TableHead>Registered</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>
                     <span className="sr-only">Actions</span>
@@ -296,12 +282,34 @@ export default function AdminUsersPage() {
                         </Avatar>
                         <div className="font-medium">
                           <p>{user.username}</p>
-                          <p className="text-sm text-muted-foreground">{user.email}</p>
+                          <p className="text-xs text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{user.password}</TableCell>
-                    <TableCell>₹{getAvailableBalance(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="text-center">
+                        {user.hasRoyalPass ? (
+                            <div className="flex justify-center">
+                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
+                                    <Star className="mr-1 h-3 w-3 fill-white" />
+                                    Active
+                                </Badge>
+                            </div>
+                        ) : (
+                            <span className="text-xs text-muted-foreground">None</span>
+                        )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                        {user.hasElitePass ? (
+                            <div className="flex justify-center">
+                                <Badge className="bg-purple-600 hover:bg-purple-700 text-white">
+                                    <ShieldCheck className="mr-1 h-3 w-3 fill-white" />
+                                    Elite
+                                </Badge>
+                            </div>
+                        ) : (
+                            <span className="text-xs text-muted-foreground">None</span>
+                        )}
+                    </TableCell>
                     <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     {gameList.map(game => (
@@ -310,22 +318,9 @@ export default function AdminUsersPage() {
                     <TableCell>
                       <div className="text-xs">
                         <p className="font-bold">{user.primaryGame}</p>
-                        <p>{user.primaryGame && user.gameProfiles?.[user.primaryGame]?.inGameUsername}</p>
-                        <p className="text-muted-foreground">{user.primaryGame && user.gameProfiles?.[user.primaryGame]?.inGameId}</p>
+                        <p className="truncate max-w-[100px]">{user.primaryGame && user.gameProfiles?.[user.primaryGame]?.inGameUsername}</p>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {user.emailVerified && <Mail className="h-4 w-4 text-green-500" title="Email Verified" />}
-                        {user.mobileVerified && <Phone className="h-4 w-4 text-green-500" title="Mobile Verified" />}
-                      </div>
-                    </TableCell>
-                    <TableCell>{user.mobile}</TableCell>
-                    <TableCell>
-                      {user.referredBy ? users.find(u => u.id === user.referredBy)?.username || 'N/A' : 'N/A'}
-                    </TableCell>
-                    <TableCell className="font-bold text-center">{getTotalReferrals(user.id)}</TableCell>
-                    <TableCell>{format(new Date(user.createdAt), 'PP')}</TableCell>
                     <TableCell>
                       {user.isBlocked ? (
                         <Badge variant="destructive">Blocked</Badge>
@@ -352,9 +347,6 @@ export default function AdminUsersPage() {
                           <DropdownMenuItem asChild>
                             <Link href={`/admin/users/${user.id}/history`}>View Match History</Link>
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/admin/users/${user.id}/history?tab=transactions`}>View Transaction History</Link>
-                          </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleBlockUser(user.id)}>
                             {user.isBlocked ? 'Unblock User' : 'Block User'}
@@ -379,7 +371,7 @@ export default function AdminUsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this user?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the user '{userToDelete?.username}' and all associated data. This action cannot be undone.
+              This will permanently delete the user '{userToDelete?.username}' and all associated data.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -396,7 +388,7 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Add Funds to {userToFund?.username}</DialogTitle>
             <DialogDescription>
-              Manually credit the user's wallet. This will create a transaction record.
+              Manually credit the user's wallet.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -421,5 +413,4 @@ export default function AdminUsersPage() {
       </Dialog>
     </div>
   );
-
-    
+}
