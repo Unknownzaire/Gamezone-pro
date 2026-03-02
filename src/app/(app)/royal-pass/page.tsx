@@ -60,11 +60,10 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
-    // Calculate today's entries for the current user
-    const todayEntriesCount = (transactions || []).filter(tx => 
-        tx.description.startsWith('Joined Lucky Draw') && 
-        tx.status === 'completed' &&
-        new Date(tx.createdAt).toDateString() === new Date().toDateString()
+    // Calculate entries for the current user for this specific jackpot
+    const currentEntriesCount = (transactions || []).filter(tx => 
+        tx.description.startsWith(`Joined Lucky Draw: ${settings.jackpotName}`) && 
+        tx.status === 'completed'
     ).length;
 
     const handleJoinDraw = () => {
@@ -77,11 +76,11 @@ export default function RoyalPassPage() {
             return;
         }
 
-        if (todayEntriesCount >= 1) {
+        if (currentEntriesCount >= 1) {
             toast({
                 variant: 'destructive',
                 title: "Limit Reached",
-                description: "You have already joined this lucky draw. One player can only join once.",
+                description: "You have already joined this lucky draw. One player can only join once per draw.",
             });
             return;
         }
@@ -151,12 +150,12 @@ export default function RoyalPassPage() {
                     <div className="space-y-3">
                         <div className="flex justify-between text-xs font-medium uppercase text-muted-foreground">
                             <span>Status</span>
-                            <span>{todayEntriesCount >= 1 ? 'ALREADY JOINED' : 'NOT ENTERED'}</span>
+                            <span>{currentEntriesCount >= 1 ? 'LIMIT REACHED' : 'NOT ENTERED'}</span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden border border-white/5">
                             <div 
                                 className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500" 
-                                style={{ width: todayEntriesCount >= 1 ? '100%' : '0%' }} 
+                                style={{ width: currentEntriesCount >= 1 ? '100%' : '0%' }} 
                             />
                         </div>
                     </div>
@@ -166,10 +165,10 @@ export default function RoyalPassPage() {
                             <AlertDialogTrigger asChild>
                                 <Button 
                                     className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group"
-                                    disabled={todayEntriesCount >= 1}
+                                    disabled={currentEntriesCount >= 1}
                                 >
                                     <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                                    {todayEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
+                                    {currentEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>

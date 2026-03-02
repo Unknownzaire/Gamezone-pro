@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -185,10 +184,6 @@ export default function AdminUsersPage() {
       .reduce((acc, tx) => acc + tx.amount, 0);
   };
 
-  const getTotalReferrals = (userId: string) => {
-    return users.filter(u => u.referredBy === userId).length;
-  };
-
   const getParticipationCount = (userId: string, gameName: string) => {
     return tournaments.filter(t => 
       t.gameName.toUpperCase() === gameName.toUpperCase() && 
@@ -282,7 +277,7 @@ export default function AdminUsersPage() {
                         </Avatar>
                         <div className="font-medium">
                           <p>{user.username}</p>
-                          <p className="text-xs text-muted-foreground">{user.email}</p>
+                          <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
                     </TableCell>

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -59,7 +58,7 @@ export default function AdminRoyalPassPage() {
                 setJackpotName(parsed.jackpotName || "Daily Lucky Draw");
                 setJackpotAmount(parsed.jackpotAmount || 5000);
                 setEntryFee(parsed.entryFee || 10);
-                setMaxEntries(parsed.maxEntries || 1);
+                setMaxEntries(1); // Force 1 entry per draw
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettings", e);
             }
@@ -80,9 +79,8 @@ export default function AdminRoyalPassPage() {
     }, []);
 
     const dailyEntries = allTransactions.filter(tx => 
-        tx.description.startsWith('Joined Lucky Draw') && 
-        tx.status === 'completed' &&
-        new Date(tx.createdAt).toDateString() === new Date().toDateString()
+        tx.description.startsWith(`Joined Lucky Draw: ${jackpotName}`) && 
+        tx.status === 'completed'
     );
 
     const filteredEntries = dailyEntries.filter(entry => {
@@ -98,7 +96,7 @@ export default function AdminRoyalPassPage() {
             toast({
                 variant: 'destructive',
                 title: "No Entries",
-                description: "There are no entries for today's lucky draw yet.",
+                description: "There are no entries for the current lucky draw yet.",
             });
             return;
         }
@@ -121,15 +119,12 @@ export default function AdminRoyalPassPage() {
             localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
         }
 
-        // 2. Award prize transaction & DELETE all today's entries
+        // 2. Award prize transaction & DELETE all active draw entries
         const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         
-        // Remove today's entries to reset the count for all players
+        // Remove active draw entries to reset the pool
         const remainingTransactions = localAllTransactions.filter((tx: any) => {
-            const isTodayDraw = tx.description.startsWith('Joined Lucky Draw') && 
-                               tx.status === 'completed' &&
-                               new Date(tx.createdAt).toDateString() === new Date().toDateString();
-            return !isTodayDraw;
+            return !tx.description.startsWith(`Joined Lucky Draw: ${jackpotName}`) || tx.status !== 'completed';
         });
 
         const prizeTx: Transaction = {
@@ -165,7 +160,7 @@ export default function AdminRoyalPassPage() {
 
         toast({
             title: "Winner Declared!",
-            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()} and entries have been deleted.`,
+            description: `${winner.username} has been awarded ₹${jackpotAmount.toLocaleString()} and entries have been reset.`,
         });
         
         reload();
@@ -176,7 +171,7 @@ export default function AdminRoyalPassPage() {
             jackpotName,
             jackpotAmount,
             entryFee,
-            maxEntries: 1 // Strictly enforce 1 entry
+            maxEntries: 1 
         }));
         toast({
             title: "Settings Saved",
@@ -218,12 +213,12 @@ export default function AdminRoyalPassPage() {
             <div className="grid gap-6 md:grid-cols-3">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Daily Entries</CardTitle>
+                        <CardTitle className="text-sm font-medium">Active Entries</CardTitle>
                         <Users className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{dailyEntries.length}</div>
-                        <p className="text-xs text-muted-foreground">Active entries in current pool</p>
+                        <p className="text-xs text-muted-foreground">Entries in current {jackpotName}</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -268,7 +263,7 @@ export default function AdminRoyalPassPage() {
                             <DialogContent>
                                 <DialogHeader>
                                     <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                    <DialogDescription>Update the daily jackpot details. Entries are limited to 1 per user.</DialogDescription>
+                                    <DialogDescription>Update the jackpot details. Entries are strictly limited to 1 per user.</DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 py-4">
                                     <div className="space-y-2">
@@ -335,7 +330,7 @@ export default function AdminRoyalPassPage() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
-                                            This will randomly select one user from today's {dailyEntries.length} entries and award them ₹{jackpotAmount.toLocaleString()}. 
+                                            This will randomly select one user from the {dailyEntries.length} entries and award them ₹{jackpotAmount.toLocaleString()}. 
                                             <br/><br/>
                                             <strong>Note: This will DELETE all current entries to reset the pool.</strong>
                                         </AlertDialogDescription>
@@ -394,10 +389,10 @@ export default function AdminRoyalPassPage() {
                         <div>
                             <CardTitle className="font-headline text-xl flex items-center gap-2">
                                 <Clock className="h-5 w-5 text-primary" />
-                                Today's Lucky Draw Entries ({dailyEntries.length})
+                                Current Draw Entries ({dailyEntries.length})
                             </CardTitle>
                             <CardDescription>
-                                Manage participants for the current draw.
+                                Manage participants for the current {jackpotName}.
                             </CardDescription>
                         </div>
                         <div className="relative w-full md:w-64">
@@ -461,7 +456,7 @@ export default function AdminRoyalPassPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Award Jackpot to {entryUser?.username}?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This will award the ₹{jackpotAmount.toLocaleString()} jackpot to this specific user and DELETE all other entries for a fresh start.
+                                                                    This will award the ₹{jackpotAmount.toLocaleString()} jackpot to this specific user and DELETE all other current entries to reset the pool.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
@@ -483,7 +478,7 @@ export default function AdminRoyalPassPage() {
                                 {filteredEntries.length === 0 && (
                                     <TableRow>
                                         <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
-                                            {searchTerm ? "No entries match your search." : "No entries for today's lucky draw yet."}
+                                            {searchTerm ? "No entries match your search." : "No entries for the current draw yet."}
                                         </TableCell>
                                     </TableRow>
                                 )}
