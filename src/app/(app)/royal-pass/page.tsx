@@ -192,7 +192,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winners announced once entries are full • One player one time join only
+                            Winner announced every Sunday • One player one time join only
                         </p>
                     </div>
                 </CardContent>
