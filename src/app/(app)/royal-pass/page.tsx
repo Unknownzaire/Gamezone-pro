@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -192,7 +191,7 @@ export default function RoyalPassPage() {
                             </AlertDialogContent>
                         </AlertDialog>
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
-                            Winner announced every Sunday • One player one time join only
+                            Winner announced every Sunday
                         </p>
                     </div>
                 </CardContent>
