@@ -67,11 +67,13 @@ export type Transaction = {
   status: 'completed' | 'pending' | 'declined';
   declineReason?: string;
   paymentDetails?: {
-    method: 'upi' | 'bank';
+    method: 'upi' | 'bank' | 'binance' | 'paypal';
     upiId?: string;
     accountNumber?: string;
     ifscCode?: string;
     accountHolderName?: string;
+    binanceId?: string;
+    paypalEmail?: string;
   }
 };
 

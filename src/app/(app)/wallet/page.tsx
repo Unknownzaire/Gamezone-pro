@@ -123,6 +123,18 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                                 <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
                             </div>
                           )}
+                          {tx.paymentDetails.method === 'binance' && tx.paymentDetails.binanceId && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Binance ID:</span>
+                                <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
+                            </div>
+                          )}
+                          {tx.paymentDetails.method === 'paypal' && tx.paymentDetails.paypalEmail && (
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">PayPal Email:</span>
+                                <span className="font-mono text-xs">{tx.paymentDetails.paypalEmail}</span>
+                            </div>
+                          )}
                           {tx.paymentDetails.method === 'bank' && (
                             <>
                               <div className="flex justify-between">
@@ -163,9 +175,11 @@ export default function WalletPage() {
     depositUpiId: 'gamezonepro@upi',
   });
   const [withdrawAmount, setWithdrawAmount] = useState('');
-  const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank'>('upi');
+  const [withdrawMethod, setWithdrawMethod] = useState<'upi' | 'bank' | 'binance' | 'paypal'>('upi');
   
   const [upiIdInput, setUpiIdInput] = useState('');
+  const [binanceIdInput, setBinanceIdInput] = useState('');
+  const [paypalEmailInput, setPaypalEmailInput] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
   const [accountHolderName, setAccountHolderName] = useState('');
@@ -217,6 +231,18 @@ export default function WalletPage() {
         return;
       }
       paymentDetails = { method: 'upi', upiId: upiIdInput };
+    } else if (withdrawMethod === 'binance') {
+      if (!binanceIdInput) {
+        toast({ variant: 'destructive', title: "Missing Binance ID", description: "Please enter your Binance ID." });
+        return;
+      }
+      paymentDetails = { method: 'binance', binanceId: binanceIdInput };
+    } else if (withdrawMethod === 'paypal') {
+      if (!paypalEmailInput) {
+        toast({ variant: 'destructive', title: "Missing PayPal Email", description: "Please enter your PayPal Email." });
+        return;
+      }
+      paymentDetails = { method: 'paypal', paypalEmail: paypalEmailInput };
     } else {
       if (!accountNumber || !ifscCode || !accountHolderName) {
         toast({ variant: 'destructive', title: "Missing Bank Details", description: "Please fill in all bank account details." });
@@ -239,6 +265,8 @@ export default function WalletPage() {
     toast({ title: "Withdrawal Request Submitted", description: `Your request to withdraw ₹${amount.toLocaleString()} has been submitted.` });
     setWithdrawAmount('');
     setUpiIdInput('');
+    setBinanceIdInput('');
+    setPaypalEmailInput('');
     setAccountNumber('');
     setIfscCode('');
     setAccountHolderName('');
@@ -444,7 +472,7 @@ export default function WalletPage() {
                             </div>
                         <div className="space-y-2">
                             <Label>Withdrawal Method</Label>
-                            <RadioGroup defaultValue="upi" onValueChange={(v) => setWithdrawMethod(v as 'upi' | 'bank')} className="flex gap-4">
+                            <RadioGroup defaultValue="upi" onValueChange={(v) => setWithdrawMethod(v as 'upi' | 'bank' | 'binance' | 'paypal')} className="flex flex-wrap gap-4">
                             <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="upi" id="upi" />
                                 <Label htmlFor="upi">UPI</Label>
@@ -453,12 +481,32 @@ export default function WalletPage() {
                                 <RadioGroupItem value="bank" id="bank" />
                                 <Label htmlFor="bank">Bank Transfer</Label>
                             </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="binance" id="binance" />
+                                <Label htmlFor="binance">Binance</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="paypal" id="paypal" />
+                                <Label htmlFor="paypal">PayPal</Label>
+                            </div>
                             </RadioGroup>
                         </div>
                         {withdrawMethod === 'upi' && (
                             <div className="space-y-2">
                             <Label htmlFor="upi-id">UPI ID</Label>
                             <Input id="upi-id" placeholder="yourname@bank" value={upiIdInput} onChange={(e) => setUpiIdInput(e.target.value)} />
+                            </div>
+                        )}
+                        {withdrawMethod === 'binance' && (
+                            <div className="space-y-2">
+                            <Label htmlFor="binance-id">Binance ID</Label>
+                            <Input id="binance-id" placeholder="Enter your Binance ID" value={binanceIdInput} onChange={(e) => setBinanceIdInput(e.target.value)} />
+                            </div>
+                        )}
+                        {withdrawMethod === 'paypal' && (
+                            <div className="space-y-2">
+                            <Label htmlFor="paypal-email">PayPal Email</Label>
+                            <Input id="paypal-email" type="email" placeholder="example@paypal.com" value={paypalEmailInput} onChange={(e) => setPaypalEmailInput(e.target.value)} />
                             </div>
                         )}
                         {withdrawMethod === 'bank' && (

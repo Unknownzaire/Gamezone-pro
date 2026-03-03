@@ -453,6 +453,8 @@ export default function AdminDashboardPage() {
                               <div className="text-xs">
                                 <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
                                 {tx.paymentDetails.method === 'upi' && <p className="font-mono">{tx.paymentDetails.upiId}</p>}
+                                {tx.paymentDetails.method === 'binance' && <p className="font-mono">Binance ID: {tx.paymentDetails.binanceId}</p>}
+                                {tx.paymentDetails.method === 'paypal' && <p className="font-mono">PayPal Email: {tx.paymentDetails.paypalEmail}</p>}
                                 {tx.paymentDetails.method === 'bank' && (
                                   <div className="font-mono">
                                     <p>{tx.paymentDetails.accountHolderName}</p>
@@ -522,18 +524,4 @@ export default function AdminDashboardPage() {
 
     </div>
   );
-
-    
-
-
-      
-
-
-
-
-    
-
-    
-
-
-
+}
