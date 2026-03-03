@@ -18,7 +18,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-background/80 backdrop-blur-sm">
+    <nav className="fixed bottom-0 left-0 right-0 z-10 border-t bg-black shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.3)]">
       <div className="container mx-auto grid h-16 max-w-lg grid-cols-5 items-center px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -31,8 +31,8 @@ export default function BottomNav() {
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <item.icon className="h-5 w-5" />
-              <span>{item.label}</span>
+              <item.icon className={cn("h-5 w-5", isActive && "fill-primary/20")} />
+              <span className={cn("font-medium", isActive && "font-bold")}>{item.label}</span>
             </Link>
           );
         })}
