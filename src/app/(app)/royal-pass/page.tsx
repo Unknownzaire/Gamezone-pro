@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,7 @@ export default function RoyalPassPage() {
         jackpotName: 'Daily Lucky Draw',
         jackpotAmount: 5000,
         entryFee: 10,
+        isActive: true,
         maxEntries: 1
     });
     const [winners, setWinners] = useState<any[]>([]);
@@ -60,9 +61,9 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
-    // Calculate entries for the current user for this specific jackpot
+    // Calculate entries for the current user for this draw
     const currentEntriesCount = (transactions || []).filter(tx => 
-        tx.description.startsWith(`Joined Lucky Draw: ${settings.jackpotName}`) && 
+        tx.description.startsWith(`Joined Lucky Draw:`) && 
         tx.status === 'completed'
     ).length;
 
@@ -76,11 +77,20 @@ export default function RoyalPassPage() {
             return;
         }
 
+        if (!settings.isActive) {
+            toast({
+                variant: 'destructive',
+                title: "Draw Closed",
+                description: "This lucky draw is currently not accepting entries.",
+            });
+            return;
+        }
+
         if (currentEntriesCount >= 1) {
             toast({
                 variant: 'destructive',
                 title: "Limit Reached",
-                description: "You have already joined this lucky draw. One player can only join once per draw.",
+                description: "You have already joined this lucky draw. Only 1 entry per player is allowed.",
             });
             return;
         }
@@ -129,19 +139,23 @@ export default function RoyalPassPage() {
                 <CardHeader className="pb-2">
                     <div className="flex items-center justify-between">
                         <CardTitle className="flex items-center gap-2 font-headline text-2xl">
-                            <Sparkles className="h-6 w-6 text-yellow-400 animate-pulse" />
+                            <Sparkles className={`h-6 w-6 ${settings.isActive ? 'text-yellow-400 animate-pulse' : 'text-muted-foreground'}`} />
                             {settings.jackpotName}
                         </CardTitle>
-                        <Badge className="bg-accent hover:bg-accent/90 text-white font-bold">LIVE</Badge>
+                        <Badge className={`${settings.isActive ? 'bg-accent hover:bg-accent/90' : 'bg-muted text-muted-foreground'} text-white font-bold`}>
+                            {settings.isActive ? 'LIVE' : 'CLOSED'}
+                        </Badge>
                     </div>
-                    <CardDescription className="text-white/70">Win the jackpot every single day!</CardDescription>
+                    <CardDescription className="text-white/70">
+                        {settings.isActive ? 'Win the jackpot every single day!' : 'This draw is currently closed. Stay tuned for the next one!'}
+                    </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="relative group">
-                        <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                        <div className="relative rounded-xl bg-card/80 border border-white/10 p-6 text-center space-y-2">
+                        {settings.isActive && <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>}
+                        <div className={`relative rounded-xl ${settings.isActive ? 'bg-card/80 border-white/10' : 'bg-muted/50 border-dashed'} border p-6 text-center space-y-2`}>
                             <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">Current Jackpot</p>
-                            <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent drop-shadow-sm">
+                            <p className={`text-5xl font-black ${settings.isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent' : 'text-muted-foreground'} drop-shadow-sm`}>
                                 ₹{settings.jackpotAmount.toLocaleString()}
                             </p>
                         </div>
@@ -150,11 +164,11 @@ export default function RoyalPassPage() {
                     <div className="space-y-3">
                         <div className="flex justify-between text-xs font-medium uppercase text-muted-foreground">
                             <span>Status</span>
-                            <span>{currentEntriesCount >= 1 ? 'LIMIT REACHED' : 'NOT ENTERED'}</span>
+                            <span>{currentEntriesCount >= 1 ? 'ALREADY JOINED' : (settings.isActive ? 'NOT ENTERED' : 'DRAW CLOSED')}</span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden border border-white/5">
                             <div 
-                                className="h-full bg-gradient-to-r from-primary to-accent transition-all duration-500" 
+                                className={`h-full ${settings.isActive ? 'bg-gradient-to-r from-primary to-accent' : 'bg-muted'} transition-all duration-500`} 
                                 style={{ width: currentEntriesCount >= 1 ? '100%' : '0%' }} 
                             />
                         </div>
@@ -164,11 +178,21 @@ export default function RoyalPassPage() {
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button 
-                                    className="w-full h-14 text-lg font-black shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90 transition-transform active:scale-95 group"
-                                    disabled={currentEntriesCount >= 1}
+                                    className={`w-full h-14 text-lg font-black shadow-lg transition-transform active:scale-95 group ${settings.isActive ? 'shadow-primary/20 bg-primary hover:bg-primary/90' : ''}`}
+                                    disabled={currentEntriesCount >= 1 || !settings.isActive}
+                                    variant={settings.isActive ? "default" : "secondary"}
                                 >
-                                    <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                                    {currentEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
+                                    {settings.isActive ? (
+                                        <>
+                                            <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                                            {currentEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <XCircle className="mr-2 h-6 w-6" />
+                                            DRAW CLOSED
+                                        </>
+                                    )}
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -178,7 +202,7 @@ export default function RoyalPassPage() {
                                         Confirm Entry
                                     </AlertDialogTitle>
                                     <AlertDialogDescription>
-                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. One player can only join once per draw.
+                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. Only 1 entry per player is allowed.
                                     </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

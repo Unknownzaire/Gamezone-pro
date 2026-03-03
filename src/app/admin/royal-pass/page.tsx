@@ -36,6 +36,7 @@ import {
     DialogClose,
 } from "@/components/ui/dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Switch } from '@/components/ui/switch';
 
 export default function AdminRoyalPassPage() {
     const { allUsers, allTransactions = [], addNotification, reload } = useUser();
@@ -44,7 +45,7 @@ export default function AdminRoyalPassPage() {
     const [jackpotName, setJackpotName] = useState("Daily Lucky Draw");
     const [jackpotAmount, setJackpotAmount] = useState(5000);
     const [entryFee, setEntryFee] = useState(10);
-    const [maxEntries, setMaxEntries] = useState(1);
+    const [isActive, setIsActive] = useState(true);
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
@@ -58,7 +59,7 @@ export default function AdminRoyalPassPage() {
                 setJackpotName(parsed.jackpotName || "Daily Lucky Draw");
                 setJackpotAmount(parsed.jackpotAmount || 5000);
                 setEntryFee(parsed.entryFee || 10);
-                setMaxEntries(1); // Force 1 entry per draw
+                setIsActive(parsed.isActive !== undefined ? parsed.isActive : true);
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettings", e);
             }
@@ -79,7 +80,7 @@ export default function AdminRoyalPassPage() {
     }, []);
 
     const dailyEntries = allTransactions.filter(tx => 
-        tx.description.startsWith(`Joined Lucky Draw: ${jackpotName}`) && 
+        tx.description.startsWith(`Joined Lucky Draw:`) && 
         tx.status === 'completed'
     );
 
@@ -124,7 +125,7 @@ export default function AdminRoyalPassPage() {
         
         // Remove active draw entries to reset the pool
         const remainingTransactions = localAllTransactions.filter((tx: any) => {
-            return !tx.description.startsWith(`Joined Lucky Draw: ${jackpotName}`) || tx.status !== 'completed';
+            return !tx.description.startsWith(`Joined Lucky Draw:`) || tx.status !== 'completed';
         });
 
         const prizeTx: Transaction = {
@@ -166,18 +167,29 @@ export default function AdminRoyalPassPage() {
         reload();
     };
 
-    const handleUpdateSettings = () => {
-        localStorage.setItem('luckyDrawSettings', JSON.stringify({
+    const handleUpdateSettings = (newActiveStatus?: boolean) => {
+        const settingsToSave = {
             jackpotName,
             jackpotAmount,
             entryFee,
+            isActive: newActiveStatus !== undefined ? newActiveStatus : isActive,
             maxEntries: 1 
-        }));
-        toast({
-            title: "Settings Saved",
-            description: "Lucky Draw configuration has been updated.",
-        });
-        setIsConfigDialogOpen(false);
+        };
+        localStorage.setItem('luckyDrawSettings', JSON.stringify(settingsToSave));
+        
+        if (newActiveStatus !== undefined) {
+            setIsActive(newActiveStatus);
+            toast({
+                title: newActiveStatus ? "Jackpot Activated" : "Jackpot Deactivated",
+                description: `The lucky draw is now ${newActiveStatus ? 'live' : 'hidden'}.`,
+            });
+        } else {
+            toast({
+                title: "Settings Saved",
+                description: "Lucky Draw configuration has been updated.",
+            });
+            setIsConfigDialogOpen(false);
+        }
     };
 
     const handleDeleteWinner = (winnerId: string) => {
@@ -218,7 +230,7 @@ export default function AdminRoyalPassPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{dailyEntries.length}</div>
-                        <p className="text-xs text-muted-foreground">Entries in current {jackpotName}</p>
+                        <p className="text-xs text-muted-foreground">Entries in current draw</p>
                     </CardContent>
                 </Card>
                 <Card>
@@ -246,66 +258,85 @@ export default function AdminRoyalPassPage() {
             <div className="grid gap-6 md:grid-cols-2">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between">
-                        <div>
+                        <div className="flex-1">
                             <CardTitle className="font-headline text-xl flex items-center gap-2">
                                 <Sparkles className="h-5 w-5 text-primary" />
                                 Jackpot Configuration
                             </CardTitle>
                             <CardDescription>Adjust the prize and entry costs.</CardDescription>
                         </div>
-                        <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                    <Pencil className="h-4 w-4" />
-                                    <span className="sr-only">Edit Jackpot Settings</span>
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                    <DialogDescription>Update the jackpot details. Entries are strictly limited to 1 per user.</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4 py-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="jackpotName">Jackpot Name</Label>
-                                        <Input 
-                                            id="jackpotName" 
-                                            value={jackpotName} 
-                                            onChange={(e) => setJackpotName(e.target.value)} 
-                                        />
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center gap-2 mr-2">
+                                <Label htmlFor="active-toggle" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                    {isActive ? 'Active' : 'Offline'}
+                                </Label>
+                                <Switch 
+                                    id="active-toggle" 
+                                    checked={isActive} 
+                                    onCheckedChange={(val) => handleUpdateSettings(val)} 
+                                />
+                            </div>
+                            <Dialog open={isConfigDialogOpen} onOpenChange={setIsConfigDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                        <Pencil className="h-4 w-4" />
+                                        <span className="sr-only">Edit Jackpot Settings</span>
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Jackpot Configuration</DialogTitle>
+                                        <DialogDescription>Update the jackpot details. Entries are strictly limited to 1 per user.</DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="jackpotName">Jackpot Name</Label>
+                                            <Input 
+                                                id="jackpotName" 
+                                                value={jackpotName} 
+                                                onChange={(e) => setJackpotName(e.target.value)} 
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
+                                            <Input 
+                                                id="jackpot" 
+                                                type="number" 
+                                                value={jackpotAmount} 
+                                                onChange={(e) => setJackpotAmount(Number(e.target.value))} 
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="fee">Entry Fee (₹)</Label>
+                                            <Input 
+                                                id="fee" 
+                                                type="number" 
+                                                value={entryFee} 
+                                                onChange={(e) => setEntryFee(Number(e.target.value))} 
+                                            />
+                                        </div>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
-                                        <Input 
-                                            id="jackpot" 
-                                            type="number" 
-                                            value={jackpotAmount} 
-                                            onChange={(e) => setJackpotAmount(Number(e.target.value))} 
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="fee">Entry Fee (₹)</Label>
-                                        <Input 
-                                            id="fee" 
-                                            type="number" 
-                                            value={entryFee} 
-                                            onChange={(e) => setEntryFee(Number(e.target.value))} 
-                                        />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button variant="outline">Cancel</Button>
-                                    </DialogClose>
-                                    <Button onClick={handleUpdateSettings}>Save Changes</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                                    <DialogFooter>
+                                        <DialogClose asChild>
+                                            <Button variant="outline">Cancel</Button>
+                                        </DialogClose>
+                                        <Button onClick={() => handleUpdateSettings()}>Save Changes</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </div>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="rounded-lg border bg-muted/30 p-4">
-                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
-                            <p className="text-xl font-black">{jackpotName}</p>
+                            <div className="flex justify-between items-start">
+                                <div>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
+                                    <p className="text-xl font-black">{jackpotName}</p>
+                                </div>
+                                <Badge variant={isActive ? "default" : "secondary"}>
+                                    {isActive ? 'LIVE' : 'INACTIVE'}
+                                </Badge>
+                            </div>
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="rounded-lg border bg-muted/30 p-4">
@@ -321,7 +352,7 @@ export default function AdminRoyalPassPage() {
                         <div className="pt-4 border-t">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="w-full h-12 text-lg font-bold">
+                                    <Button variant="destructive" className="w-full h-12 text-lg font-bold" disabled={dailyEntries.length === 0}>
                                         <Trophy className="mr-2 h-5 w-5" />
                                         RANDOM PICK WINNER
                                     </Button>
@@ -392,7 +423,7 @@ export default function AdminRoyalPassPage() {
                                 Current Draw Entries ({dailyEntries.length})
                             </CardTitle>
                             <CardDescription>
-                                Manage participants for the current {jackpotName}.
+                                Manage participants for the current draw.
                             </CardDescription>
                         </div>
                         <div className="relative w-full md:w-64">
@@ -456,7 +487,7 @@ export default function AdminRoyalPassPage() {
                                                             <AlertDialogHeader>
                                                                 <AlertDialogTitle>Award Jackpot to {entryUser?.username}?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This will award the ₹{jackpotAmount.toLocaleString()} jackpot to this specific user and DELETE all other current entries to reset the pool.
+                                                                    This will award the jackpot to this specific user and DELETE all other current entries to reset the pool.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
