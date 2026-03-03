@@ -73,6 +73,7 @@ export type Transaction = {
     ifscCode?: string;
     accountHolderName?: string;
     binanceId?: string;
+    binanceNickname?: string;
     paypalEmail?: string;
   }
 };

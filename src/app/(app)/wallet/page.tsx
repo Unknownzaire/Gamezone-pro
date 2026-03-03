@@ -123,11 +123,19 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                                 <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
                             </div>
                           )}
-                          {tx.paymentDetails.method === 'binance' && tx.paymentDetails.binanceId && (
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Binance ID:</span>
-                                <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
-                            </div>
+                          {tx.paymentDetails.method === 'binance' && (
+                            <>
+                              <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Binance ID:</span>
+                                  <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
+                              </div>
+                              {tx.paymentDetails.binanceNickname && (
+                                <div className="flex justify-between">
+                                    <span className="text-muted-foreground">Nickname:</span>
+                                    <span className="font-medium">{tx.paymentDetails.binanceNickname}</span>
+                                </div>
+                              )}
+                            </>
                           )}
                           {tx.paymentDetails.method === 'paypal' && tx.paymentDetails.paypalEmail && (
                             <div className="flex justify-between">
@@ -167,7 +175,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, updateUser, reload: reloadUser, moveReferralBonusToWallet } = useUser();
+  const { user, transactions, addTransaction, updateUser, reload: reloadUser } = useUser();
   const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
@@ -179,6 +187,7 @@ export default function WalletPage() {
   
   const [upiIdInput, setUpiIdInput] = useState('');
   const [binanceIdInput, setBinanceIdInput] = useState('');
+  const [binanceNicknameInput, setBinanceNicknameInput] = useState('');
   const [paypalEmailInput, setPaypalEmailInput] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
   const [ifscCode, setIfscCode] = useState('');
@@ -201,7 +210,6 @@ export default function WalletPage() {
 
   useEffect(() => {
     loadWalletSettings();
-    // This component is now managed by the storage event listener in useUser hook.
   }, []);
 
   const handleWithdraw = () => {
@@ -232,11 +240,11 @@ export default function WalletPage() {
       }
       paymentDetails = { method: 'upi', upiId: upiIdInput };
     } else if (withdrawMethod === 'binance') {
-      if (!binanceIdInput) {
-        toast({ variant: 'destructive', title: "Missing Binance ID", description: "Please enter your Binance ID." });
+      if (!binanceIdInput || !binanceNicknameInput) {
+        toast({ variant: 'destructive', title: "Missing Details", description: "Please enter your Binance ID and Nickname." });
         return;
       }
-      paymentDetails = { method: 'binance', binanceId: binanceIdInput };
+      paymentDetails = { method: 'binance', binanceId: binanceIdInput, binanceNickname: binanceNicknameInput };
     } else if (withdrawMethod === 'paypal') {
       if (!paypalEmailInput) {
         toast({ variant: 'destructive', title: "Missing PayPal Email", description: "Please enter your PayPal Email." });
@@ -251,7 +259,6 @@ export default function WalletPage() {
       paymentDetails = { method: 'bank', accountNumber, ifscCode, accountHolderName };
     }
     
-    // Immediately deduct balance
     updateUser({ walletBalance: user.walletBalance - amount });
 
     addTransaction({
@@ -266,6 +273,7 @@ export default function WalletPage() {
     setWithdrawAmount('');
     setUpiIdInput('');
     setBinanceIdInput('');
+    setBinanceNicknameInput('');
     setPaypalEmailInput('');
     setAccountNumber('');
     setIfscCode('');
@@ -292,7 +300,7 @@ export default function WalletPage() {
         status: 'pending',
         paymentDetails: {
           method: 'upi',
-          upiId: upiRef, // Store the reference number here
+          upiId: upiRef, 
         }
     });
 
@@ -498,9 +506,15 @@ export default function WalletPage() {
                             </div>
                         )}
                         {withdrawMethod === 'binance' && (
-                            <div className="space-y-2">
-                            <Label htmlFor="binance-id">Binance ID</Label>
-                            <Input id="binance-id" placeholder="Enter your Binance ID" value={binanceIdInput} onChange={(e) => setBinanceIdInput(e.target.value)} />
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="binance-id">Binance ID</Label>
+                                    <Input id="binance-id" placeholder="Enter your Binance ID" value={binanceIdInput} onChange={(e) => setBinanceIdInput(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="binance-nickname">Binance Nickname</Label>
+                                    <Input id="binance-nickname" placeholder="Your account nickname" value={binanceNicknameInput} onChange={(e) => setBinanceNicknameInput(e.target.value)} />
+                                </div>
                             </div>
                         )}
                         {withdrawMethod === 'paypal' && (

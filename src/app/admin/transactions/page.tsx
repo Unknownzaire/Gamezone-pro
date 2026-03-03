@@ -205,11 +205,19 @@ export default function AdminTransactionsPage() {
                                         <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
                                     </div>
                                 )}
-                                {tx.paymentDetails.method === 'binance' && tx.paymentDetails.binanceId && (
-                                    <div className="flex justify-between">
-                                        <span className="text-muted-foreground">Binance ID:</span>
-                                        <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
-                                    </div>
+                                {tx.paymentDetails.method === 'binance' && (
+                                    <>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Binance ID:</span>
+                                            <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
+                                        </div>
+                                        {tx.paymentDetails.binanceNickname && (
+                                            <div className="flex justify-between">
+                                                <span className="text-muted-foreground">Nickname:</span>
+                                                <span className="font-medium">{tx.paymentDetails.binanceNickname}</span>
+                                            </div>
+                                        )}
+                                    </>
                                 )}
                                 {tx.paymentDetails.method === 'paypal' && tx.paymentDetails.paypalEmail && (
                                     <div className="flex justify-between">
