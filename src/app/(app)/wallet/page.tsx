@@ -125,16 +125,16 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                           )}
                           {tx.paymentDetails.method === 'binance' && (
                             <>
-                              <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Binance ID:</span>
-                                  <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
-                              </div>
                               {tx.paymentDetails.binanceNickname && (
                                 <div className="flex justify-between">
                                     <span className="text-muted-foreground">Nickname:</span>
                                     <span className="font-medium">{tx.paymentDetails.binanceNickname}</span>
                                 </div>
                               )}
+                              <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Binance ID:</span>
+                                  <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
+                              </div>
                             </>
                           )}
                           {tx.paymentDetails.method === 'paypal' && tx.paymentDetails.paypalEmail && (
@@ -241,7 +241,7 @@ export default function WalletPage() {
       paymentDetails = { method: 'upi', upiId: upiIdInput };
     } else if (withdrawMethod === 'binance') {
       if (!binanceIdInput || !binanceNicknameInput) {
-        toast({ variant: 'destructive', title: "Missing Details", description: "Please enter your Binance ID and Nickname." });
+        toast({ variant: 'destructive', title: "Missing Details", description: "Please enter your Binance Nickname and ID." });
         return;
       }
       paymentDetails = { method: 'binance', binanceId: binanceIdInput, binanceNickname: binanceNicknameInput };
@@ -449,7 +449,7 @@ export default function WalletPage() {
                 <DialogContent>
                      <DialogHeader>
                         <DialogTitle>Withdraw Funds</DialogTitle>
-                        <DialogDescription>Request a withdrawal to your bank account or UPI.</DialogDescription>
+                        <DialogDescription>Request a withdrawal to your bank account or digital wallet.</DialogDescription>
                     </DialogHeader>
                      <div className="space-y-4 rounded-lg bg-card p-4">
                         <div className="space-y-2">
@@ -508,12 +508,12 @@ export default function WalletPage() {
                         {withdrawMethod === 'binance' && (
                             <div className="space-y-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="binance-id">Binance ID</Label>
-                                    <Input id="binance-id" placeholder="Enter your Binance ID" value={binanceIdInput} onChange={(e) => setBinanceIdInput(e.target.value)} />
-                                </div>
-                                <div className="space-y-2">
                                     <Label htmlFor="binance-nickname">Binance Nickname</Label>
                                     <Input id="binance-nickname" placeholder="Your account nickname" value={binanceNicknameInput} onChange={(e) => setBinanceNicknameInput(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="binance-id">Binance ID</Label>
+                                    <Input id="binance-id" placeholder="Enter your Binance ID" value={binanceIdInput} onChange={(e) => setBinanceIdInput(e.target.value)} />
                                 </div>
                             </div>
                         )}

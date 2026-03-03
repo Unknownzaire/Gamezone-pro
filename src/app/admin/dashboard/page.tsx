@@ -455,8 +455,8 @@ export default function AdminDashboardPage() {
                                 {tx.paymentDetails.method === 'upi' && <p className="font-mono">{tx.paymentDetails.upiId}</p>}
                                 {tx.paymentDetails.method === 'binance' && (
                                   <div className="font-mono">
-                                    <p>ID: {tx.paymentDetails.binanceId}</p>
                                     <p>Nick: {tx.paymentDetails.binanceNickname || 'N/A'}</p>
+                                    <p>ID: {tx.paymentDetails.binanceId}</p>
                                   </div>
                                 )}
                                 {tx.paymentDetails.method === 'paypal' && <p className="font-mono">{tx.paymentDetails.paypalEmail}</p>}
