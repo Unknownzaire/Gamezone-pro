@@ -376,41 +376,45 @@ export default function ManageTournamentPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                                <span className="sr-only">Open menu</span>
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                            <DropdownMenuItem asChild>
-                                                <Link href={`/admin/users/edit/${p.user.id}`}>
-                                                    View / Edit Profile
-                                                </Link>
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem 
-                                                className="text-destructive"
-                                                onClick={() => setParticipantToRemove(p)}
-                                                disabled={tournament.status === 'Completed'}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Remove & Refund
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem 
-                                                className="text-destructive font-bold"
-                                                onClick={() => {
-                                                    setAccountToDelete(p.user);
-                                                    setIsAccountDeleteDialogOpen(true);
-                                                }}
-                                            >
-                                                <Trash2 className="mr-2 h-4 w-4" />
-                                                Delete User Account
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                    <span className="sr-only">Open menu</span>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                                <DropdownMenuItem asChild>
+                                                    <Link href={`/admin/users/edit/${p.user.id}`}>
+                                                        View / Edit Profile
+                                                    </Link>
+                                                </DropdownMenuItem>
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem 
+                                                    className="text-destructive"
+                                                    onClick={() => setParticipantToRemove(p)}
+                                                    disabled={tournament.status === 'Completed'}
+                                                >
+                                                    <Trash2 className="mr-2 h-4 w-4" />
+                                                    Remove & Refund
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                            onClick={() => {
+                                                setAccountToDelete(p.user);
+                                                setIsAccountDeleteDialogOpen(true);
+                                            }}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                            <span className="sr-only">Delete User Account</span>
+                                        </Button>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
