@@ -27,6 +27,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
 
@@ -70,7 +71,7 @@ export default function ManageTournamentPage() {
 
 
   if (!tournament) {
-    return <div>Loading...</div>; // Or a skeleton loader
+    return <div>Loading...</div>;
   }
 
   const updateAndSaveTournaments = (updatedTournaments: Tournament[]) => {
@@ -124,6 +125,20 @@ export default function ManageTournamentPage() {
     const updatedTournaments = tournaments.map(t => t.id === updatedTournament.id ? updatedTournament : t);
     updateAndSaveTournaments(updatedTournaments);
     setTournament(updatedTournament);
+  };
+
+  const handleDeleteTournament = () => {
+    const storedTournaments = localStorage.getItem('allTournaments');
+    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
+    const updatedTournaments = allTournaments.filter(t => t.id !== id);
+    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+    
+    toast({
+        title: "Tournament Deleted",
+        description: `The tournament "${tournament.title}" has been successfully deleted.`,
+    });
+    
+    router.push('/admin/tournaments');
   };
 
   const handleRemoveParticipant = () => {
@@ -193,17 +208,41 @@ export default function ManageTournamentPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link href="/admin/tournaments">
-            <Button variant="outline" size="icon" className="h-7 w-7">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back</span>
-            </Button>
-        </Link>
-        <div>
-            <h1 className="font-headline text-3xl font-bold">{tournament.title}</h1>
-            <p className="text-muted-foreground">Manage details for this tournament.</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+            <Link href="/admin/tournaments">
+                <Button variant="outline" size="icon" className="h-7 w-7">
+                    <ArrowLeft className="h-4 w-4" />
+                    <span className="sr-only">Back</span>
+                </Button>
+            </Link>
+            <div>
+                <h1 className="font-headline text-3xl font-bold">{tournament.title}</h1>
+                <p className="text-muted-foreground">Manage details for this tournament.</p>
+            </div>
         </div>
+        <AlertDialog>
+            <AlertDialogTrigger asChild>
+                <Button variant="destructive">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Tournament
+                </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the tournament "{tournament.title}", including all participant data and room details.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive hover:bg-destructive/90">
+                        Delete Permanently
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
