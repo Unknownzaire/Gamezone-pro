@@ -290,7 +290,7 @@ export default function ManageTournamentPage() {
         </Card>
 
         <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1.5">
                     <CardTitle className="font-headline">Participants</CardTitle>
                     <CardDescription>List of all players who joined this tournament.</CardDescription>
@@ -320,7 +320,7 @@ export default function ManageTournamentPage() {
                     <TableBody>
                         {filteredParticipants.map(p => (
                             <TableRow key={p.id}>
-                                <TableCell>{p.user.username}</TableCell>
+                                <TableCell className="font-medium">{p.user.username}</TableCell>
                                 <TableCell>{p.user.inGameUsername || 'N/A'}</TableCell>
                                 <TableCell>{p.user.inGameId || 'N/A'}</TableCell>
                                 <TableCell>
@@ -330,14 +330,14 @@ export default function ManageTournamentPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        className="text-destructive h-8 w-8"
+                                        variant="outline" 
+                                        size="sm" 
+                                        className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground h-8"
                                         onClick={() => setParticipantToRemove(p)}
                                         disabled={tournament.status === 'Completed'}
                                     >
-                                        <Trash2 className="h-4 w-4" />
-                                        <span className="sr-only">Remove participant</span>
+                                        <Trash2 className="mr-1 h-3 w-3" />
+                                        Delete
                                     </Button>
                                 </TableCell>
                             </TableRow>
