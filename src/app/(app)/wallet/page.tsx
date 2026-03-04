@@ -5,7 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle, Gift } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle, Gift, Copy, Building2, Wallet as WalletIcon, Share2 } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -194,7 +194,9 @@ export default function WalletPage() {
   const [accountHolderName, setAccountHolderName] = useState('');
 
   const [addAmount, setAddAmount] = useState('500');
-  const [upiRef, setUpiRef] = useState('');
+  const [addMethod, setAddMethod] = useState<'upi' | 'bank' | 'binance' | 'paypal'>('upi');
+  const [transactionRef, setTransactionRef] = useState('');
+  
   const quickAmounts = [100, 200, 500, 1000, 2000, 5000];
   const quickAddAmounts = [50, 100, 200, 500, 1000];
 
@@ -288,25 +290,34 @@ export default function WalletPage() {
       toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount to add." });
       return;
     }
-    if (!upiRef || upiRef.length !== 12) {
-       toast({ variant: 'destructive', title: "Invalid Reference Number", description: "Please enter the 12-digit UPI transaction reference number." });
+    
+    if (!transactionRef) {
+       toast({ variant: 'destructive', title: "Missing Reference", description: "Please enter your transaction reference ID." });
       return;
+    }
+
+    let paymentDetails: Transaction['paymentDetails'];
+    if (addMethod === 'upi') {
+        paymentDetails = { method: 'upi', upiId: transactionRef };
+    } else if (addMethod === 'binance') {
+        paymentDetails = { method: 'binance', binanceId: transactionRef };
+    } else if (addMethod === 'paypal') {
+        paymentDetails = { method: 'paypal', paypalEmail: transactionRef };
+    } else {
+        paymentDetails = { method: 'bank', accountNumber: transactionRef }; // generic capture
     }
 
     addTransaction({
         amount,
         type: 'credit',
-        description: `Deposit via UPI`,
+        description: `Deposit via ${addMethod.toUpperCase()}`,
         status: 'pending',
-        paymentDetails: {
-          method: 'upi',
-          upiId: upiRef, 
-        }
+        paymentDetails
     });
 
-    toast({ title: "Deposit Request Submitted", description: `Your request to deposit ₹${amount.toLocaleString()} has been sent for approval.` });
-    setAddAmount('');
-    setUpiRef('');
+    toast({ title: "Deposit Request Submitted", description: `Your request to deposit ₹${amount.toLocaleString()} via ${addMethod.toUpperCase()} has been sent for approval.` });
+    setAddAmount('500');
+    setTransactionRef('');
     setIsAddMoneyOpen(false);
   }
   
@@ -315,8 +326,13 @@ export default function WalletPage() {
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
   
+  const copyToClipboard = (text: string, label: string) => {
+      navigator.clipboard.writeText(text);
+      toast({ title: "Copied!", description: `${label} copied to clipboard.` });
+  };
+
   const payeeName = 'Gamezone Pro';
-  const qrCodeUrl = walletSettings.qrCodeImageUrl
+  const upiQrCodeUrl = walletSettings.qrCodeImageUrl
     ? walletSettings.qrCodeImageUrl
     : `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${walletSettings.depositUpiId}&pn=${encodeURIComponent(payeeName)}${addAmount ? `&am=${addAmount}` : ''}&cu=INR`;
 
@@ -379,66 +395,121 @@ export default function WalletPage() {
                 <DialogTrigger asChild>
                     <Button className="w-full">Add Money</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl">
                     <DialogHeader>
                         <DialogTitle>Add Money</DialogTitle>
-                        <DialogDescription>Scan the QR or use the UPI ID to add funds to your wallet.</DialogDescription>
+                        <DialogDescription>Select your preferred method and follow the instructions.</DialogDescription>
                     </DialogHeader>
-                     <div className="flex flex-col sm:flex-row items-start justify-between gap-6 rounded-lg bg-card p-4">
-                        <div className="w-full sm:w-2/3 space-y-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="add-amount">Amount (₹)</Label>
-                                <Input 
-                                id="add-amount" 
-                                type="number" 
-                                placeholder="e.g., 500" 
-                                value={addAmount} 
-                                onChange={(e) => setAddAmount(e.target.value)} 
-                                />
-                            </div>
+                    
+                    <Tabs defaultValue="upi" className="w-full" onValueChange={(val) => setAddMethod(val as any)}>
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="upi">UPI</TabsTrigger>
+                            <TabsTrigger value="bank">Bank</TabsTrigger>
+                            <TabsTrigger value="binance">Binance</TabsTrigger>
+                            <TabsTrigger value="paypal">PayPal</TabsTrigger>
+                        </TabsList>
+
+                        <div className="mt-4 space-y-4">
                             <div className="space-y-2">
-                                <Label>Quick Add</Label>
-                                <div className="flex flex-wrap gap-2">
+                                <Label htmlFor="add-amount">Amount to Deposit (₹)</Label>
+                                <Input id="add-amount" type="number" value={addAmount} onChange={(e) => setAddAmount(e.target.value)} />
+                                <div className="flex flex-wrap gap-2 mt-2">
                                     {quickAddAmounts.map(amount => (
-                                        <Button 
-                                            key={amount} 
-                                            variant={addAmount === amount.toString() ? 'default' : 'outline'}
-                                            size="sm"
-                                            onClick={() => setAddAmount(amount.toString())}
-                                        >
-                                            ₹{amount}
-                                        </Button>
+                                        <Button key={amount} variant="outline" size="sm" onClick={() => setAddAmount(amount.toString())}>₹{amount}</Button>
                                     ))}
                                 </div>
                             </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="upi-ref">UPI Transaction Reference No.</Label>
-                                <Input 
-                                id="upi-ref" 
-                                placeholder="Enter the 12-digit number"
-                                value={upiRef}
-                                onChange={(e) => {
-                                    const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                                    if (numericValue.length <= 12) {
-                                      setUpiRef(numericValue);
-                                    }
-                                }}
-                                />
-                            </div>
+
+                            <TabsContent value="upi" className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-6 items-center border rounded-lg p-4">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="bg-white p-2 rounded-lg">
+                                            <Image src={upiQrCodeUrl} alt="UPI QR" width={150} height={150} unoptimized />
+                                        </div>
+                                        <p className="text-xs font-mono text-muted-foreground">{walletSettings.depositUpiId}</p>
+                                        <Button size="sm" variant="ghost" onClick={() => copyToClipboard(walletSettings.depositUpiId, "UPI ID")}>Copy ID</Button>
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor="upi-ref">UPI Transaction Reference ID (12 digits)</Label>
+                                        <Input id="upi-ref" placeholder="Enter reference number" value={transactionRef} onChange={(e) => setTransactionRef(e.target.value.replace(/[^0-9]/g, ''))} />
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="bank" className="space-y-4">
+                                <div className="bg-muted p-4 rounded-lg space-y-3">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-muted-foreground">Bank Name:</span>
+                                        <span className="font-semibold">{walletSettings.bankName || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-muted-foreground">Account Holder:</span>
+                                        <span className="font-semibold">{walletSettings.bankAccountHolderName || 'N/A'}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-muted-foreground">Account Number:</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono font-bold text-primary">{walletSettings.bankAccountNumber || 'N/A'}</span>
+                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(walletSettings.bankAccountNumber || '', "Account Number")}><Copy className="h-3 w-3" /></Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-sm text-muted-foreground">IFSC Code:</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="font-mono font-bold text-primary">{walletSettings.bankIfscCode || 'N/A'}</span>
+                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(walletSettings.bankIfscCode || '', "IFSC Code")}><Copy className="h-3 w-3" /></Button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="bank-ref">Transaction ID / Reference</Label>
+                                    <Input id="bank-ref" placeholder="Enter transfer reference" value={transactionRef} onChange={(e) => setTransactionRef(e.target.value)} />
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="binance" className="space-y-4">
+                                <div className="flex flex-col sm:flex-row gap-6 items-center border rounded-lg p-4">
+                                    <div className="flex flex-col items-center gap-2">
+                                        {walletSettings.binanceQrCodeImageUrl ? (
+                                            <div className="bg-white p-2 rounded-lg">
+                                                <Image src={walletSettings.binanceQrCodeImageUrl} alt="Binance QR" width={150} height={150} unoptimized />
+                                            </div>
+                                        ) : (
+                                            <div className="w-[150px] h-[150px] bg-muted flex items-center justify-center rounded-lg text-center text-xs p-2">Binance QR not configured</div>
+                                        )}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-mono">{walletSettings.binanceId || 'N/A'}</span>
+                                            <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => copyToClipboard(walletSettings.binanceId || '', "Binance ID")}><Copy className="h-3 w-3" /></Button>
+                                        </div>
+                                    </div>
+                                    <div className="flex-1 space-y-2">
+                                        <Label htmlFor="binance-ref">Binance Pay Order ID / Reference</Label>
+                                        <Input id="binance-ref" placeholder="Enter Binance reference" value={transactionRef} onChange={(e) => setTransactionRef(e.target.value)} />
+                                    </div>
+                                </div>
+                            </TabsContent>
+
+                            <TabsContent value="paypal" className="space-y-4">
+                                <div className="bg-muted p-4 rounded-lg flex justify-between items-center">
+                                    <div className="space-y-1">
+                                        <span className="text-xs text-muted-foreground uppercase font-bold">PayPal Email</span>
+                                        <p className="font-bold text-lg">{walletSettings.paypalEmail || 'N/A'}</p>
+                                    </div>
+                                    <Button onClick={() => copyToClipboard(walletSettings.paypalEmail || '', "PayPal Email")} variant="outline">Copy Email</Button>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="paypal-ref">PayPal Transaction ID</Label>
+                                    <Input id="paypal-ref" placeholder="Enter PayPal transaction ID" value={transactionRef} onChange={(e) => setTransactionRef(e.target.value)} />
+                                </div>
+                            </TabsContent>
                         </div>
-                        <div className="w-full sm:w-1/3 flex flex-col items-center justify-center space-y-2">
-                             <Label>Scan and Pay</Label>
-                             <div className="flex flex-col items-center gap-2 rounded-lg bg-white p-2">
-                               <Image src={qrCodeUrl} alt="UPI QR Code" width={128} height={128} unoptimized/>
-                               <p className="font-mono text-xs text-black">{walletSettings.depositUpiId}</p>
-                            </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
+                    </Tabs>
+
+                    <DialogFooter className="mt-6">
                         <DialogClose asChild>
                           <Button variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button onClick={handleAddMoney}>Confirm Deposit</Button>
+                        <Button onClick={handleAddMoney}>Submit Deposit Request</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -482,20 +553,20 @@ export default function WalletPage() {
                             <Label>Withdrawal Method</Label>
                             <RadioGroup defaultValue="upi" onValueChange={(v) => setWithdrawMethod(v as 'upi' | 'bank' | 'binance' | 'paypal')} className="flex flex-wrap gap-4">
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="upi" id="upi" />
-                                <Label htmlFor="upi">UPI</Label>
+                                <RadioGroupItem value="upi" id="withdraw-upi" />
+                                <Label htmlFor="withdraw-upi">UPI</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="bank" id="bank" />
-                                <Label htmlFor="bank">Bank Transfer</Label>
+                                <RadioGroupItem value="bank" id="withdraw-bank" />
+                                <Label htmlFor="withdraw-bank">Bank Transfer</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="binance" id="binance" />
-                                <Label htmlFor="binance">Binance</Label>
+                                <RadioGroupItem value="binance" id="withdraw-binance" />
+                                <Label htmlFor="withdraw-binance">Binance</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="paypal" id="paypal" />
-                                <Label htmlFor="paypal">PayPal</Label>
+                                <RadioGroupItem value="paypal" id="withdraw-paypal" />
+                                <Label htmlFor="withdraw-paypal">PayPal</Label>
                             </div>
                             </RadioGroup>
                         </div>

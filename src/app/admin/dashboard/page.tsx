@@ -399,6 +399,9 @@ export default function AdminDashboardPage() {
                               <div className="text-xs">
                                 <p className="font-bold uppercase">{tx.paymentDetails.method}</p>
                                 {tx.paymentDetails.method === 'upi' && <p>Ref: <span className="font-mono">{tx.paymentDetails.upiId}</span></p>}
+                                {tx.paymentDetails.method === 'binance' && <p>Binance: <span className="font-mono">{tx.paymentDetails.binanceId}</span></p>}
+                                {tx.paymentDetails.method === 'paypal' && <p>PayPal: <span className="font-mono">{tx.paymentDetails.paypalEmail}</span></p>}
+                                {tx.paymentDetails.method === 'bank' && <p>A/C: <span className="font-mono">{tx.paymentDetails.accountNumber}</span></p>}
                               </div>
                             ) : (
                               <p className="text-muted-foreground">N/A</p>

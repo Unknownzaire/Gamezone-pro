@@ -24,12 +24,23 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export interface WalletSettings {
     minWithdrawal: number;
     maxWithdrawal: number;
     depositUpiId: string;
     qrCodeImageUrl?: string;
+    // Bank Transfer
+    bankName?: string;
+    bankAccountNumber?: string;
+    bankIfscCode?: string;
+    bankAccountHolderName?: string;
+    // Binance
+    binanceId?: string;
+    binanceQrCodeImageUrl?: string;
+    // PayPal
+    paypalEmail?: string;
 }
 
 export interface ReferralSettings {
@@ -68,7 +79,9 @@ export default function AdminSettingsPage() {
         helplineNumber: '+911234567890',
         supportEmail: 'support@gamezonepro.com',
     });
-    const [qrCodeFile, setQrCodeFile] = useState<File | null>(null);
+    
+    const [upiQrFile, setUpiQrFile] = useState<File | null>(null);
+    const [binanceQrFile, setBinanceQrFile] = useState<File | null>(null);
     const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
     useEffect(() => {
@@ -117,20 +130,30 @@ export default function AdminSettingsPage() {
             }
         };
 
-        if (qrCodeFile) {
+        let updatedSettings = { ...walletSettings };
+
+        if (upiQrFile) {
             try {
-                const imageUrl = await compressImage(qrCodeFile, { maxWidth: 400, maxHeight: 400, quality: 0.6 });
-                const newSettings = { ...walletSettings, qrCodeImageUrl: imageUrl };
-                setWalletSettings(newSettings);
-                saveSettings(newSettings);
+                const imageUrl = await compressImage(upiQrFile, { maxWidth: 400, maxHeight: 400, quality: 0.6 });
+                updatedSettings.qrCodeImageUrl = imageUrl;
             } catch (error) {
-                console.error("QR Compression error:", error);
-                toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process QR image.' });
-                setIsUpdatingWallet(false);
+                console.error("UPI QR Compression error:", error);
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process UPI QR image.' });
             }
-        } else {
-            saveSettings(walletSettings);
         }
+
+        if (binanceQrFile) {
+            try {
+                const imageUrl = await compressImage(binanceQrFile, { maxWidth: 400, maxHeight: 400, quality: 0.6 });
+                updatedSettings.binanceQrCodeImageUrl = imageUrl;
+            } catch (error) {
+                console.error("Binance QR Compression error:", error);
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not process Binance QR image.' });
+            }
+        }
+
+        setWalletSettings(updatedSettings);
+        saveSettings(updatedSettings);
     }
 
     const handleReferralUpdate = (e: React.FormEvent) => {
@@ -190,9 +213,15 @@ export default function AdminSettingsPage() {
         setSocialMediaLinks(prev => prev.filter(link => link.id !== id));
     };
 
-     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+     const handleUpiFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
-            setQrCodeFile(e.target.files[0]);
+            setUpiQrFile(e.target.files[0]);
+        }
+    };
+
+    const handleBinanceFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            setBinanceQrFile(e.target.files[0]);
         }
     };
     
@@ -263,32 +292,87 @@ export default function AdminSettingsPage() {
                  {(!showOnly || showOnly === 'wallet') && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Wallet Settings</CardTitle>
-                            <CardDescription>Configure global wallet and payment settings.</CardDescription>
+                            <CardTitle>Wallet & Payment Settings</CardTitle>
+                            <CardDescription>Configure global wallet limits and deposit details.</CardDescription>
                         </CardHeader>
                         <form onSubmit={handleWalletUpdate}>
-                            <CardContent className="pt-6 space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="minWithdrawal">Minimum Withdrawal (₹)</Label>
-                                    <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
+                            <CardContent className="pt-6 space-y-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="minWithdrawal">Min Withdrawal (₹)</Label>
+                                        <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="maxWithdrawal">Max Withdrawal (₹)</Label>
+                                        <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="maxWithdrawal">Maximum Withdrawal (₹)</Label>
-                                    <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
-                                    <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="qr-code">QR Code Image</Label>
-                                    <Input id="qr-code" type="file" accept="image/*" onChange={handleFileChange} disabled={isUpdatingWallet} />
-                                    {walletSettings.qrCodeImageUrl && !qrCodeFile && <p className="text-xs text-muted-foreground pt-1">Current QR code is set. Upload a new file to replace it.</p>}
-                                </div>
-                                <div className="flex justify-end">
+
+                                <Tabs defaultValue="upi" className="w-full">
+                                    <TabsList className="grid w-full grid-cols-4">
+                                        <TabsTrigger value="upi">UPI</TabsTrigger>
+                                        <TabsTrigger value="bank">Bank</TabsTrigger>
+                                        <TabsTrigger value="binance">Binance</TabsTrigger>
+                                        <TabsTrigger value="paypal">PayPal</TabsTrigger>
+                                    </TabsList>
+                                    
+                                    <TabsContent value="upi" className="space-y-4 pt-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
+                                            <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="upi-qr">UPI QR Code</Label>
+                                            <Input id="upi-qr" type="file" accept="image/*" onChange={handleUpiFileChange} disabled={isUpdatingWallet} />
+                                            {walletSettings.qrCodeImageUrl && !upiQrFile && <p className="text-xs text-muted-foreground">Current QR code is set.</p>}
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="bank" className="space-y-4 pt-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bankName">Bank Name</Label>
+                                                <Input id="bankName" value={walletSettings.bankName} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bankIfscCode">IFSC Code</Label>
+                                                <Input id="bankIfscCode" value={walletSettings.bankIfscCode} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bankAccountNumber">Account Number</Label>
+                                            <Input id="bankAccountNumber" value={walletSettings.bankAccountNumber} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="bankAccountHolderName">Account Holder Name</Label>
+                                            <Input id="bankAccountHolderName" value={walletSettings.bankAccountHolderName} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="binance" className="space-y-4 pt-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="binanceId">Binance ID</Label>
+                                            <Input id="binanceId" value={walletSettings.binanceId} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="binance-qr">Binance Pay QR Code</Label>
+                                            <Input id="binance-qr" type="file" accept="image/*" onChange={handleBinanceFileChange} disabled={isUpdatingWallet} />
+                                            {walletSettings.binanceQrCodeImageUrl && !binanceQrFile && <p className="text-xs text-muted-foreground">Current QR code is set.</p>}
+                                        </div>
+                                    </TabsContent>
+
+                                    <TabsContent value="paypal" className="space-y-4 pt-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="paypalEmail">PayPal Support Email</Label>
+                                            <Input id="paypalEmail" type="email" value={walletSettings.paypalEmail} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                        </div>
+                                    </TabsContent>
+                                </Tabs>
+
+                                <div className="flex justify-end pt-4">
                                     <Button type="submit" disabled={isUpdatingWallet}>
                                         {isUpdatingWallet ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        Save Wallet Settings
+                                        Save Payment Settings
                                     </Button>
                                 </div>
                             </CardContent>
