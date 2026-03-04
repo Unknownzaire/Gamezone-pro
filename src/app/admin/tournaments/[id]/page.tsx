@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, DollarSign, Trophy, Users } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -31,6 +31,7 @@ export default function ManageTournamentPage() {
   const [roomId, setRoomId] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [liveStreamLink, setLiveStreamLink] = useState('');
+  const [participantSearch, setParticipantSearch] = useState('');
   
   useEffect(() => {
     let allTournaments: Tournament[];
@@ -121,6 +122,13 @@ export default function ManageTournamentPage() {
     { title: "Participants", value: `${tournament.participants.length} / 100`, icon: Users },
   ];
 
+  const filteredParticipants = tournament.participants.filter(p => {
+    const searchLower = participantSearch.toLowerCase();
+    return p.user.username.toLowerCase().includes(searchLower) || 
+           (p.user.inGameUsername && p.user.inGameUsername.toLowerCase().includes(searchLower)) ||
+           (p.user.inGameId && p.user.inGameId.toLowerCase().includes(searchLower));
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
@@ -181,9 +189,20 @@ export default function ManageTournamentPage() {
         </Card>
 
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Participants</CardTitle>
-                 <CardDescription>List of all players who joined this tournament.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div className="space-y-1.5">
+                    <CardTitle className="font-headline">Participants</CardTitle>
+                    <CardDescription>List of all players who joined this tournament.</CardDescription>
+                </div>
+                <div className="relative w-full max-w-[200px]">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search user..." 
+                        className="pl-8 h-8 text-xs" 
+                        value={participantSearch}
+                        onChange={(e) => setParticipantSearch(e.target.value)}
+                    />
+                </div>
             </CardHeader>
             <CardContent>
               <ScrollArea className="h-72">
@@ -197,7 +216,7 @@ export default function ManageTournamentPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {tournament.participants.map(p => (
+                        {filteredParticipants.map(p => (
                             <TableRow key={p.id}>
                                 <TableCell>{p.user.username}</TableCell>
                                 <TableCell>{p.user.inGameUsername || 'N/A'}</TableCell>
@@ -211,6 +230,9 @@ export default function ManageTournamentPage() {
                         ))}
                     </TableBody>
                 </Table>
+                {filteredParticipants.length === 0 && (
+                    <p className="text-center text-muted-foreground py-8">No matching participants found.</p>
+                )}
               </ScrollArea>
             </CardContent>
         </Card>
