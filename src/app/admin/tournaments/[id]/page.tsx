@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2, MoreHorizontal, UserMinus } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -405,11 +405,23 @@ export default function ManageTournamentPage() {
                                         <Button 
                                             variant="ghost" 
                                             size="icon" 
+                                            className="h-8 w-8 text-orange-500 hover:bg-orange-500/10"
+                                            onClick={() => setParticipantToRemove(p)}
+                                            disabled={tournament.status === 'Completed'}
+                                            title="Delete User Joining (Refund)"
+                                        >
+                                            <UserMinus className="h-4 w-4" />
+                                            <span className="sr-only">Delete User Joining</span>
+                                        </Button>
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
                                             className="h-8 w-8 text-destructive hover:bg-destructive/10"
                                             onClick={() => {
                                                 setAccountToDelete(p.user);
                                                 setIsAccountDeleteDialogOpen(true);
                                             }}
+                                            title="Delete User Account Permanently"
                                         >
                                             <Trash2 className="h-4 w-4" />
                                             <span className="sr-only">Delete User Account</span>
