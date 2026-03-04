@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -29,6 +29,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
 
 
 export default function ManageTournamentPage() {
@@ -45,6 +53,9 @@ export default function ManageTournamentPage() {
   const [participantSearch, setParticipantSearch] = useState('');
   const [participantToRemove, setParticipantToRemove] = useState<Participant | null>(null);
   
+  const [isAccountDeleteDialogOpen, setIsAccountDeleteDialogOpen] = useState(false);
+  const [accountToDelete, setAccountToDelete] = useState<User | null>(null);
+
   useEffect(() => {
     let allTournaments: Tournament[];
     try {
@@ -192,6 +203,42 @@ export default function ManageTournamentPage() {
     setParticipantToRemove(null);
   };
 
+  const handleDeleteAccount = () => {
+    if (!accountToDelete) return;
+
+    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    let allTournaments: Tournament[] = JSON.parse(localStorage.getItem('allTournaments') || '[]');
+    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+
+    // 1. Remove user from all users
+    const updatedUsers = allUsers.filter(u => u.id !== accountToDelete.id);
+    
+    // 2. Remove user from all tournaments participant lists
+    const updatedTournaments = allTournaments.map(t => ({
+        ...t,
+        participants: t.participants.filter(p => p.user.id !== accountToDelete.id)
+    }));
+
+    // 3. Remove user transactions
+    const updatedTransactions = allTransactions.filter(tx => tx.userId !== accountToDelete.id);
+
+    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
+    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+
+    // Update local state
+    setTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === id));
+    
+    toast({
+        title: "Account Deleted",
+        description: `User account for ${accountToDelete.username} has been permanently deleted.`,
+    });
+    
+    setAccountToDelete(null);
+    setIsAccountDeleteDialogOpen(false);
+  };
+
   const statCards = [
     { title: "Status", value: tournament.status, icon: Clock },
     { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
@@ -329,16 +376,41 @@ export default function ManageTournamentPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="text-destructive border-destructive hover:bg-destructive hover:text-destructive-foreground h-8"
-                                        onClick={() => setParticipantToRemove(p)}
-                                        disabled={tournament.status === 'Completed'}
-                                    >
-                                        <Trash2 className="mr-1 h-3 w-3" />
-                                        Delete
-                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                                <span className="sr-only">Open menu</span>
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                            <DropdownMenuItem asChild>
+                                                <Link href={`/admin/users/edit/${p.user.id}`}>
+                                                    View / Edit Profile
+                                                </Link>
+                                            </DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem 
+                                                className="text-destructive"
+                                                onClick={() => setParticipantToRemove(p)}
+                                                disabled={tournament.status === 'Completed'}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Remove & Refund
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem 
+                                                className="text-destructive font-bold"
+                                                onClick={() => {
+                                                    setAccountToDelete(p.user);
+                                                    setIsAccountDeleteDialogOpen(true);
+                                                }}
+                                            >
+                                                <Trash2 className="mr-2 h-4 w-4" />
+                                                Delete User Account
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -370,6 +442,27 @@ export default function ManageTournamentPage() {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive hover:bg-destructive/90">
               Confirm & Refund
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+       <AlertDialog open={isAccountDeleteDialogOpen} onOpenChange={setIsAccountDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permanently Delete User Account?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you absolutely sure you want to delete <strong>{accountToDelete?.username}</strong>?
+              <br /><br />
+              This action is <strong>permanent</strong>. It will remove the user from the system, all tournaments they are in, and delete their entire profile. 
+              <br /><br />
+              <em>Note: No refunds are issued automatically when deleting an account. Use "Remove & Refund" first if needed.</em>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setAccountToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90 text-white">
+              Permanently Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
