@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -16,8 +16,18 @@ import { WinnerSuggestion } from './components/WinnerSuggestion';
 import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Tournament } from '@/lib/types';
+import { Tournament, Participant, User, Transaction } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 
 export default function ManageTournamentPage() {
@@ -32,6 +42,7 @@ export default function ManageTournamentPage() {
   const [roomPassword, setRoomPassword] = useState('');
   const [liveStreamLink, setLiveStreamLink] = useState('');
   const [participantSearch, setParticipantSearch] = useState('');
+  const [participantToRemove, setParticipantToRemove] = useState<Participant | null>(null);
   
   useEffect(() => {
     let allTournaments: Tournament[];
@@ -113,6 +124,57 @@ export default function ManageTournamentPage() {
     const updatedTournaments = tournaments.map(t => t.id === updatedTournament.id ? updatedTournament : t);
     updateAndSaveTournaments(updatedTournaments);
     setTournament(updatedTournament);
+  };
+
+  const handleRemoveParticipant = () => {
+    if (!participantToRemove || !tournament) return;
+
+    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
+    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+    let allTournaments: Tournament[] = JSON.parse(localStorage.getItem('allTournaments') || '[]');
+
+    // 1. Refund the user
+    const userIndex = allUsers.findIndex(u => u.id === participantToRemove.user.id);
+    if (userIndex !== -1) {
+        allUsers[userIndex].walletBalance += tournament.entryFee;
+        
+        // 2. Add refund transaction
+        const refundTx: Transaction = {
+            id: `tx-refund-${Date.now()}`,
+            userId: participantToRemove.user.id,
+            amount: tournament.entryFee,
+            type: 'credit',
+            description: `Refund for removal from tournament: ${tournament.title}`,
+            createdAt: new Date(),
+            status: 'completed',
+        };
+        allTransactions.unshift(refundTx);
+    }
+
+    // 3. Remove from tournament
+    const updatedTournaments = allTournaments.map(t => {
+        if (t.id === tournament.id) {
+            return {
+                ...t,
+                participants: t.participants.filter(p => p.id !== participantToRemove.id)
+            };
+        }
+        return t;
+    });
+
+    localStorage.setItem('allUsers', JSON.stringify(allUsers));
+    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+
+    setTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === tournament.id));
+    
+    toast({
+        title: "Participant Removed",
+        description: `${participantToRemove.user.username} has been removed and refunded ₹${tournament.entryFee}.`,
+    });
+    
+    setParticipantToRemove(null);
   };
 
   const statCards = [
@@ -213,6 +275,7 @@ export default function ManageTournamentPage() {
                             <TableHead>Game Username</TableHead>
                             <TableHead>Game ID</TableHead>
                             <TableHead>Result</TableHead>
+                            <TableHead className="text-right">Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -225,6 +288,18 @@ export default function ManageTournamentPage() {
                                     <Badge variant={p.result === 'Winner' ? 'default' : 'outline'}>
                                         {p.result ?? 'N/A'}
                                     </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        className="text-destructive h-8 w-8"
+                                        onClick={() => setParticipantToRemove(p)}
+                                        disabled={tournament.status === 'Completed'}
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                        <span className="sr-only">Remove participant</span>
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
@@ -241,6 +316,25 @@ export default function ManageTournamentPage() {
        <Separator />
       
        <WinnerSuggestion tournament={tournament} onWinnerDeclare={handleWinnerDeclaration} />
+
+       <AlertDialog open={!!participantToRemove} onOpenChange={(open) => !open && setParticipantToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Participant?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{participantToRemove?.user.username}</strong> from this tournament?
+              <br /><br />
+              The entry fee of <strong>₹{tournament.entryFee}</strong> will be refunded to their wallet.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive hover:bg-destructive/90">
+              Confirm & Refund
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );
