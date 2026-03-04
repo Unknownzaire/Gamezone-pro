@@ -5,18 +5,19 @@ import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament, PromotionalAd, SupportTicket } from '@/lib/types';
-import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket } from "lucide-react";
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket, Pencil } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogClose, DialogTrigger, DialogFooter } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 export default function AdminDashboardPage() {
   const [totalUsers, setTotalUsers] = useState(0);
@@ -37,6 +38,10 @@ export default function AdminDashboardPage() {
   
   const [transactionToDecline, setTransactionToDecline] = useState<Transaction | null>(null);
   const [declineReason, setDeclineReason] = useState('');
+
+  const [transactionToEditAmount, setTransactionToEditAmount] = useState<Transaction | null>(null);
+  const [editAmountValue, setEditAmountValue] = useState('');
+  const [isEditAmountDialogOpen, setIsEditAmountDialogOpen] = useState(false);
 
   const loadData = useCallback(() => {
     try {
@@ -189,6 +194,27 @@ export default function AdminDashboardPage() {
     setTransactionToDecline(null);
     setDeclineReason('');
   }
+
+  const handleSaveAmount = () => {
+    if (!transactionToEditAmount || !editAmountValue) return;
+    const amount = parseFloat(editAmountValue);
+    if (isNaN(amount) || amount <= 0) {
+      toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount." });
+      return;
+    }
+
+    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
+    const index = currentAllTransactions.findIndex(t => t.id === transactionToEditAmount.id);
+    if (index !== -1) {
+      currentAllTransactions[index].amount = amount;
+      localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
+      loadData();
+      toast({ title: "Amount Updated", description: "Deposit amount has been adjusted." });
+      setIsEditAmountDialogOpen(false);
+      setTransactionToEditAmount(null);
+      setEditAmountValue('');
+    }
+  };
   
   const handleRefreshClick = (e: React.MouseEvent, type: 'withdrawals' | 'deposits') => {
     e.stopPropagation();
@@ -351,7 +377,23 @@ export default function AdminDashboardPage() {
                               </div>
                             ) : 'Unknown User'}
                           </TableCell>
-                          <TableCell className="font-semibold">₹{tx.amount.toLocaleString()}</TableCell>
+                          <TableCell className="font-semibold">
+                            <div className="flex items-center gap-2">
+                              ₹{tx.amount.toLocaleString()}
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6"
+                                onClick={() => {
+                                  setTransactionToEditAmount(tx);
+                                  setEditAmountValue(tx.amount.toString());
+                                  setIsEditAmountDialogOpen(true);
+                                }}
+                              >
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
                           <TableCell>
                             {tx.paymentDetails ? (
                               <div className="text-xs">
@@ -526,6 +568,33 @@ export default function AdminDashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isEditAmountDialogOpen} onOpenChange={setIsEditAmountDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Deposit Amount</DialogTitle>
+            <DialogDescription>
+              Adjust the amount for this pending deposit request.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-amount">New Amount (₹)</Label>
+              <Input 
+                id="edit-amount" 
+                type="number" 
+                value={editAmountValue} 
+                onChange={(e) => setEditAmountValue(e.target.value)} 
+                placeholder="Enter correct amount"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditAmountDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveAmount}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
