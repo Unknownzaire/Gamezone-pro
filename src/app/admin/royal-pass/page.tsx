@@ -50,6 +50,7 @@ export default function AdminRoyalPassPage() {
     
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [entryToDelete, setEntryToDelete] = useState<Transaction | null>(null);
 
     useEffect(() => {
         const settings = localStorage.getItem('luckyDrawSettings');
@@ -91,6 +92,15 @@ export default function AdminRoyalPassPage() {
     });
 
     const royalPassUsers = allUsers.filter(u => u.hasRoyalPass);
+
+    const handleDeleteEntry = (transactionId: string) => {
+        const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
+        const updatedTransactions = localAllTransactions.filter((tx: any) => tx.id !== transactionId);
+        localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+        toast({ title: "Entry deleted successfully" });
+        setEntryToDelete(null);
+        reload();
+    };
 
     const handlePickWinner = (manualWinnerId?: string) => {
         if (dailyEntries.length === 0) {
@@ -501,6 +511,14 @@ export default function AdminRoyalPassPage() {
                                                     <Link href={`/admin/users/edit/${entryUser?.id}`}>
                                                         <Button variant="ghost" size="sm">Manage</Button>
                                                     </Link>
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="text-destructive hover:bg-destructive/10"
+                                                        onClick={() => setEntryToDelete(entry)}
+                                                    >
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
                                                 </div>
                                             </TableCell>
                                         </TableRow>
@@ -567,6 +585,26 @@ export default function AdminRoyalPassPage() {
                     )}
                 </CardContent>
             </Card>
+
+            <AlertDialog open={!!entryToDelete} onOpenChange={(open) => !open && setEntryToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Lucky Draw Entry?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to remove this entry? The user will not be refunded automatically.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={() => entryToDelete && handleDeleteEntry(entryToDelete.id)}
+                            className="bg-destructive hover:bg-destructive/90"
+                        >
+                            Delete Entry
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }
