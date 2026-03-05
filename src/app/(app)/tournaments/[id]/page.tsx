@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter, useParams } from 'next/navigation';
@@ -116,9 +117,6 @@ export default function TournamentDetailsPage() {
           description: `You and your team have joined the "${tournament.title}" tournament.`,
         });
         setSelectedTeammates([]);
-        setTimeout(() => {
-            router.push('/royal-pass');
-        }, 1500);
       } else if (typeof result === 'object' && result.error) {
           toast({
               variant: 'destructive',
@@ -259,7 +257,7 @@ export default function TournamentDetailsPage() {
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isJoining) joinButtonText = 'Joining...';
-  else if (isAlreadyJoined) joinButtonText = 'ENTER LUCKY DRAW';
+  else if (isAlreadyJoined) joinButtonText = 'ALREADY JOINED';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
   else if (isBlocked) joinButtonText = 'Account Blocked';
@@ -431,11 +429,9 @@ export default function TournamentDetailsPage() {
 
       <div className="pt-2">
         {isAlreadyJoined ? (
-            <Link href="/royal-pass" className="w-full">
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg">
-                    ENTER LUCKY DRAW
-                </Button>
-            </Link>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled>
+                ALREADY JOINED
+            </Button>
         ) : (
             <AlertDialog>
             <AlertDialogTrigger asChild>
