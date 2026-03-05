@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 export default function RoyalPassPage() {
-    const { user, updateUser, addTransaction, transactions } = useUser();
+    const { user, updateUser, addTransaction, transactions, tournaments } = useUser();
     const { toast } = useToast();
     const [settings, setSettings] = useState({
         jackpotName: 'Daily Lucky Draw',
@@ -61,6 +61,11 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
+    // Calculate if user has joined ANY tournament
+    const hasJoinedAnyTournament = (tournaments || []).some(t => 
+        t.participants.some(p => p.user.id === user?.id)
+    );
+
     // Calculate entries for the current user for this draw
     const currentEntriesCount = (transactions || []).filter(tx => 
         tx.description.startsWith(`Joined Lucky Draw:`) && 
@@ -82,6 +87,15 @@ export default function RoyalPassPage() {
                 variant: 'destructive',
                 title: "Draw Closed",
                 description: "This lucky draw is currently not accepting entries.",
+            });
+            return;
+        }
+
+        if (!hasJoinedAnyTournament) {
+            toast({
+                variant: 'destructive',
+                title: "Entry Locked",
+                description: "You must join at least one tournament match to unlock the lucky draw.",
             });
             return;
         }
@@ -164,11 +178,13 @@ export default function RoyalPassPage() {
                     <div className="space-y-3">
                         <div className="flex justify-between text-xs font-medium uppercase text-muted-foreground">
                             <span>Status</span>
-                            <span>{currentEntriesCount >= 1 ? 'ALREADY JOINED' : (settings.isActive ? 'NOT ENTERED' : 'DRAW CLOSED')}</span>
+                            <span>
+                                {!hasJoinedAnyTournament ? 'JOIN A MATCH TO UNLOCK' : (currentEntriesCount >= 1 ? 'ALREADY JOINED' : (settings.isActive ? 'NOT ENTERED' : 'DRAW CLOSED'))}
+                            </span>
                         </div>
                         <div className="h-2 w-full rounded-full bg-muted/50 overflow-hidden border border-white/5">
                             <div 
-                                className={`h-full ${settings.isActive ? 'bg-gradient-to-r from-primary to-accent' : 'bg-muted'} transition-all duration-500`} 
+                                className={`h-full ${settings.isActive && hasJoinedAnyTournament ? 'bg-gradient-to-r from-primary to-accent' : 'bg-muted'} transition-all duration-500`} 
                                 style={{ width: currentEntriesCount >= 1 ? '100%' : '0%' }} 
                             />
                         </div>
@@ -178,41 +194,53 @@ export default function RoyalPassPage() {
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button 
-                                    className={`w-full h-14 text-lg font-black shadow-lg transition-transform active:scale-95 group ${settings.isActive ? 'shadow-primary/20 bg-primary hover:bg-primary/90' : ''}`}
-                                    disabled={currentEntriesCount >= 1 || !settings.isActive}
-                                    variant={settings.isActive ? "default" : "secondary"}
+                                    className={`w-full h-14 text-lg font-black shadow-lg transition-transform active:scale-95 group ${settings.isActive && hasJoinedAnyTournament ? 'shadow-primary/20 bg-primary hover:bg-primary/90' : ''}`}
+                                    disabled={currentEntriesCount >= 1 || !settings.isActive || !hasJoinedAnyTournament}
+                                    variant={settings.isActive && hasJoinedAnyTournament ? "default" : "secondary"}
                                 >
-                                    {settings.isActive ? (
-                                        <>
-                                            <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
-                                            {currentEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
-                                        </>
-                                    ) : (
+                                    {!settings.isActive ? (
                                         <>
                                             <XCircle className="mr-2 h-6 w-6" />
                                             DRAW CLOSED
                                         </>
+                                    ) : !hasJoinedAnyTournament ? (
+                                        <>
+                                            <Lock className="mr-2 h-6 w-6" />
+                                            ENTRY LOCKED
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Gift className="mr-2 h-6 w-6 group-hover:rotate-12 transition-transform" />
+                                            {currentEntriesCount >= 1 ? 'ALREADY JOINED' : `JOIN DRAW (₹${settings.entryFee})`}
+                                        </>
                                     )}
                                 </Button>
                             </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                    <AlertDialogTitle className="flex items-center gap-2">
-                                        <AlertTriangle className="h-5 w-5 text-primary" />
-                                        Confirm Entry
-                                    </AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                        Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. Only 1 entry per player is allowed.
-                                    </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={handleJoinDraw}>
-                                        Confirm & Join
-                                    </AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
+                            {hasJoinedAnyTournament && settings.isActive && currentEntriesCount < 1 && (
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle className="flex items-center gap-2">
+                                            <AlertTriangle className="h-5 w-5 text-primary" />
+                                            Confirm Entry
+                                        </AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                            Are you sure you want to join {settings.jackpotName}? ₹{settings.entryFee} will be deducted from your wallet balance. Only 1 entry per player is allowed.
+                                        </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleJoinDraw}>
+                                            Confirm & Join
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            )}
                         </AlertDialog>
+                        {!hasJoinedAnyTournament && settings.isActive && (
+                            <p className="text-xs text-center text-primary font-bold animate-pulse">
+                                Please join any tournament match first to unlock this draw!
+                            </p>
+                        )}
                         <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider font-semibold">
                             Winner announced every Sunday
                         </p>
