@@ -91,8 +91,6 @@ export default function AdminRoyalPassPage() {
                user?.email.toLowerCase().includes(searchTerm.toLowerCase());
     });
 
-    const royalPassUsers = allUsers.filter(u => u.hasRoyalPass);
-
     const handleDeleteEntry = (transactionId: string) => {
         const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         const updatedTransactions = localAllTransactions.filter((tx: any) => tx.id !== transactionId);
@@ -259,7 +257,7 @@ export default function AdminRoyalPassPage() {
                         <Star className="h-4 w-4 text-yellow-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{royalPassUsers.length}</div>
+                        <div className="text-2xl font-bold">{allUsers.filter(u => u.hasRoyalPass).length}</div>
                         <p className="text-xs text-muted-foreground">Total users with premium</p>
                     </CardContent>
                 </Card>
@@ -534,55 +532,6 @@ export default function AdminRoyalPassPage() {
                             </TableBody>
                         </Table>
                     </ScrollArea>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle className="font-headline text-xl">Royal Pass Holders</CardTitle>
-                    <CardDescription>Users currently enjoying premium benefits.</CardDescription>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>User</TableHead>
-                                <TableHead>Primary Game</TableHead>
-                                <TableHead>Balance</TableHead>
-                                <TableHead className="text-right">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {royalPassUsers.map((user) => (
-                                <TableRow key={user.id}>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                                <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-semibold">{user.username}</p>
-                                                <p className="text-xs text-muted-foreground">{user.email}</p>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>{user.primaryGame}</TableCell>
-                                    <TableCell>₹{user.walletBalance.toLocaleString()}</TableCell>
-                                    <TableCell className="text-right">
-                                        <Link href={`/admin/users/edit/${user.id}`}>
-                                            <Button variant="outline" size="sm">Manage Profile</Button>
-                                        </Link>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    {royalPassUsers.length === 0 && (
-                        <div className="p-8 text-center text-muted-foreground">
-                            No users have purchased a Royal Pass yet.
-                        </div>
-                    )}
                 </CardContent>
             </Card>
 
