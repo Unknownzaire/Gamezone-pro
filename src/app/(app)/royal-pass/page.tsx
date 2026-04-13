@@ -258,7 +258,7 @@ export default function RoyalPassPage() {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y divide-white/5">
-                        {winners.map((winner, i) => (
+                        {winners.slice(0, 5).map((winner, i) => (
                             <div key={i} className="flex items-center justify-between p-4 hover:bg-white/5 transition-colors">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center font-bold text-xs">
