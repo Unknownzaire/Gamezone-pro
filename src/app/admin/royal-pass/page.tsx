@@ -107,7 +107,7 @@ export default function AdminRoyalPassPage() {
             toast({
                 variant: 'destructive',
                 title: "No Entries",
-                description: "There are no entries for the current lucky draw yet.",
+                description: "There are no entries for the current giveaway yet.",
             });
             return;
         }
@@ -143,7 +143,7 @@ export default function AdminRoyalPassPage() {
             userId: winner.id,
             amount: jackpotAmount,
             type: 'credit',
-            description: `Won ${jackpotName} Jackpot!`,
+            description: `Won ${jackpotName} Giveaway!`,
             createdAt: new Date(),
             status: 'completed'
         };
@@ -164,7 +164,7 @@ export default function AdminRoyalPassPage() {
         // 4. Send notification
         addNotification({
             userId: winner.id,
-            title: '🎉 JACKPOT WINNER!',
+            title: '🎉 GIVEAWAY WINNER!',
             description: `Congratulations! You won the ${jackpotName} of ₹${jackpotAmount.toLocaleString()}!`,
             type: 'general'
         });
@@ -190,13 +190,13 @@ export default function AdminRoyalPassPage() {
         if (newActiveStatus !== undefined) {
             setIsActive(newActiveStatus);
             toast({
-                title: newActiveStatus ? "Jackpot Activated" : "Jackpot Deactivated",
-                description: `The lucky draw is now ${newActiveStatus ? 'live' : 'hidden'}.`,
+                title: newActiveStatus ? "Giveaway Activated" : "Giveaway Deactivated",
+                description: `The giveaway is now ${newActiveStatus ? 'live' : 'hidden'}.`,
             });
         } else {
             toast({
                 title: "Settings Saved",
-                description: "Lucky Draw configuration has been updated.",
+                description: "Giveaway configuration has been updated.",
             });
             setIsConfigDialogOpen(false);
         }
@@ -222,7 +222,7 @@ export default function AdminRoyalPassPage() {
                         </Button>
                     </Link>
                     <div>
-                        <h1 className="font-headline text-3xl font-bold">Royal Pass & Lucky Draw</h1>
+                        <h1 className="font-headline text-3xl font-bold">Royal Pass & Giveaway</h1>
                         <p className="text-muted-foreground">Manage prizes, winners, and pass holders.</p>
                     </div>
                 </div>
@@ -245,7 +245,7 @@ export default function AdminRoyalPassPage() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Current Jackpot</CardTitle>
+                        <CardTitle className="text-sm font-medium">Current Giveaway</CardTitle>
                         <Gift className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
@@ -271,7 +271,7 @@ export default function AdminRoyalPassPage() {
                         <div className="flex-1">
                             <CardTitle className="font-headline text-xl flex items-center gap-2">
                                 <Sparkles className="h-5 w-5 text-primary" />
-                                Jackpot Configuration
+                                GIVEAWAY
                             </CardTitle>
                             <CardDescription>Adjust the prize and entry costs.</CardDescription>
                         </div>
@@ -290,17 +290,17 @@ export default function AdminRoyalPassPage() {
                                 <DialogTrigger asChild>
                                     <Button variant="ghost" size="icon">
                                         <Pencil className="h-4 w-4" />
-                                        <span className="sr-only">Edit Jackpot Settings</span>
+                                        <span className="sr-only">Edit Giveaway Settings</span>
                                     </Button>
                                 </DialogTrigger>
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Edit Jackpot Configuration</DialogTitle>
-                                        <DialogDescription>Update the jackpot details. Entries are strictly limited to 1 per user.</DialogDescription>
+                                        <DialogTitle>Edit Giveaway Configuration</DialogTitle>
+                                        <DialogDescription>Update the giveaway details. Entries are strictly limited to 1 per user.</DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="jackpotName">Jackpot Name</Label>
+                                            <Label htmlFor="jackpotName">Giveaway Name</Label>
                                             <Input 
                                                 id="jackpotName" 
                                                 value={jackpotName} 
@@ -308,7 +308,7 @@ export default function AdminRoyalPassPage() {
                                             />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="jackpot">Jackpot Amount (₹)</Label>
+                                            <Label htmlFor="jackpot">Giveaway Amount (₹)</Label>
                                             <Input 
                                                 id="jackpot" 
                                                 type="number" 
@@ -340,7 +340,7 @@ export default function AdminRoyalPassPage() {
                         <div className="rounded-lg border bg-muted/30 p-4">
                             <div className="flex justify-between items-start">
                                 <div>
-                                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Jackpot</p>
+                                    <p className="text-xs text-muted-foreground uppercase tracking-wider font-bold mb-1">Active Giveaway</p>
                                     <p className="text-xl font-black">{jackpotName}</p>
                                 </div>
                                 <Badge variant={isActive ? "default" : "secondary"}>
@@ -495,9 +495,9 @@ export default function AdminRoyalPassPage() {
                                                         </AlertDialogTrigger>
                                                         <AlertDialogContent>
                                                             <AlertDialogHeader>
-                                                                <AlertDialogTitle>Award Jackpot to {entryUser?.username}?</AlertDialogTitle>
+                                                                <AlertDialogTitle>Award Giveaway to {entryUser?.username}?</AlertDialogTitle>
                                                                 <AlertDialogDescription>
-                                                                    This will award the jackpot to this specific user and DELETE all other current entries to reset the pool.
+                                                                    This will award the giveaway prize to this specific user and DELETE all other current entries to reset the pool.
                                                                 </AlertDialogDescription>
                                                             </AlertDialogHeader>
                                                             <AlertDialogFooter>
