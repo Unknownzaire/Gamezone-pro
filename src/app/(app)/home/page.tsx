@@ -17,53 +17,74 @@ import Autoplay from "embla-carousel-autoplay";
 import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
-    <Card key={tournament.id} className="overflow-hidden group relative aspect-video flex flex-col justify-end text-white">
+    <Card key={tournament.id} className="overflow-hidden group relative flex flex-col h-full border-primary/10 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
         {/* Clickable Link Overlay */}
         <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
             <span className="sr-only">View tournament details</span>
         </Link>
         
-        {/* Background Image */}
-        <Image
-            src={tournament.imageUrl}
-            alt={tournament.title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            data-ai-hint={tournament.imageHint}
-        />
-        
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent z-10" />
+        {/* Header Image with Status */}
+        <div className="relative aspect-video w-full overflow-hidden">
+            <Image
+                src={tournament.imageUrl}
+                alt={tournament.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                data-ai-hint={tournament.imageHint}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+            
+            <Badge
+                variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                className="absolute right-2 top-2 z-30 font-bold shadow-md px-2 py-0.5"
+            >
+                {tournament.status === "Live" && <span className="mr-1 h-1.5 w-1.5 animate-pulse rounded-full bg-white inline-block" />}
+                {tournament.status}
+            </Badge>
+        </div>
 
         {/* Content */}
-        <div className="relative p-3 space-y-2">
-             <h3 className="font-headline text-base font-bold truncate">{tournament.title}</h3>
-            
-             <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-[10px] text-white/90">
-                <div className="flex items-center gap-1.5">
-                    <Trophy className="h-3 w-3" />
-                    <span>Prize: ₹{tournament.prizePool.toLocaleString()}</span>
+        <CardContent className="p-3 flex-1 flex flex-col justify-between space-y-3">
+            <div className="space-y-2">
+                <h3 className="font-headline text-sm font-bold leading-tight line-clamp-2 group-hover:text-primary transition-colors">
+                    {tournament.title}
+                </h3>
+                
+                <div className="grid grid-cols-2 gap-2">
+                    <div className="flex items-center gap-1.5 bg-muted/30 px-2 py-1.5 rounded-lg border border-white/5">
+                        <Trophy className="h-3 w-3 text-yellow-500" />
+                        <div className="flex flex-col">
+                            <span className="text-[8px] text-muted-foreground uppercase font-medium leading-none">Prize</span>
+                            <span className="text-[10px] font-bold text-foreground">₹{tournament.prizePool.toLocaleString()}</span>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-1.5 bg-muted/30 px-2 py-1.5 rounded-lg border border-white/5">
+                        <Users className="h-3 w-3 text-primary" />
+                        <div className="flex flex-col">
+                            <span className="text-[8px] text-muted-foreground uppercase font-medium leading-none">Entry</span>
+                            <span className="text-[10px] font-bold text-foreground">₹{tournament.entryFee}</span>
+                        </div>
+                    </div>
                 </div>
-                 <div className="flex items-center gap-1.5">
-                    <Users className="h-3 w-3" />
-                    <span>Entry: ₹{tournament.entryFee}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3" /> : <Users className="h-3 w-3" />}
-                    <span>{tournament.matchType}</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                    <Clock className="h-3 w-3" />
-                    <span className='truncate'>{format(new Date(tournament.matchTime), "P p")}</span>
+
+                <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-1 px-1">
+                    <div className="flex items-center gap-1">
+                        {tournament.matchType === 'Solo' ? <UserIcon className="h-3 w-3" /> : <Users className="h-3 w-3" />}
+                        <span>{tournament.matchType}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" />
+                        <span>{format(new Date(tournament.matchTime), "p")}</span>
+                    </div>
                 </div>
             </div>
 
-            <div>
+            <div className="pt-1">
                 {tournament.status === 'Live' && tournament.liveStreamLink ? (
                     <Button 
                         size="sm" 
-                        variant="secondary" 
-                        className="w-full bg-red-600 hover:bg-red-700 text-white border-none h-7 text-[10px] relative z-30"
+                        variant="destructive" 
+                        className="w-full h-8 text-[10px] relative z-30 font-bold tracking-wider"
                         asChild
                     >
                         <a 
@@ -72,27 +93,25 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <PlayCircle className="mr-1 h-3 w-3" />
-                            Watch Live
+                            <PlayCircle className="mr-1 h-3.5 w-3.5" />
+                            WATCH NOW
                         </a>
                     </Button>
-                ) : tournament.status !== 'Completed' && (
-                    <div className="space-y-1">
-                        <div className="flex justify-between text-[10px] text-white/90">
-                            <span>{tournament.participants.length} / 100 joined</span>
+                ) : tournament.status !== 'Completed' ? (
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between text-[9px] font-bold">
+                            <span className="text-muted-foreground uppercase">Spots Left</span>
+                            <span className="text-primary">{100 - tournament.participants.length} / 100</span>
                         </div>
-                        <Progress value={tournament.participants.length} className="h-1 bg-white/20" />
+                        <Progress value={tournament.participants.length} className="h-1.5 bg-muted" />
                     </div>
+                ) : (
+                    <Button variant="secondary" size="sm" className="w-full h-8 text-[10px] font-bold pointer-events-none opacity-50">
+                        TOURNAMENT ENDED
+                    </Button>
                 )}
             </div>
-        </div>
-        {/* Status Badge */}
-        <Badge
-            variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-            className="absolute right-2 top-2 z-30 text-[10px] px-1.5 py-0.5"
-        >
-            {tournament.status}
-        </Badge>
+        </CardContent>
     </Card>
 );
 
