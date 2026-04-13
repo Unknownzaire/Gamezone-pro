@@ -283,44 +283,6 @@ export default function RoyalPassPage() {
                     </div>
                 </CardContent>
             </Card>
-
-            {/* Royal Pass Info */}
-            <Card className="border-white/5 bg-card/30">
-                <CardHeader>
-                    <div className="flex items-center gap-2 mb-2">
-                        <Star className="h-5 w-5 text-accent fill-accent" />
-                        <CardTitle className="text-xl font-headline">Coming Soon!</CardTitle>
-                    </div>
-                    <CardDescription>
-                        The elite Royal Pass experience is under heavy development.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ul className="space-y-3 text-sm text-muted-foreground">
-                        <li className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            Double Jackpot Entry Chances
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            Zero-Commission Private Rooms
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            Premium "Royal" Badge on Leaderboards
-                        </li>
-                        <li className="flex items-center gap-2">
-                            <div className="h-1.5 w-1.5 rounded-full bg-primary" />
-                            Exclusive Weekly Tournaments
-                        </li>
-                    </ul>
-                    <div className="mt-6 p-4 rounded-lg bg-accent/10 border border-accent/20">
-                        <p className="text-xs text-accent-foreground font-medium text-center italic">
-                            "Stay tuned for exciting new ways to earn rewards and enhance your gaming experience!"
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     );
 }
