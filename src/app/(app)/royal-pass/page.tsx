@@ -144,7 +144,7 @@ export default function RoyalPassPage() {
                 </Link>
                 <div>
                     <h1 className="font-headline text-3xl font-bold tracking-tight">Royal Pass</h1>
-                    <p className="text-muted-foreground text-sm">Try your luck to win Royal Pass!</p>
+                    <p className="text-muted-foreground text-sm">Try your luck to win rewards!</p>
                 </div>
             </div>
 
@@ -161,14 +161,14 @@ export default function RoyalPassPage() {
                         </Badge>
                     </div>
                     <CardDescription className="text-white/70">
-                        {settings.isActive ? 'Win the jackpot every single day!' : 'This draw is currently closed. Stay tuned for the next one!'}
+                        {settings.isActive ? 'Win big rewards every single week!' : 'This draw is currently closed. Stay tuned for the next one!'}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="relative group">
                         {settings.isActive && <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>}
                         <div className={`relative rounded-xl ${settings.isActive ? 'bg-card/80 border-white/10' : 'bg-muted/50 border-dashed'} border p-6 text-center space-y-2`}>
-                            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">Current Jackpot</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">Prize Pool</p>
                             <p className={`text-5xl font-black ${settings.isActive ? 'text-transparent bg-clip-text bg-gradient-to-r from-primary via-white to-accent' : 'text-muted-foreground'} drop-shadow-sm`}>
                                 ₹{settings.jackpotAmount.toLocaleString()}
                             </p>
