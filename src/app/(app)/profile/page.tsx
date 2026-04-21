@@ -1,4 +1,3 @@
-
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -682,11 +681,6 @@ export default function ProfilePage() {
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
-              <div className="text-center pt-2">
-                <Link href="/forgot-password">
-                    <span className="text-sm text-muted-foreground hover:text-primary">Forgot your password?</span>
-                </Link>
-              </div>
           </CardContent>
         </Card>
         
