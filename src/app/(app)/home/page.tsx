@@ -23,7 +23,26 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
             <span className="sr-only">View tournament details</span>
         </Link>
         
-        {/* Content - LEFT SIDE */}
+        {/* Left Side: Image with Status */}
+        <div className="relative w-1/3 h-full overflow-hidden shrink-0 border-r border-white/5">
+            <Image
+                src={tournament.imageUrl}
+                alt={tournament.title}
+                fill
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                data-ai-hint={tournament.imageHint}
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-background/20 via-transparent to-transparent" />
+            
+            <Badge
+                variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
+                className="absolute left-1 top-1 z-30 font-bold shadow-md px-1.5 py-0.5 text-[8px]"
+            >
+                {tournament.status}
+            </Badge>
+        </div>
+
+        {/* Right Side: Content */}
         <CardContent className="p-3 flex-1 flex flex-col justify-between space-y-2 overflow-hidden">
             <div className="space-y-1">
                 <h3 className="font-headline text-sm font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
@@ -84,25 +103,6 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => (
                 )}
             </div>
         </CardContent>
-
-        {/* Right Side: Image with Status */}
-        <div className="relative w-1/3 h-full overflow-hidden shrink-0 border-l border-white/5">
-            <Image
-                src={tournament.imageUrl}
-                alt={tournament.title}
-                fill
-                className="object-cover transition-transform duration-500 group-hover:scale-110"
-                data-ai-hint={tournament.imageHint}
-            />
-            <div className="absolute inset-0 bg-gradient-to-l from-background/20 via-transparent to-transparent" />
-            
-            <Badge
-                variant={tournament.status === "Live" ? "destructive" : tournament.status === 'Completed' ? 'secondary' : 'default'}
-                className="absolute right-1 top-1 z-30 font-bold shadow-md px-1.5 py-0.5 text-[8px]"
-            >
-                {tournament.status}
-            </Badge>
-        </div>
     </Card>
 );
 
