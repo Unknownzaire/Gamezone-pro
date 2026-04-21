@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2, MoreHorizontal, UserMinus } from "lucide-react";
+import { ArrowLeft, Clock, DollarSign, Trophy, Users, Search, Trash2, MoreHorizontal, UserMinus, Pencil } from "lucide-react";
 import Link from "next/link";
 import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
@@ -37,6 +37,16 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 
 export default function ManageTournamentPage() {
@@ -55,6 +65,9 @@ export default function ManageTournamentPage() {
   
   const [isAccountDeleteDialogOpen, setIsAccountDeleteDialogOpen] = useState(false);
   const [accountToDelete, setAccountToDelete] = useState<User | null>(null);
+
+  const [isEditPrizeDialogOpen, setIsEditPrizeDialogOpen] = useState(false);
+  const [newPrizePool, setNewPrizePool] = useState(0);
 
   useEffect(() => {
     let allTournaments: Tournament[];
@@ -75,6 +88,7 @@ export default function ManageTournamentPage() {
         setRoomId(currentTournament.roomId || '');
         setRoomPassword(currentTournament.roomPassword || '');
         setLiveStreamLink(currentTournament.liveStreamLink || '');
+        setNewPrizePool(currentTournament.prizePool);
     } else {
         router.push('/admin/tournaments');
     }
@@ -113,6 +127,28 @@ export default function ManageTournamentPage() {
     toast({
       title: 'Tournament is Live!',
       description: 'Room details have been updated and status is set to Live.',
+    });
+  };
+
+  const handleUpdatePrizePool = () => {
+    if (newPrizePool < 0) {
+        toast({ variant: 'destructive', title: "Invalid Amount", description: "Prize pool cannot be negative." });
+        return;
+    }
+
+    const updatedTournaments = tournaments.map(t => 
+        t.id === tournament.id 
+          ? { ...t, prizePool: newPrizePool } 
+          : t
+      );
+    
+    updateAndSaveTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === id));
+    setIsEditPrizeDialogOpen(false);
+
+    toast({
+      title: 'Prize Pool Updated',
+      description: `The prize pool for "${tournament.title}" has been updated to ₹${newPrizePool.toLocaleString()}.`,
     });
   };
 
@@ -297,7 +333,20 @@ export default function ManageTournamentPage() {
             <Card key={stat.title}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                    <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    <div className="flex items-center gap-2">
+                        {stat.title === "Prize Pool" && (
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-6 w-6 hover:bg-primary/20"
+                                onClick={() => setIsEditPrizeDialogOpen(true)}
+                            >
+                                <Pencil className="h-3 w-3" />
+                                <span className="sr-only">Edit Prize Pool</span>
+                            </Button>
+                        )}
+                        <stat.icon className="h-4 w-4 text-muted-foreground" />
+                    </div>
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
@@ -483,6 +532,35 @@ export default function ManageTournamentPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={isEditPrizeDialogOpen} onOpenChange={setIsEditPrizeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Prize Pool</DialogTitle>
+            <DialogDescription>
+              Update the total prize pool for this tournament. This change will be visible to all users.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="new-prize-pool">Prize Pool (₹)</Label>
+              <Input 
+                id="new-prize-pool" 
+                type="number" 
+                value={newPrizePool} 
+                onChange={(e) => setNewPrizePool(Number(e.target.value))} 
+                placeholder="Enter amount"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleUpdatePrizePool}>Save Changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
