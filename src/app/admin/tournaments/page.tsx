@@ -11,7 +11,7 @@ import { MoreHorizontal, PlusCircle, ArrowLeft, Search, Clock, Trophy, Swords } 
 import Link from "next/link";
 import { format } from "date-fns";
 import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import type { Tournament } from "@/lib/types";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -30,32 +30,40 @@ export default function AdminTournamentsPage() {
   const [gameFilter, setGameFilter] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [gameList, setGameList] = useState<string[]>([]);
   const { toast } = useToast();
 
-   useEffect(() => {
-    const loadTournaments = () => {
-      try {
-        const storedTournaments = localStorage.getItem('allTournaments');
-        if (storedTournaments) {
-          setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
-        } else {
-          setTournaments(initialMockTournaments);
-          localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
-        }
-      } catch (error) {
-        console.error("Failed to parse tournaments from localStorage", error);
+  const loadData = useCallback(() => {
+    try {
+      const storedTournaments = localStorage.getItem('allTournaments');
+      if (storedTournaments) {
+        setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
+      } else {
         setTournaments(initialMockTournaments);
         localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
       }
-    };
+    } catch (error) {
+      console.error("Failed to parse tournaments from localStorage", error);
+      setTournaments(initialMockTournaments);
+    }
 
-    loadTournaments();
-    // Listen for storage changes to update the list in real-time
-    window.addEventListener('storage', loadTournaments);
-    return () => {
-      window.removeEventListener('storage', loadTournaments);
-    };
+    const storedGames = localStorage.getItem('gameList');
+    if (storedGames) {
+        setGameList(JSON.parse(storedGames));
+    } else {
+        const defaultGames = ['BGMI', 'FREE FIRE', 'COD'];
+        setGameList(defaultGames);
+        localStorage.setItem('gameList', JSON.stringify(defaultGames));
+    }
   }, []);
+
+   useEffect(() => {
+    loadData();
+    window.addEventListener('storage', loadData);
+    return () => {
+      window.removeEventListener('storage', loadData);
+    };
+  }, [loadData]);
 
   const handleDeleteTournament = () => {
     if (!tournamentToDelete) return;
@@ -98,6 +106,13 @@ export default function AdminTournamentsPage() {
         <div className="flex items-center gap-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
                 <Button 
+                    variant={statusFilter === 'ALL' ? 'default' : 'outline'} 
+                    size="sm" 
+                    onClick={() => setStatusFilter('ALL')}
+                >
+                    All
+                </Button>
+                <Button 
                     variant={statusFilter === 'Upcoming' ? 'default' : 'outline'} 
                     size="sm" 
                     onClick={() => setStatusFilter(statusFilter === 'Upcoming' ? 'ALL' : 'Upcoming')}
@@ -126,9 +141,9 @@ export default function AdminTournamentsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="ALL">All Games</SelectItem>
-              <SelectItem value="BGMI">BGMI</SelectItem>
-              <SelectItem value="FREE FIRE">Free Fire</SelectItem>
-              <SelectItem value="COD">COD</SelectItem>
+              {gameList.filter(g => g.toUpperCase() !== 'OTHER').map(game => (
+                <SelectItem key={game} value={game.toUpperCase()}>{game}</SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
