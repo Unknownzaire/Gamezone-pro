@@ -60,6 +60,10 @@ export default function AdminSettingsPage() {
     const searchParams = useSearchParams();
     const showOnly = searchParams.get('show');
 
+    const [adminUsername, setAdminUsername] = useState('unknownzaire94');
+    const [currentPasswordInput, setCurrentPasswordInput] = useState('');
+    const [newPasswordInput, setNewPasswordInput] = useState('');
+
     const [walletSettings, setWalletSettings] = useState<WalletSettings>({
         minWithdrawal: 100,
         maxWithdrawal: 5000,
@@ -85,6 +89,12 @@ export default function AdminSettingsPage() {
     const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
     useEffect(() => {
+        const storedAdmin = localStorage.getItem('adminCredentials');
+        if (storedAdmin) {
+            const parsed = JSON.parse(storedAdmin);
+            setAdminUsername(parsed.username);
+        }
+
         const storedWalletSettings = localStorage.getItem('walletSettings');
         if (storedWalletSettings) {
             setWalletSettings(JSON.parse(storedWalletSettings));
@@ -105,10 +115,33 @@ export default function AdminSettingsPage() {
 
     const handleSecurityUpdate = (e: React.FormEvent) => {
         e.preventDefault();
+        
+        const storedAdmin = localStorage.getItem('adminCredentials');
+        const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
+        const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
+
+        if (currentPasswordInput !== credentials.password) {
+            toast({
+                variant: 'destructive',
+                title: "Authentication Failed",
+                description: "The current password you entered is incorrect."
+            });
+            return;
+        }
+
+        const newCredentials = {
+            username: adminUsername,
+            password: newPasswordInput || credentials.password
+        };
+
+        localStorage.setItem('adminCredentials', JSON.stringify(newCredentials));
+
         toast({
             title: "Security Settings Updated",
-            description: "Your admin credentials have been updated."
+            description: "Your admin credentials have been successfully updated."
         });
+        setCurrentPasswordInput('');
+        setNewPasswordInput('');
     }
     
     const handleWalletUpdate = async (e: React.FormEvent) => {
@@ -271,15 +304,32 @@ export default function AdminSettingsPage() {
                             <CardContent className="pt-6 space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="username">Admin Username</Label>
-                                    <Input id="username" defaultValue="admin" required />
+                                    <Input 
+                                        id="username" 
+                                        value={adminUsername} 
+                                        onChange={(e) => setAdminUsername(e.target.value)} 
+                                        required 
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="current-password">Current Password</Label>
-                                    <Input id="current-password" type="password" required />
+                                    <Input 
+                                        id="current-password" 
+                                        type="password" 
+                                        value={currentPasswordInput}
+                                        onChange={(e) => setCurrentPasswordInput(e.target.value)}
+                                        required 
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="new-password">New Password</Label>
-                                    <Input id="new-password" type="password" />
+                                    <Input 
+                                        id="new-password" 
+                                        type="password" 
+                                        value={newPasswordInput}
+                                        onChange={(e) => setNewPasswordInput(e.target.value)}
+                                        placeholder="Leave blank to keep current"
+                                    />
                                 </div>
                                 <div className="flex justify-end">
                                     <Button type="submit">Save Security Settings</Button>

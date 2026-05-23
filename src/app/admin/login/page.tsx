@@ -18,7 +18,13 @@ export default function AdminLoginPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'unknownzaire94' && password === 'z@!re4515') {
+    
+    // Check localStorage for admin credentials, fallback to defaults
+    const storedAdmin = localStorage.getItem('adminCredentials');
+    const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
+    const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
+
+    if (username === credentials.username && password === credentials.password) {
       toast({
         title: 'Admin Login Successful',
         description: 'Welcome to the Admin Panel.',

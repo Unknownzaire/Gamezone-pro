@@ -247,21 +247,19 @@ export default function TournamentDetailsPage() {
     },
   ];
 
-  const isAlreadyJoined = currentUser ? tournament.participants.some(p => p.user.id === currentUser.id) : false;
   const isFull = tournament.participants.length >= 100;
   const isBlocked = currentUser?.isBlocked;
   const isGameMismatch = currentUser && currentUser.primaryGame !== tournament.gameName;
   const isTeamCorrectlySelected = requiredTeammates === 0 || selectedTeammates.length === requiredTeammates;
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isAlreadyJoined && !isFull && !isBlocked && !isJoining && !isGameMismatch;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isFull && !isBlocked && !isJoining && !isGameMismatch;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isJoining) joinButtonText = 'Joining...';
-  else if (isAlreadyJoined) joinButtonText = 'ALREADY JOINED';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
   else if (isBlocked) joinButtonText = 'Account Blocked';
-  else if (isGameMismatch) joinButtonText = `join only ${tournament.gameName.toLowerCase()} player`;
+  else if (isGameMismatch) joinButtonText = `Join only ${tournament.gameName.toLowerCase()} player`;
 
 
   return (
@@ -348,8 +346,8 @@ export default function TournamentDetailsPage() {
                         </DialogHeader>
                         <ScrollArea className="h-72">
                             <div className="space-y-3 pr-4">
-                            {tournament.participants.length > 0 ? tournament.participants.map((p) => (
-                                <div key={p.id} className="flex items-center gap-3 rounded-md bg-muted p-2">
+                            {tournament.participants.length > 0 ? tournament.participants.map((p, index) => (
+                                <div key={`${p.id}-${index}`} className="flex items-center gap-3 rounded-md bg-muted p-2">
                                 <Avatar className="h-10 w-10">
                                     <AvatarImage src={p.user.avatarUrl} alt={p.user.username} />
                                     <AvatarFallback>{p.user.username.charAt(0)}</AvatarFallback>
@@ -383,7 +381,7 @@ export default function TournamentDetailsPage() {
                     </Button>
                   </a>
                 )}
-                {tournament.roomId && isAlreadyJoined && (
+                {tournament.roomId && (
                   <Card className="bg-muted p-4">
                       <CardTitle className="text-lg mb-2">Live Match Details</CardTitle>
                       <div className="flex items-center gap-4 text-base">
@@ -428,70 +426,62 @@ export default function TournamentDetailsPage() {
       </Card>
 
       <div className="pt-2">
-        {isAlreadyJoined ? (
-            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled>
-                ALREADY JOINED
+        <AlertDialog>
+        <AlertDialogTrigger asChild>
+            <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin}>
+            {joinButtonText}
             </Button>
-        ) : (
-            <AlertDialog>
-            <AlertDialogTrigger asChild>
-                <Button className="w-full bg-accent text-accent-foreground hover:bg-accent/90" size="lg" disabled={!canJoin}>
-                {joinButtonText}
-                </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-                <AlertDialogHeader>
-                <AlertDialogTitle className="flex items-center gap-2">
-                    <AlertTriangle className="text-primary" />
-                    Confirm Your Entry
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                    An entry fee of ₹{tournament.entryFee} will be deducted from your wallet for each player. Are you sure you want to join? This action cannot be undone.
-                </AlertDialogDescription>
-                </AlertDialogHeader>
-                
-                {requiredTeammates > 0 && (
-                    <div className="space-y-4 py-2">
-                        <h4 className="font-semibold">Select Your Team</h4>
-                        <p className="text-sm text-muted-foreground">
-                            You need to select {requiredTeammates} teammate{requiredTeammates > 1 ? 's' : ''} to join this {tournament.matchType} tournament.
-                        </p>
-                        {teammates.length >= requiredTeammates ? (
-                            <div className="space-y-2">
-                                {teammates.map(teammate => (
-                                    <div key={teammate.id} className="flex items-center space-x-2 rounded-md border p-3 has-[:disabled]:opacity-50">
-                                        <Checkbox
-                                            id={`teammate-${teammate.id}`}
-                                            checked={selectedTeammates.includes(teammate.id)}
-                                            onCheckedChange={() => handleTeammateSelect(teammate.id)}
-                                            disabled={!selectedTeammates.includes(teammate.id) && selectedTeammates.length >= requiredTeammates}
-                                        />
-                                        <Label htmlFor={`teammate-${teammate.id}`} className="flex-1 cursor-pointer">
-                                            <p className="font-medium">{teammate.username}</p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Balance: ₹{teammate.walletBalance.toFixed(2)}
-                                            </p>
-                                        </Label>
-                                    </div>
-                                ))}
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+            <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <AlertTriangle className="text-primary" />
+                Confirm Your Entry
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+                An entry fee of ₹{tournament.entryFee} will be deducted from your wallet for each player. Are you sure you want to join? This action cannot be undone.
+            </AlertDialogDescription>
+            </AlertDialogHeader>
+            
+            {requiredTeammates > 0 && (
+                <div className="space-y-4 py-2">
+                    <h4 className="font-semibold">Select Your Team</h4>
+                    <p className="text-sm text-muted-foreground">
+                        You need to select {requiredTeammates} teammate{requiredTeammates > 1 ? 's' : ''} to join this {tournament.matchType} tournament.
+                    </p>
+                    <div className="space-y-2">
+                        {teammates.length > 0 ? teammates.map(teammate => (
+                            <div key={teammate.id} className="flex items-center justify-between space-x-2 rounded-md border p-3 has-[:disabled]:opacity-50">
+                                <div className="flex-1">
+                                    <p className="font-medium">{teammate.username}</p>
+                                    <p className="text-xs text-muted-foreground">
+                                        Balance: ₹{teammate.walletBalance.toFixed(2)}
+                                    </p>
+                                </div>
+                                <Button 
+                                    size="sm" 
+                                    variant={selectedTeammates.includes(teammate.id) ? "default" : "outline"}
+                                    onClick={() => handleTeammateSelect(teammate.id)}
+                                    disabled={!selectedTeammates.includes(teammate.id) && selectedTeammates.length >= requiredTeammates}
+                                >
+                                    {selectedTeammates.includes(teammate.id) ? "Selected" : "Select"}
+                                </Button>
                             </div>
-                        ) : (
-                            <p className="text-sm text-destructive text-center py-4">
-                                You don't have enough teammates to join this tournament. You need at least {requiredTeammates} more player(s) in your team.
-                            </p>
+                        )) : (
+                            <p className="text-sm text-muted-foreground text-center py-4">No team members found. Create or join a team in your profile.</p>
                         )}
                     </div>
-                )}
+                </div>
+            )}
 
-                <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleJoin} disabled={!isTeamCorrectlySelected}>
-                    Confirm &amp; Join
-                </AlertDialogAction>
-                </AlertDialogFooter>
-            </AlertDialogContent>
-            </AlertDialog>
-        )}
+            <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleJoin} disabled={!isTeamCorrectlySelected}>
+                Confirm &amp; Join
+            </AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
+        </AlertDialog>
       </div>
 
     </div>
