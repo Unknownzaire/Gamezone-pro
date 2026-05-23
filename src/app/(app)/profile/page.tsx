@@ -512,9 +512,10 @@ export default function ProfilePage() {
                                 </DialogHeader>
                                 <ScrollArea className="h-72">
                                 <div className="space-y-4 pr-4">
-                                    {sortedTeamMembers.map(member => (
+                                    {sortedTeamMembers.map((member, index) => (
                                     <div key={member.id} className="flex items-center justify-between">
                                         <div className="flex items-center gap-4">
+                                            <span className="font-bold text-muted-foreground w-4 text-xs">{index + 1}.</span>
                                             <Avatar className="h-10 w-10">
                                             <AvatarImage src={member.avatarUrl} alt={member.username} />
                                             <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
