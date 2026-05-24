@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,7 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil, Search, Plus } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil, Search, Plus, Video, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Transaction } from '@/lib/types';
@@ -62,6 +63,7 @@ export default function AdminRoyalPassPage() {
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [entryToDelete, setEntryToDelete] = useState<Transaction | null>(null);
+    const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
 
     useEffect(() => {
         const stored = localStorage.getItem('luckyDrawSettingsList');
@@ -485,6 +487,7 @@ export default function AdminRoyalPassPage() {
                                 <TableRow>
                                     <TableHead>User</TableHead>
                                     <TableHead>Jackpot</TableHead>
+                                    <TableHead className="text-center">Reel</TableHead>
                                     <TableHead>Joined At</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
@@ -494,6 +497,7 @@ export default function AdminRoyalPassPage() {
                                     const entryUser = getUserById(entry.userId);
                                     const jackpotName = entry.description.replace('Joined Lucky Draw: ', '');
                                     const giveaway = giveaways.find(g => g.jackpotName === jackpotName);
+                                    const reelUrl = entry.paymentDetails?.reelUrl;
                                     
                                     return (
                                         <TableRow key={entry.id}>
@@ -513,6 +517,16 @@ export default function AdminRoyalPassPage() {
                                                 <Badge variant="outline" className="text-[10px] border-primary/50 text-primary">
                                                     {jackpotName}
                                                 </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {reelUrl ? (
+                                                    <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setViewingReelUrl(reelUrl)}>
+                                                        <Video className="h-3 w-3" />
+                                                        View Reel
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] text-muted-foreground italic">No reel</span>
+                                                )}
                                             </TableCell>
                                             <TableCell className="text-[10px]">
                                                 {format(new Date(entry.createdAt), "hh:mm a, MMM d")}
@@ -551,7 +565,7 @@ export default function AdminRoyalPassPage() {
                                 })}
                                 {filteredEntries.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={4} className="h-24 text-center text-muted-foreground">
+                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
                                             No matching entries found.
                                         </TableCell>
                                     </TableRow>
@@ -602,6 +616,21 @@ export default function AdminRoyalPassPage() {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            <Dialog open={!!viewingReelUrl} onOpenChange={(open) => !open && setViewingReelUrl(null)}>
+                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black">
+                    <div className="aspect-[9/16] relative flex items-center justify-center">
+                        {viewingReelUrl && (
+                            <video 
+                                src={viewingReelUrl} 
+                                controls 
+                                autoPlay 
+                                className="h-full w-full object-contain"
+                            />
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

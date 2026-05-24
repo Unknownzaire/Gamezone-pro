@@ -67,7 +67,7 @@ export type Transaction = {
   status: 'completed' | 'pending' | 'declined';
   declineReason?: string;
   paymentDetails?: {
-    method: 'upi' | 'bank' | 'binance' | 'paypal';
+    method: 'upi' | 'bank' | 'binance' | 'paypal' | 'giveaway';
     upiId?: string;
     accountNumber?: string;
     ifscCode?: string;
@@ -75,6 +75,7 @@ export type Transaction = {
     binanceId?: string;
     binanceNickname?: string;
     paypalEmail?: string;
+    reelUrl?: string;
   }
 };
 

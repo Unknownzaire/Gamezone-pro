@@ -1,24 +1,26 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, ChevronRight } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, ChevronRight, Video, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface Giveaway {
     id: string;
@@ -33,6 +35,11 @@ export default function RoyalPassPage() {
     const { toast } = useToast();
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [winners, setWinners] = useState<any[]>([]);
+    
+    const [selectedReel, setSelectedReel] = useState<File | null>(null);
+    const [isJoining, setIsJoining] = useState(false);
+    const [joiningGiveaway, setJoiningGiveaway] = useState<Giveaway | null>(null);
+    const reelInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         const stored = localStorage.getItem('luckyDrawSettingsList');
@@ -67,48 +74,63 @@ export default function RoyalPassPage() {
         t.participants.some(p => p.user.id === user?.id)
     );
 
-    const handleJoinDraw = (giveaway: Giveaway) => {
-        if (!user) {
-            toast({ variant: 'destructive', title: "Not Logged In" });
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            if (file.size > 20 * 1024 * 1024) { // 20MB limit for prototype
+                toast({ variant: 'destructive', title: "File too large", description: "Please upload a video under 20MB." });
+                return;
+            }
+            setSelectedReel(file);
+        }
+    };
+
+    const handleJoinDraw = async () => {
+        if (!user || !joiningGiveaway) return;
+        
+        if (!selectedReel) {
+            toast({ variant: 'destructive', title: "Reel Required", description: "Please upload a video reel to join the giveaway." });
             return;
         }
 
-        const currentEntriesCount = (transactions || []).filter(tx => 
-            tx.description === `Joined Lucky Draw: ${giveaway.jackpotName}` && 
-            tx.status === 'completed'
-        ).length;
+        setIsJoining(true);
 
-        if (currentEntriesCount >= 1) {
-            toast({
-                variant: 'destructive',
-                title: "Limit Reached",
-                description: "You have already joined this lucky draw.",
+        try {
+            const reader = new FileReader();
+            const reelDataPromise = new Promise<string>((resolve, reject) => {
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+                reader.readAsDataURL(selectedReel);
             });
-            return;
-        }
 
-        if (user.walletBalance < giveaway.entryFee) {
-            toast({
-                variant: 'destructive',
-                title: "Insufficient Balance",
-                description: `You need at least ₹${giveaway.entryFee} to join.`,
+            const reelUrl = await reelDataPromise;
+
+            updateUser({ walletBalance: user.walletBalance - joiningGiveaway.entryFee });
+
+            addTransaction({
+                amount: joiningGiveaway.entryFee,
+                type: 'debit',
+                description: `Joined Lucky Draw: ${joiningGiveaway.jackpotName}`,
+                status: 'completed',
+                paymentDetails: {
+                    method: 'giveaway',
+                    reelUrl: reelUrl
+                }
             });
-            return;
+
+            toast({
+                title: "Joined Successfully!",
+                description: `Your reel has been submitted for ${joiningGiveaway.jackpotName}.`,
+            });
+
+            setJoiningGiveaway(null);
+            setSelectedReel(null);
+        } catch (error) {
+            console.error("Join error:", error);
+            toast({ variant: 'destructive', title: "Join Failed", description: "An error occurred while processing your video." });
+        } finally {
+            setIsJoining(false);
         }
-
-        updateUser({ walletBalance: user.walletBalance - giveaway.entryFee });
-
-        addTransaction({
-            amount: giveaway.entryFee,
-            type: 'debit',
-            description: `Joined Lucky Draw: ${giveaway.jackpotName}`,
-            status: 'completed',
-        });
-
-        toast({
-            title: "Joined Successfully!",
-            description: `You have been entered into ${giveaway.jackpotName}.`,
-        });
     };
 
     const activeGiveaways = giveaways.filter(g => g.isActive);
@@ -171,8 +193,15 @@ export default function RoyalPassPage() {
                                             </div>
                                         </div>
 
-                                        <AlertDialog>
-                                            <AlertDialogTrigger asChild>
+                                        <Dialog open={joiningGiveaway?.id === giveaway.id} onOpenChange={(open) => {
+                                            if (!open) {
+                                                setJoiningGiveaway(null);
+                                                setSelectedReel(null);
+                                            } else {
+                                                setJoiningGiveaway(giveaway);
+                                            }
+                                        }}>
+                                            <DialogTrigger asChild>
                                                 <Button 
                                                     className={`w-full h-12 font-bold ${!isJoined && hasJoinedAnyTournament ? 'bg-primary hover:bg-primary/90' : ''}`}
                                                     disabled={isJoined || !hasJoinedAnyTournament}
@@ -186,22 +215,60 @@ export default function RoyalPassPage() {
                                                         <><Gift className="mr-2 h-4 w-4" /> JOIN DRAW (₹{giveaway.entryFee})</>
                                                     )}
                                                 </Button>
-                                            </AlertDialogTrigger>
-                                            {!isJoined && hasJoinedAnyTournament && (
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Enter {giveaway.jackpotName}?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                            ₹{giveaway.entryFee} will be deducted from your wallet balance.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleJoinDraw(giveaway)}>Confirm & Join</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
+                                            </DialogTrigger>
+                                            {joiningGiveaway && (
+                                                <DialogContent>
+                                                    <DialogHeader>
+                                                        <DialogTitle>Join {joiningGiveaway.jackpotName}</DialogTitle>
+                                                        <DialogDescription>
+                                                            Upload your best BGMI match reel to enter. Entry fee: ₹{joiningGiveaway.entryFee}
+                                                        </DialogDescription>
+                                                    </DialogHeader>
+                                                    <div className="space-y-4 py-4">
+                                                        <div className="space-y-2">
+                                                            <Label htmlFor="reel">Upload Video Reel (Max 20MB)</Label>
+                                                            <div 
+                                                                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                onClick={() => reelInputRef.current?.click()}
+                                                            >
+                                                                {selectedReel ? (
+                                                                    <div className="flex flex-col items-center gap-2">
+                                                                        <Video className="h-10 w-10 text-primary" />
+                                                                        <p className="text-sm font-medium">{selectedReel.name}</p>
+                                                                        <p className="text-xs text-muted-foreground">Click to change video</p>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex flex-col items-center gap-2">
+                                                                        <Video className="h-10 w-10 text-muted-foreground" />
+                                                                        <p className="text-sm font-medium">Select Video Clip</p>
+                                                                        <p className="text-xs text-muted-foreground">MP4, MOV supported</p>
+                                                                    </div>
+                                                                )}
+                                                                <Input 
+                                                                    id="reel" 
+                                                                    type="file" 
+                                                                    accept="video/*" 
+                                                                    className="hidden" 
+                                                                    onChange={handleFileChange} 
+                                                                    ref={reelInputRef}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                        <div className="bg-muted/50 p-4 rounded-lg flex items-center gap-3">
+                                                            <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
+                                                            <p className="text-xs text-muted-foreground">By joining, you agree that ₹{joiningGiveaway.entryFee} will be deducted from your balance.</p>
+                                                        </div>
+                                                    </div>
+                                                    <DialogFooter>
+                                                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                                                        <Button onClick={handleJoinDraw} disabled={!selectedReel || isJoining}>
+                                                            {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gift className="mr-2 h-4 w-4" />}
+                                                            {isJoining ? 'Uploading...' : 'Confirm Entry'}
+                                                        </Button>
+                                                    </DialogFooter>
+                                                </DialogContent>
                                             )}
-                                        </AlertDialog>
+                                        </Dialog>
                                         {!hasJoinedAnyTournament && (
                                             <p className="text-[10px] text-center text-primary font-bold animate-pulse">
                                                 Join any tournament match first to unlock!
