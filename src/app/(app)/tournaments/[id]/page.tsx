@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight, PlayCircle, User as UserIcon } from 'lucide-react';
+import { ArrowLeft, Clock, ShieldCheck, Trophy, Users, AlertTriangle, BarChart3, ChevronRight, PlayCircle, User as UserIcon, Lock } from 'lucide-react';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament, PrizeDistribution, User } from '@/lib/types';
@@ -251,6 +251,7 @@ export default function TournamentDetailsPage() {
   const isBlocked = currentUser?.isBlocked;
   const isGameMismatch = currentUser && currentUser.primaryGame !== tournament.gameName;
   const isTeamCorrectlySelected = requiredTeammates === 0 || selectedTeammates.length === requiredTeammates;
+  const isParticipant = tournament.participants.some(p => p.user.id === currentUser?.id);
   
   const canJoin = currentUser && tournament.status === 'Upcoming' && !isFull && !isBlocked && !isJoining && !isGameMismatch;
 
@@ -382,13 +383,25 @@ export default function TournamentDetailsPage() {
                   </a>
                 )}
                 {tournament.roomId && (
-                  <Card className="bg-muted p-4">
-                      <CardTitle className="text-lg mb-2">Live Match Details</CardTitle>
-                      <div className="flex items-center gap-4 text-base">
-                        <p>Room ID: <span className="font-mono text-primary">{tournament.roomId}</span></p>
-                        <p>Password: <span className="font-mono text-primary">{tournament.roomPassword}</span></p>
-                      </div>
-                  </Card>
+                  isParticipant ? (
+                    <Card className="bg-muted p-4 border-primary/20">
+                        <CardTitle className="text-lg mb-2 flex items-center gap-2">
+                          <PlayCircle className="h-5 w-5 text-primary" />
+                          Live Match Details
+                        </CardTitle>
+                        <div className="flex items-center gap-4 text-base">
+                          <p>Room ID: <span className="font-mono text-primary font-bold">{tournament.roomId}</span></p>
+                          <p>Password: <span className="font-mono text-primary font-bold">{tournament.roomPassword}</span></p>
+                        </div>
+                    </Card>
+                  ) : (
+                    <Card className="bg-muted/50 p-4 border-dashed">
+                       <div className="flex items-center gap-3 text-muted-foreground">
+                          <Lock className="h-5 w-5" />
+                          <p className="text-sm font-medium">Room ID and Password are only visible to participants.</p>
+                       </div>
+                    </Card>
+                  )
                 )}
               </div>
             )}
