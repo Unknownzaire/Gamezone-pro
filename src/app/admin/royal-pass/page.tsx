@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user.tsx";
-import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil, Search, Plus, Video, PlayCircle } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Users, Star, RefreshCw, Trash2, Clock, Pencil, Search, Plus, Video, PlayCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { Transaction } from '@/lib/types';
@@ -71,7 +71,6 @@ export default function AdminRoyalPassPage() {
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                // Ensure existing giveaways have the requiresReel property
                 const migrated = parsed.map((g: any) => ({
                     ...g,
                     requiresReel: g.requiresReel !== undefined ? g.requiresReel : true
@@ -186,14 +185,16 @@ export default function AdminRoyalPassPage() {
         }
 
         let winner;
+        let winningTx;
         if (manualWinnerId) {
+            winningTx = poolEntries.find(tx => tx.userId === manualWinnerId);
             winner = allUsers.find(u => u.id === manualWinnerId);
         } else {
-            const winningTx = poolEntries[Math.floor(Math.random() * poolEntries.length)];
+            winningTx = poolEntries[Math.floor(Math.random() * poolEntries.length)];
             winner = allUsers.find(u => u.id === winningTx.userId);
         }
 
-        if (!winner) return;
+        if (!winner || !winningTx) return;
 
         const localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
         const userIndex = localAllUsers.findIndex((u: any) => u.id === winner.id);
@@ -225,7 +226,8 @@ export default function AdminRoyalPassPage() {
             name: winner.username,
             amount: giveaway.jackpotAmount,
             date: format(new Date(), "MMM d"),
-            jackpot: giveaway.jackpotName
+            jackpot: giveaway.jackpotName,
+            reel: winningTx.paymentDetails?.reelUrl
         };
         const updatedWinners = [newWinnerRecord, ...recentWinners];
         setRecentWinners(updatedWinners);
@@ -445,6 +447,7 @@ export default function AdminRoyalPassPage() {
                                     <TableRow>
                                         <TableHead>User</TableHead>
                                         <TableHead>Jackpot</TableHead>
+                                        <TableHead>Reel</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead className="text-right">Action</TableHead>
                                     </TableRow>
@@ -454,6 +457,20 @@ export default function AdminRoyalPassPage() {
                                         <TableRow key={winner.id}>
                                             <TableCell className="font-medium text-xs">{winner.name}</TableCell>
                                             <TableCell className="text-xs text-primary font-semibold">{winner.jackpot}</TableCell>
+                                            <TableCell>
+                                                {winner.reel ? (
+                                                    <Button 
+                                                        variant="ghost" 
+                                                        size="icon" 
+                                                        className="h-7 w-7 text-primary" 
+                                                        onClick={() => setViewingReelUrl(winner.reel)}
+                                                    >
+                                                        <Video className="h-3 w-3" />
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] text-muted-foreground italic">None</span>
+                                                )}
+                                            </TableCell>
                                             <TableCell className="text-xs font-bold">₹{winner.amount.toLocaleString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteWinner(winner.id)}>
@@ -633,7 +650,7 @@ export default function AdminRoyalPassPage() {
             </AlertDialog>
 
             <Dialog open={!!viewingReelUrl} onOpenChange={(open) => !open && setViewingReelUrl(null)}>
-                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black">
+                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black border-none">
                     <div className="aspect-[9/16] relative flex items-center justify-center">
                         {viewingReelUrl && (
                             <video 
@@ -644,6 +661,14 @@ export default function AdminRoyalPassPage() {
                             />
                         )}
                     </div>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-2 right-2 text-white bg-black/40 hover:bg-black/60 rounded-full"
+                        onClick={() => setViewingReelUrl(null)}
+                    >
+                        <XCircle className="h-6 w-6" />
+                    </Button>
                 </DialogContent>
             </Dialog>
         </div>

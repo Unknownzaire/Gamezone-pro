@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, ChevronRight, Video, Loader2 } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, ChevronRight, Video, Loader2, Users, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
@@ -20,6 +20,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 interface Giveaway {
     id: string;
@@ -31,7 +34,7 @@ interface Giveaway {
 }
 
 export default function RoyalPassPage() {
-    const { user, updateUser, addTransaction, transactions, tournaments } = useUser();
+    const { user, updateUser, addTransaction, transactions, tournaments, allUsers } = useUser();
     const { toast } = useToast();
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [winners, setWinners] = useState<any[]>([]);
@@ -39,6 +42,7 @@ export default function RoyalPassPage() {
     const [selectedReel, setSelectedReel] = useState<File | null>(null);
     const [isJoining, setIsJoining] = useState(false);
     const [joiningGiveaway, setJoiningGiveaway] = useState<Giveaway | null>(null);
+    const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
     const reelInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -46,7 +50,6 @@ export default function RoyalPassPage() {
         if (stored) {
             try {
                 const parsed = JSON.parse(stored);
-                // Migrating old data if property doesn't exist
                 const migrated = parsed.map((g: any) => ({
                     ...g,
                     requiresReel: g.requiresReel !== undefined ? g.requiresReel : true
@@ -83,7 +86,7 @@ export default function RoyalPassPage() {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            if (file.size > 20 * 1024 * 1024) { // 20MB limit for prototype
+            if (file.size > 20 * 1024 * 1024) {
                 toast({ variant: 'destructive', title: "File too large", description: "Please upload a video under 20MB." });
                 return;
             }
@@ -143,6 +146,11 @@ export default function RoyalPassPage() {
         }
     };
 
+    const giveawayEntries = (jackpotName: string) => (transactions || []).filter(tx => 
+        tx.description === `Joined Lucky Draw: ${jackpotName}` && 
+        tx.status === 'completed'
+    );
+
     const activeGiveaways = giveaways.filter(g => g.isActive);
 
     return (
@@ -170,8 +178,11 @@ export default function RoyalPassPage() {
                         {activeGiveaways.map((giveaway) => {
                             const isJoined = (transactions || []).some(tx => 
                                 tx.description === `Joined Lucky Draw: ${giveaway.jackpotName}` && 
-                                tx.status === 'completed'
+                                tx.status === 'completed' &&
+                                tx.userId === user?.id
                             );
+
+                            const entries = giveawayEntries(giveaway.jackpotName);
 
                             return (
                                 <Card key={giveaway.id} className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-background to-accent/5 shadow-xl shadow-primary/5">
@@ -204,6 +215,70 @@ export default function RoyalPassPage() {
                                                     className={`h-full ${isJoined ? 'bg-primary' : 'bg-muted'}`} 
                                                     style={{ width: isJoined ? '100%' : '0%' }} 
                                                 />
+                                            </div>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="link" size="sm" className="h-auto p-0 text-[10px] text-primary/70 hover:text-primary">
+                                                            View All {entries.length} Entries & Reels
+                                                        </Button>
+                                                    </DialogTrigger>
+                                                    <DialogContent className="max-w-md max-h-[80vh] flex flex-col">
+                                                        <DialogHeader>
+                                                            <DialogTitle>Entries for {giveaway.jackpotName}</DialogTitle>
+                                                            <DialogDescription>Watch submissions from other players.</DialogDescription>
+                                                        </DialogHeader>
+                                                        <ScrollArea className="flex-1 pr-4">
+                                                            <Table>
+                                                                <TableHeader>
+                                                                    <TableRow>
+                                                                        <TableHead>User</TableHead>
+                                                                        <TableHead className="text-right">Reel</TableHead>
+                                                                    </TableRow>
+                                                                </TableHeader>
+                                                                <TableBody>
+                                                                    {entries.map(entry => {
+                                                                        const entryUser = allUsers.find(u => u.id === entry.userId);
+                                                                        return (
+                                                                            <TableRow key={entry.id}>
+                                                                                <TableCell>
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <Avatar className="h-6 w-6">
+                                                                                            <AvatarImage src={entryUser?.avatarUrl} />
+                                                                                            <AvatarFallback>{entryUser?.username.charAt(0)}</AvatarFallback>
+                                                                                        </Avatar>
+                                                                                        <span className="text-xs font-medium">{entryUser?.username || 'Unknown'}</span>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="text-right">
+                                                                                    {entry.paymentDetails?.reelUrl ? (
+                                                                                        <Button 
+                                                                                            size="icon" 
+                                                                                            variant="ghost" 
+                                                                                            className="h-8 w-8 text-primary" 
+                                                                                            onClick={() => setViewingReelUrl(entry.paymentDetails!.reelUrl!)}
+                                                                                        >
+                                                                                            <Video className="h-4 w-4" />
+                                                                                        </Button>
+                                                                                    ) : (
+                                                                                        <span className="text-[10px] text-muted-foreground italic">No reel</span>
+                                                                                    )}
+                                                                                </TableCell>
+                                                                            </TableRow>
+                                                                        );
+                                                                    })}
+                                                                    {entries.length === 0 && (
+                                                                        <TableRow>
+                                                                            <TableCell colSpan={2} className="text-center py-8 text-muted-foreground text-xs italic">
+                                                                                No entries yet. Be the first to join!
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                    )}
+                                                                </TableBody>
+                                                            </Table>
+                                                        </ScrollArea>
+                                                    </DialogContent>
+                                                </Dialog>
                                             </div>
                                         </div>
 
@@ -313,7 +388,7 @@ export default function RoyalPassPage() {
             <Card className="border-white/5 bg-card/50">
                 <CardHeader className="py-4">
                     <CardTitle className="flex items-center gap-2 text-lg font-headline">
-                        <Trophy className="h-5 w-5 text-yellow-500" />
+                        <Trophy className="h-5 w-5 text-yellow-400" />
                         Hall of Fame
                     </CardTitle>
                 </CardHeader>
@@ -330,9 +405,22 @@ export default function RoyalPassPage() {
                                         <p className="text-[10px] text-muted-foreground">{winner.date} • {winner.jackpot}</p>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <p className="font-black text-primary">₹{winner.amount.toLocaleString()}</p>
-                                    <p className="text-[8px] text-muted-foreground uppercase font-bold">Winner</p>
+                                <div className="flex items-center gap-4">
+                                    {winner.reel && (
+                                        <Button 
+                                            variant="ghost" 
+                                            size="icon" 
+                                            className="h-8 w-8 text-primary" 
+                                            onClick={() => setViewingReelUrl(winner.reel)}
+                                            title="Watch Winning Reel"
+                                        >
+                                            <PlayCircle className="h-5 w-5" />
+                                        </Button>
+                                    )}
+                                    <div className="text-right">
+                                        <p className="font-black text-primary">₹{winner.amount.toLocaleString()}</p>
+                                        <p className="text-[8px] text-muted-foreground uppercase font-bold">Winner</p>
+                                    </div>
                                 </div>
                             </div>
                         ))}
@@ -344,6 +432,29 @@ export default function RoyalPassPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            <Dialog open={!!viewingReelUrl} onOpenChange={(open) => !open && setViewingReelUrl(null)}>
+                <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden bg-black border-none">
+                    <div className="aspect-[9/16] relative flex items-center justify-center">
+                        {viewingReelUrl && (
+                            <video 
+                                src={viewingReelUrl} 
+                                controls 
+                                autoPlay 
+                                className="h-full w-full object-contain"
+                            />
+                        )}
+                    </div>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute top-2 right-2 text-white bg-black/40 hover:bg-black/60 rounded-full"
+                        onClick={() => setViewingReelUrl(null)}
+                    >
+                        <XCircle className="h-6 w-6" />
+                    </Button>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
