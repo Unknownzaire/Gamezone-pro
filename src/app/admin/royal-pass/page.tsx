@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -45,6 +44,7 @@ interface Giveaway {
     jackpotAmount: number;
     entryFee: number;
     isActive: boolean;
+    requiresReel: boolean;
 }
 
 export default function AdminRoyalPassPage() {
@@ -59,6 +59,7 @@ export default function AdminRoyalPassPage() {
     const [newName, setNewName] = useState("");
     const [newAmount, setNewAmount] = useState(1000);
     const [newFee, setNewFee] = useState(10);
+    const [newRequiresReel, setNewRequiresReel] = useState(true);
 
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -69,18 +70,24 @@ export default function AdminRoyalPassPage() {
         const stored = localStorage.getItem('luckyDrawSettingsList');
         if (stored) {
             try {
-                setGiveaways(JSON.parse(stored));
+                const parsed = JSON.parse(stored);
+                // Ensure existing giveaways have the requiresReel property
+                const migrated = parsed.map((g: any) => ({
+                    ...g,
+                    requiresReel: g.requiresReel !== undefined ? g.requiresReel : true
+                }));
+                setGiveaways(migrated);
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettingsList", e);
             }
         } else {
-            // Default initial giveaway
             const defaultGiveaway = [{
                 id: 'default',
                 jackpotName: 'Daily Lucky Draw',
                 jackpotAmount: 5000,
                 entryFee: 10,
-                isActive: true
+                isActive: true,
+                requiresReel: true
             }];
             setGiveaways(defaultGiveaway);
             localStorage.setItem('luckyDrawSettingsList', JSON.stringify(defaultGiveaway));
@@ -112,13 +119,15 @@ export default function AdminRoyalPassPage() {
             jackpotName: newName,
             jackpotAmount: newAmount,
             entryFee: newFee,
-            isActive: true
+            isActive: true,
+            requiresReel: newRequiresReel
         };
         saveGiveaways([...giveaways, newGiveaway]);
         setIsAddDialogOpen(false);
         setNewName("");
         setNewAmount(1000);
         setNewFee(10);
+        setNewRequiresReel(true);
         toast({ title: "Giveaway created successfully" });
     };
 
@@ -186,7 +195,6 @@ export default function AdminRoyalPassPage() {
 
         if (!winner) return;
 
-        // 1. Credit the winner's wallet
         const localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
         const userIndex = localAllUsers.findIndex((u: any) => u.id === winner.id);
         if (userIndex !== -1) {
@@ -194,7 +202,6 @@ export default function AdminRoyalPassPage() {
             localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
         }
 
-        // 2. Award prize transaction & DELETE active draw entries for this pool
         const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         
         const remainingTransactions = localAllTransactions.filter((tx: any) => {
@@ -213,7 +220,6 @@ export default function AdminRoyalPassPage() {
         
         localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...remainingTransactions]));
 
-        // 3. Add to hall of fame
         const newWinnerRecord = {
             id: `hall-${Date.now()}`,
             name: winner.username,
@@ -225,7 +231,6 @@ export default function AdminRoyalPassPage() {
         setRecentWinners(updatedWinners);
         localStorage.setItem('luckyDrawWinners', JSON.stringify(updatedWinners));
 
-        // 4. Send notification
         addNotification({
             userId: winner.id,
             title: '🎉 GIVEAWAY WINNER!',
@@ -295,6 +300,13 @@ export default function AdminRoyalPassPage() {
                                     <Label htmlFor="createFee">Entry Fee (₹)</Label>
                                     <Input id="createFee" type="number" value={newFee} onChange={(e) => setNewFee(Number(e.target.value))} />
                                 </div>
+                                <div className="flex items-center justify-between py-2 border-t mt-2">
+                                    <div className="space-y-0.5">
+                                        <Label>Requires Video Reel</Label>
+                                        <p className="text-xs text-muted-foreground">Users must upload a video to join</p>
+                                    </div>
+                                    <Switch checked={newRequiresReel} onCheckedChange={setNewRequiresReel} />
+                                </div>
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
@@ -348,7 +360,12 @@ export default function AdminRoyalPassPage() {
                                         <Sparkles className={`h-5 w-5 ${giveaway.isActive ? 'text-primary' : 'text-muted-foreground'}`} />
                                         {giveaway.jackpotName}
                                     </CardTitle>
-                                    <CardDescription>Adjust prize and costs.</CardDescription>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <CardDescription>Adjust prize and costs.</CardDescription>
+                                        <Badge variant="outline" className="text-[10px] h-4">
+                                            {giveaway.requiresReel ? 'Video Entry' : 'Direct Entry'}
+                                        </Badge>
+                                    </div>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Switch 
@@ -414,11 +431,6 @@ export default function AdminRoyalPassPage() {
                             </CardContent>
                         </Card>
                     ))}
-                    {giveaways.length === 0 && (
-                        <Card className="border-dashed flex items-center justify-center p-12">
-                            <p className="text-muted-foreground">No giveaways created. Click "Add Giveaway" to start.</p>
-                        </Card>
-                    )}
                 </div>
 
                 <Card className="flex flex-col">
@@ -563,13 +575,6 @@ export default function AdminRoyalPassPage() {
                                         </TableRow>
                                     );
                                 })}
-                                {filteredEntries.length === 0 && (
-                                    <TableRow>
-                                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                            No matching entries found.
-                                        </TableCell>
-                                    </TableRow>
-                                )}
                             </TableBody>
                         </Table>
                     </ScrollArea>
@@ -594,6 +599,16 @@ export default function AdminRoyalPassPage() {
                             <div className="space-y-2">
                                 <Label htmlFor="editFee">Entry Fee (₹)</Label>
                                 <Input id="editFee" type="number" value={editingGiveaway.entryFee} onChange={(e) => setEditingGiveaway({...editingGiveaway, entryFee: Number(e.target.value)})} />
+                            </div>
+                            <div className="flex items-center justify-between py-2 border-t mt-2">
+                                <div className="space-y-0.5">
+                                    <Label>Requires Video Reel</Label>
+                                    <p className="text-xs text-muted-foreground">Users must upload a video to join</p>
+                                </div>
+                                <Switch 
+                                    checked={editingGiveaway.requiresReel} 
+                                    onCheckedChange={(val) => setEditingGiveaway({...editingGiveaway, requiresReel: val})} 
+                                />
                             </div>
                         </div>
                     )}

@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ interface Giveaway {
     jackpotAmount: number;
     entryFee: number;
     isActive: boolean;
+    requiresReel: boolean;
 }
 
 export default function RoyalPassPage() {
@@ -45,7 +45,13 @@ export default function RoyalPassPage() {
         const stored = localStorage.getItem('luckyDrawSettingsList');
         if (stored) {
             try {
-                setGiveaways(JSON.parse(stored));
+                const parsed = JSON.parse(stored);
+                // Migrating old data if property doesn't exist
+                const migrated = parsed.map((g: any) => ({
+                    ...g,
+                    requiresReel: g.requiresReel !== undefined ? g.requiresReel : true
+                }));
+                setGiveaways(migrated);
             } catch (e) {
                 console.error("Failed to parse luckyDrawSettingsList", e);
             }
@@ -88,22 +94,24 @@ export default function RoyalPassPage() {
     const handleJoinDraw = async () => {
         if (!user || !joiningGiveaway) return;
         
-        if (!selectedReel) {
-            toast({ variant: 'destructive', title: "Reel Required", description: "Please upload a video reel to join the giveaway." });
+        if (joiningGiveaway.requiresReel && !selectedReel) {
+            toast({ variant: 'destructive', title: "Reel Required", description: "Please upload a video reel to join this giveaway." });
             return;
         }
 
         setIsJoining(true);
 
         try {
-            const reader = new FileReader();
-            const reelDataPromise = new Promise<string>((resolve, reject) => {
-                reader.onload = () => resolve(reader.result as string);
-                reader.onerror = reject;
-                reader.readAsDataURL(selectedReel);
-            });
-
-            const reelUrl = await reelDataPromise;
+            let reelUrl = "";
+            if (selectedReel) {
+                const reader = new FileReader();
+                const reelDataPromise = new Promise<string>((resolve, reject) => {
+                    reader.onload = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(selectedReel);
+                });
+                reelUrl = await reelDataPromise;
+            }
 
             updateUser({ walletBalance: user.walletBalance - joiningGiveaway.entryFee });
 
@@ -114,20 +122,22 @@ export default function RoyalPassPage() {
                 status: 'completed',
                 paymentDetails: {
                     method: 'giveaway',
-                    reelUrl: reelUrl
+                    reelUrl: reelUrl || undefined
                 }
             });
 
             toast({
                 title: "Joined Successfully!",
-                description: `Your reel has been submitted for ${joiningGiveaway.jackpotName}.`,
+                description: joiningGiveaway.requiresReel 
+                    ? `Your reel has been submitted for ${joiningGiveaway.jackpotName}.`
+                    : `You have successfully joined ${joiningGiveaway.jackpotName}.`,
             });
 
             setJoiningGiveaway(null);
             setSelectedReel(null);
         } catch (error) {
             console.error("Join error:", error);
-            toast({ variant: 'destructive', title: "Join Failed", description: "An error occurred while processing your video." });
+            toast({ variant: 'destructive', title: "Join Failed", description: "An error occurred while processing your request." });
         } finally {
             setIsJoining(false);
         }
@@ -170,7 +180,11 @@ export default function RoyalPassPage() {
                                             <CardTitle className="font-headline text-xl">{giveaway.jackpotName}</CardTitle>
                                             <Badge className="bg-accent text-white font-bold">LIVE</Badge>
                                         </div>
-                                        <CardDescription className="text-white/70">Win big rewards from this pool!</CardDescription>
+                                        <CardDescription className="text-white/70">
+                                            {giveaway.requiresReel 
+                                                ? "Upload your best BGMI reel to win!" 
+                                                : "Join directly for a chance to win!"}
+                                        </CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="relative rounded-xl bg-card/50 border border-white/10 p-4 text-center">
@@ -221,49 +235,58 @@ export default function RoyalPassPage() {
                                                     <DialogHeader>
                                                         <DialogTitle>Join {joiningGiveaway.jackpotName}</DialogTitle>
                                                         <DialogDescription>
-                                                            Upload your best BGMI match reel to enter. Entry fee: ₹{joiningGiveaway.entryFee}
+                                                            Entry fee: ₹{joiningGiveaway.entryFee} will be deducted from your wallet.
                                                         </DialogDescription>
                                                     </DialogHeader>
                                                     <div className="space-y-4 py-4">
-                                                        <div className="space-y-2">
-                                                            <Label htmlFor="reel">Upload Video Reel (Max 20MB)</Label>
-                                                            <div 
-                                                                className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
-                                                                onClick={() => reelInputRef.current?.click()}
-                                                            >
-                                                                {selectedReel ? (
-                                                                    <div className="flex flex-col items-center gap-2">
-                                                                        <Video className="h-10 w-10 text-primary" />
-                                                                        <p className="text-sm font-medium">{selectedReel.name}</p>
-                                                                        <p className="text-xs text-muted-foreground">Click to change video</p>
-                                                                    </div>
-                                                                ) : (
-                                                                    <div className="flex flex-col items-center gap-2">
-                                                                        <Video className="h-10 w-10 text-muted-foreground" />
-                                                                        <p className="text-sm font-medium">Select Video Clip</p>
-                                                                        <p className="text-xs text-muted-foreground">MP4, MOV supported</p>
-                                                                    </div>
-                                                                )}
-                                                                <Input 
-                                                                    id="reel" 
-                                                                    type="file" 
-                                                                    accept="video/*" 
-                                                                    className="hidden" 
-                                                                    onChange={handleFileChange} 
-                                                                    ref={reelInputRef}
-                                                                />
+                                                        {joiningGiveaway.requiresReel ? (
+                                                            <div className="space-y-2">
+                                                                <Label htmlFor="reel">Upload Video Reel (Max 20MB)</Label>
+                                                                <div 
+                                                                    className="border-2 border-dashed rounded-lg p-8 text-center cursor-pointer hover:bg-muted/50 transition-colors"
+                                                                    onClick={() => reelInputRef.current?.click()}
+                                                                >
+                                                                    {selectedReel ? (
+                                                                        <div className="flex flex-col items-center gap-2">
+                                                                            <Video className="h-10 w-10 text-primary" />
+                                                                            <p className="text-sm font-medium">{selectedReel.name}</p>
+                                                                            <p className="text-xs text-muted-foreground">Click to change video</p>
+                                                                        </div>
+                                                                    ) : (
+                                                                        <div className="flex flex-col items-center gap-2">
+                                                                            <Video className="h-10 w-10 text-muted-foreground" />
+                                                                            <p className="text-sm font-medium">Select Video Clip</p>
+                                                                            <p className="text-xs text-muted-foreground">MP4, MOV supported</p>
+                                                                        </div>
+                                                                    )}
+                                                                    <Input 
+                                                                        id="reel" 
+                                                                        type="file" 
+                                                                        accept="video/*" 
+                                                                        className="hidden" 
+                                                                        onChange={handleFileChange} 
+                                                                        ref={reelInputRef}
+                                                                    />
+                                                                </div>
                                                             </div>
-                                                        </div>
+                                                        ) : (
+                                                            <div className="p-12 text-center border-2 border-dashed rounded-lg bg-muted/20">
+                                                                <Gift className="h-12 w-12 text-primary mx-auto mb-4" />
+                                                                <p className="font-semibold">Direct Entry Enabled</p>
+                                                                <p className="text-sm text-muted-foreground">No video upload required for this draw.</p>
+                                                            </div>
+                                                        )}
+                                                        
                                                         <div className="bg-muted/50 p-4 rounded-lg flex items-center gap-3">
                                                             <AlertTriangle className="h-5 w-5 text-yellow-500 shrink-0" />
-                                                            <p className="text-xs text-muted-foreground">By joining, you agree that ₹{joiningGiveaway.entryFee} will be deducted from your balance.</p>
+                                                            <p className="text-xs text-muted-foreground">Confirming will deduct ₹{joiningGiveaway.entryFee} from your balance.</p>
                                                         </div>
                                                     </div>
                                                     <DialogFooter>
                                                         <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-                                                        <Button onClick={handleJoinDraw} disabled={!selectedReel || isJoining}>
+                                                        <Button onClick={handleJoinDraw} disabled={(joiningGiveaway.requiresReel && !selectedReel) || isJoining}>
                                                             {isJoining ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Gift className="mr-2 h-4 w-4" />}
-                                                            {isJoining ? 'Uploading...' : 'Confirm Entry'}
+                                                            {isJoining ? 'Processing...' : 'Confirm Entry'}
                                                         </Button>
                                                     </DialogFooter>
                                                 </DialogContent>
