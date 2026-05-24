@@ -55,6 +55,7 @@ export default function AdminRoyalPassPage() {
     const [isCreateDialogOpen, setIsAddDialogOpen] = useState(false);
     const [isConfigDialogOpen, setIsConfigDialogOpen] = useState(false);
     const [editingGiveaway, setEditingGiveaway] = useState<Giveaway | null>(null);
+    const [viewingGiveawayEntries, setViewingGiveawayEntries] = useState<Giveaway | null>(null);
     
     const [newName, setNewName] = useState("");
     const [newAmount, setNewAmount] = useState(1000);
@@ -245,6 +246,7 @@ export default function AdminRoyalPassPage() {
             description: `${winner.username} has been awarded ₹${giveaway.jackpotAmount.toLocaleString()} and entries for ${giveaway.jackpotName} have been reset.`,
         });
         
+        setViewingGiveawayEntries(null);
         reload();
     };
 
@@ -406,7 +408,7 @@ export default function AdminRoyalPassPage() {
                                     </div>
                                 </div>
                                 
-                                <div className="pt-2">
+                                <div className="pt-2 flex flex-col gap-2">
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
                                             <Button variant="destructive" className="w-full font-bold" disabled={dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${giveaway.jackpotName}`).length === 0}>
@@ -429,6 +431,11 @@ export default function AdminRoyalPassPage() {
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
                                     </AlertDialog>
+
+                                    <Button variant="outline" className="w-full font-bold" onClick={() => setViewingGiveawayEntries(giveaway)}>
+                                        <Video className="mr-2 h-4 w-4" />
+                                        VIEW VIDEO LIST
+                                    </Button>
                                 </div>
                             </CardContent>
                         </Card>
@@ -632,6 +639,83 @@ export default function AdminRoyalPassPage() {
                     <DialogFooter>
                         <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                         <Button onClick={handleUpdateGiveaway}>Save Changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            <Dialog open={!!viewingGiveawayEntries} onOpenChange={(open) => !open && setViewingGiveawayEntries(null)}>
+                <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+                    <DialogHeader>
+                        <DialogTitle>Video Submissions: {viewingGiveawayEntries?.jackpotName}</DialogTitle>
+                        <DialogDescription>Review reels and select a winner for this giveaway.</DialogDescription>
+                    </DialogHeader>
+                    <ScrollArea className="flex-1 pr-4">
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>User</TableHead>
+                                    <TableHead className="text-center">Reel</TableHead>
+                                    <TableHead className="text-right">Action</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {viewingGiveawayEntries && dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${viewingGiveawayEntries.jackpotName}`).map((entry) => {
+                                    const entryUser = getUserById(entry.userId);
+                                    const reelUrl = entry.paymentDetails?.reelUrl;
+                                    return (
+                                        <TableRow key={entry.id}>
+                                            <TableCell>
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8">
+                                                        <AvatarImage src={entryUser?.avatarUrl} alt={entryUser?.username} />
+                                                        <AvatarFallback>{entryUser?.username?.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                    <div>
+                                                        <p className="font-semibold text-xs">{entryUser?.username || 'Unknown'}</p>
+                                                        <p className="text-[10px] text-muted-foreground">{entryUser?.email}</p>
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                {reelUrl ? (
+                                                    <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setViewingReelUrl(reelUrl)}>
+                                                        <Video className="h-3 w-3" />
+                                                        View Reel
+                                                    </Button>
+                                                ) : (
+                                                    <span className="text-[10px] text-muted-foreground italic">No reel</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <AlertDialog>
+                                                    <AlertDialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" className="h-7 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
+                                                            Select as Winner
+                                                        </Button>
+                                                    </AlertDialogTrigger>
+                                                    <AlertDialogContent>
+                                                        <AlertDialogTitle>Select {entryUser?.username} as winner?</AlertDialogTitle>
+                                                        <AlertDialogDescription>This will award ₹{viewingGiveawayEntries.jackpotAmount.toLocaleString()} and reset the entries for this draw.</AlertDialogDescription>
+                                                        <AlertDialogFooter>
+                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                            <AlertDialogAction onClick={() => handlePickWinner(viewingGiveawayEntries, entryUser?.id)}>Confirm</AlertDialogAction>
+                                                        </AlertDialogFooter>
+                                                    </AlertDialogContent>
+                                                </AlertDialog>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
+                                {viewingGiveawayEntries && dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${viewingGiveawayEntries.jackpotName}`).length === 0 && (
+                                    <TableRow>
+                                        <TableCell colSpan={3} className="text-center py-8 text-muted-foreground italic">No entries yet.</TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+                    </ScrollArea>
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
