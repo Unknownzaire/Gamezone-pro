@@ -121,6 +121,20 @@ export default function EditUserPage() {
       const storedUsersJSON = localStorage.getItem('allUsers');
       let allUsers: User[] = storedUsersJSON ? JSON.parse(storedUsersJSON) : [];
 
+      // Validate uniqueness for Team Name in Admin Edit
+      if (formData.teamName && formData.teamName !== user?.teamName) {
+          const isTeamNameTaken = allUsers.some(u => u.id !== id && u.teamName?.toLowerCase() === formData.teamName?.toLowerCase());
+          if (isTeamNameTaken) {
+              toast({
+                  variant: 'destructive',
+                  title: "Team Name Taken",
+                  description: "This team name is already in use by another team."
+              });
+              setIsSubmitting(false);
+              return;
+          }
+      }
+
       const updatedUsers = allUsers.map(u => {
         if (u.id === id) {
           return { 

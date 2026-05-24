@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -170,6 +171,24 @@ export default function ProfilePage() {
     }
 
     if (currentUser) {
+      // Validate uniqueness for Username and Team Name
+      if (username !== currentUser.username && allUsers.some(u => u.id !== currentUser.id && u.username.toLowerCase() === username.toLowerCase())) {
+          toast({ variant: 'destructive', title: "Username Taken", description: "This username is already in use." });
+          return;
+      }
+
+      if (teamName && teamName !== currentUser.teamName) {
+          const isTeamNameTaken = allUsers.some(u => u.id !== currentUser.id && u.teamName?.toLowerCase() === teamName.toLowerCase());
+          if (isTeamNameTaken) {
+              toast({
+                  variant: 'destructive',
+                  title: "Team Name Taken",
+                  description: "This team name is already in use by another team. Please choose a unique name or join via invite."
+              });
+              return;
+          }
+      }
+
       const updatedFields: Partial<User> = {
         username,
         mobile,
