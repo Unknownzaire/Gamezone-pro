@@ -65,6 +65,7 @@ export default function AdminRoyalPassPage() {
 
     const [recentWinners, setRecentWinners] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [submissionSearchTerm, setSubmissionSearchTerm] = useState('');
     const [entryToDelete, setEntryToDelete] = useState<Transaction | null>(null);
     const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
 
@@ -433,7 +434,7 @@ export default function AdminRoyalPassPage() {
                                         </AlertDialogContent>
                                     </AlertDialog>
 
-                                    <Button variant="outline" className="w-full font-bold" onClick={() => setViewingGiveawayEntries(giveaway)}>
+                                    <Button variant="outline" className="w-full font-bold" onClick={() => { setViewingGiveawayEntries(giveaway); setSubmissionSearchTerm(''); }}>
                                         {giveaway.requiresReel ? (
                                             <>
                                                 <Video className="mr-2 h-4 w-4" />
@@ -659,6 +660,17 @@ export default function AdminRoyalPassPage() {
                         <DialogTitle>Submissions: {viewingGiveawayEntries?.jackpotName}</DialogTitle>
                         <DialogDescription>Review entries and select a winner for this giveaway.</DialogDescription>
                     </DialogHeader>
+                    <div className="py-2">
+                        <div className="relative">
+                            <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="Search by username or email..." 
+                                className="pl-8" 
+                                value={submissionSearchTerm}
+                                onChange={(e) => setSubmissionSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </div>
                     <ScrollArea className="flex-1 pr-4">
                         <Table>
                             <TableHeader>
@@ -669,52 +681,59 @@ export default function AdminRoyalPassPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {viewingGiveawayEntries && dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${viewingGiveawayEntries.jackpotName}`).map((entry) => {
-                                    const entryUser = getUserById(entry.userId);
-                                    const reelUrl = entry.paymentDetails?.reelUrl;
-                                    return (
-                                        <TableRow key={entry.id}>
-                                            <TableCell>
-                                                <div className="flex items-center gap-3">
-                                                    <Avatar className="h-8 w-8">
-                                                        <AvatarImage src={entryUser?.avatarUrl} alt={entryUser?.username} />
-                                                        <AvatarFallback>{entryUser?.username?.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <p className="font-semibold text-xs">{entryUser?.username || 'Unknown'}</p>
-                                                        <p className="text-[10px] text-muted-foreground">{entryUser?.email}</p>
+                                {viewingGiveawayEntries && dailyEntries
+                                    .filter(tx => tx.description === `Joined Lucky Draw: ${viewingGiveawayEntries.jackpotName}`)
+                                    .filter(tx => {
+                                        const user = getUserById(tx.userId);
+                                        return user?.username.toLowerCase().includes(submissionSearchTerm.toLowerCase()) || 
+                                               user?.email.toLowerCase().includes(submissionSearchTerm.toLowerCase());
+                                    })
+                                    .map((entry) => {
+                                        const entryUser = getUserById(entry.userId);
+                                        const reelUrl = entry.paymentDetails?.reelUrl;
+                                        return (
+                                            <TableRow key={entry.id}>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-8 w-8">
+                                                            <AvatarImage src={entryUser?.avatarUrl} alt={entryUser?.username} />
+                                                            <AvatarFallback>{entryUser?.username?.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div>
+                                                            <p className="font-semibold text-xs">{entryUser?.username || 'Unknown'}</p>
+                                                            <p className="text-[10px] text-muted-foreground">{entryUser?.email}</p>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-center">
-                                                {reelUrl ? (
-                                                    <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setViewingReelUrl(reelUrl)}>
-                                                        <Video className="h-3 w-3" />
-                                                        View Reel
-                                                    </Button>
-                                                ) : (
-                                                    <span className="text-[10px] text-muted-foreground italic">No reel</span>
-                                                )}
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" className="h-7 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
-                                                            Select as Winner
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {reelUrl ? (
+                                                        <Button variant="ghost" size="sm" className="h-7 text-[10px] gap-1" onClick={() => setViewingReelUrl(reelUrl)}>
+                                                            <Video className="h-3 w-3" />
+                                                            View Reel
                                                         </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogTitle>Select {entryUser?.username} as winner?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will award ₹{viewingGiveawayEntries.jackpotAmount.toLocaleString()} and reset the entries for this draw.</AlertDialogDescription>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handlePickWinner(viewingGiveawayEntries, entryUser?.id)}>Confirm</AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
-                                            </TableCell>
-                                        </TableRow>
-                                    );
+                                                    ) : (
+                                                        <span className="text-[10px] text-muted-foreground italic">No reel</span>
+                                                    )}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" className="h-7 text-[10px] bg-primary/10 hover:bg-primary/20 text-primary border-primary/20">
+                                                                Select as Winner
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogTitle>Select {entryUser?.username} as winner?</AlertDialogTitle>
+                                                            <AlertDialogDescription>This will award ₹{viewingGiveawayEntries.jackpotAmount.toLocaleString()} and reset the entries for this draw.</AlertDialogDescription>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handlePickWinner(viewingGiveawayEntries, entryUser?.id)}>Confirm</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
                                 })}
                                 {viewingGiveawayEntries && dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${viewingGiveawayEntries.jackpotName}`).length === 0 && (
                                     <TableRow>
