@@ -382,27 +382,6 @@ export default function TournamentDetailsPage() {
                     </Button>
                   </a>
                 )}
-                {tournament.roomId && (
-                  isParticipant ? (
-                    <Card className="bg-muted p-4 border-primary/20">
-                        <CardTitle className="text-lg mb-2 flex items-center gap-2">
-                          <PlayCircle className="h-5 w-5 text-primary" />
-                          Live Match Details
-                        </CardTitle>
-                        <div className="flex items-center gap-4 text-base">
-                          <p>Room ID: <span className="font-mono text-primary font-bold">{tournament.roomId}</span></p>
-                          <p>Password: <span className="font-mono text-primary font-bold">{tournament.roomPassword}</span></p>
-                        </div>
-                    </Card>
-                  ) : (
-                    <Card className="bg-muted/50 p-4 border-dashed">
-                       <div className="flex items-center gap-3 text-muted-foreground">
-                          <Lock className="h-5 w-5" />
-                          <p className="text-sm font-medium">Room ID and Password are only visible to participants.</p>
-                       </div>
-                    </Card>
-                  )
-                )}
               </div>
             )}
         </CardContent>
