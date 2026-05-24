@@ -29,6 +29,7 @@ export default function AdminDashboardPage() {
   const [activeAdsCount, setActiveAdsCount] = useState(0);
   const [openSupportTicketsCount, setOpenSupportTicketsCount] = useState(0);
   const [activeRoyalPassCount, setActiveRoyalPassCount] = useState(0);
+  const [activeGiveawaysCount, setActiveGiveawaysCount] = useState(0);
 
 
   const { toast } = useToast();
@@ -72,6 +73,12 @@ export default function AdminDashboardPage() {
 
       setActiveRoyalPassCount(users.filter(u => u.hasRoyalPass).length);
 
+      const storedGiveaways = localStorage.getItem('luckyDrawSettingsList');
+      if (storedGiveaways) {
+          const giveaways = JSON.parse(storedGiveaways);
+          setActiveGiveawaysCount(giveaways.filter((g: any) => g.isActive).length);
+      }
+
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
     }
@@ -80,7 +87,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allUsers' || event.key === 'allTransactions' || event.key === 'allTournaments' || event.key === 'promotionalAds' || event.key === 'supportTickets') {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'supportTickets', 'luckyDrawSettingsList'].includes(event.key || '')) {
         loadData();
       }
     };
@@ -118,7 +125,7 @@ export default function AdminDashboardPage() {
   const stats = [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
-    { title: "Active Royal Passes", value: activeRoyalPassCount, icon: Ticket, href: '/admin/royal-pass'},
+    { title: "Active Giveaways", value: activeGiveawaysCount, icon: Gift, href: '/admin/royal-pass'},
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -433,8 +434,17 @@ export default function AdminRoyalPassPage() {
                                     </AlertDialog>
 
                                     <Button variant="outline" className="w-full font-bold" onClick={() => setViewingGiveawayEntries(giveaway)}>
-                                        <Video className="mr-2 h-4 w-4" />
-                                        VIEW VIDEO LIST
+                                        {giveaway.requiresReel ? (
+                                            <>
+                                                <Video className="mr-2 h-4 w-4" />
+                                                VIEW VIDEO LIST
+                                            </>
+                                        ) : (
+                                            <>
+                                                <Users className="mr-2 h-4 w-4" />
+                                                VIEW LIST
+                                            </>
+                                        )}
                                     </Button>
                                 </div>
                             </CardContent>
@@ -508,7 +518,7 @@ export default function AdminRoyalPassPage() {
                         <div className="relative w-full md:w-64">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input 
-                                placeholder="Search entries or jackpot..." 
+                                placeholder="Search entries or giveaway..." 
                                 className="pl-8" 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -646,15 +656,15 @@ export default function AdminRoyalPassPage() {
             <Dialog open={!!viewingGiveawayEntries} onOpenChange={(open) => !open && setViewingGiveawayEntries(null)}>
                 <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
                     <DialogHeader>
-                        <DialogTitle>Video Submissions: {viewingGiveawayEntries?.jackpotName}</DialogTitle>
-                        <DialogDescription>Review reels and select a winner for this giveaway.</DialogDescription>
+                        <DialogTitle>Submissions: {viewingGiveawayEntries?.jackpotName}</DialogTitle>
+                        <DialogDescription>Review entries and select a winner for this giveaway.</DialogDescription>
                     </DialogHeader>
                     <ScrollArea className="flex-1 pr-4">
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
-                                    <TableHead className="text-center">Reel</TableHead>
+                                    <TableHead className="text-center">Submission</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
