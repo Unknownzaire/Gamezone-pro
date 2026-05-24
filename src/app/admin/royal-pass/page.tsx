@@ -453,7 +453,7 @@ export default function AdminRoyalPassPage() {
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>User</TableHead>
-                                        <TableHead>Jackpot</TableHead>
+                                        <TableHead>Giveaway</TableHead>
                                         <TableHead>Reel</TableHead>
                                         <TableHead>Amount</TableHead>
                                         <TableHead className="text-right">Action</TableHead>
@@ -522,7 +522,7 @@ export default function AdminRoyalPassPage() {
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>User</TableHead>
-                                    <TableHead>Jackpot</TableHead>
+                                    <TableHead>Giveaway</TableHead>
                                     <TableHead className="text-center">Reel</TableHead>
                                     <TableHead>Joined At</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
