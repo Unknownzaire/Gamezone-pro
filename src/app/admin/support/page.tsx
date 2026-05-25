@@ -1,23 +1,23 @@
-
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/table";
 import { mockUsers } from "@/lib/mock-data";
 import { SupportTicket, User, SupportTicketMessage } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal, Send, Paperclip } from 'lucide-react';
+import { ArrowLeft, RefreshCw, MessageSquare, CheckSquare, Mail, MoreHorizontal, Send, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 
 export default function AdminSupportPage() {
@@ -25,6 +25,7 @@ export default function AdminSupportPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
   const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
+  const [ticketToDelete, setTicketToDelete] = useState<SupportTicket | null>(null);
   const { toast } = useToast();
 
   const loadData = useCallback(() => {
@@ -104,6 +105,15 @@ export default function AdminSupportPage() {
     // Keep dialog open to see new message
     const updatedActiveTicket = updatedTickets.find(t => t.id === activeTicket.id);
     setActiveTicket(updatedActiveTicket || null);
+  };
+
+  const handleDeleteTicket = () => {
+    if (!ticketToDelete) return;
+    const updatedTickets = tickets.filter(t => t.id !== ticketToDelete.id);
+    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
+    loadData();
+    toast({ title: 'Ticket Deleted', description: 'The support ticket has been permanently removed.' });
+    setTicketToDelete(null);
   };
 
 
@@ -229,6 +239,11 @@ export default function AdminSupportPage() {
                                 </a>
                                 </DropdownMenuItem>
                             )}
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onClick={() => setTicketToDelete(ticket)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete Ticket
+                            </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -304,6 +319,23 @@ export default function AdminSupportPage() {
           )}
         </CardContent>
       </Card>
+
+      <AlertDialog open={!!ticketToDelete} onOpenChange={(open) => !open && setTicketToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently remove the conversation history for this ticket.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setTicketToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTicket} className="bg-destructive hover:bg-destructive/90">
+              Delete Permanently
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
