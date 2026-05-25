@@ -416,7 +416,7 @@ export default function CreateTournamentPage() {
                                     <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} min="0" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="slots">Player Entry Limit</Label>
+                                    <Label htmlFor="slots">Entry Limit</Label>
                                     <Input id="slots" name="slots" type="number" placeholder="100" value={slots} onChange={(e) => setSlots(Number(e.target.value))} required min="1" max="10000" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">

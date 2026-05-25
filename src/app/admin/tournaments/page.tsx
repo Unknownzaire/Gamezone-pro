@@ -207,6 +207,7 @@ export default function AdminTournamentsPage() {
                 <TableHead>Status</TableHead>
                 <TableHead>Prize Pool</TableHead>
                 <TableHead>Entry Fee</TableHead>
+                <TableHead>Limit</TableHead>
                 <TableHead>Match Time</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
@@ -243,6 +244,7 @@ export default function AdminTournamentsPage() {
                   </TableCell>
                   <TableCell>₹{t.prizePool.toLocaleString()}</TableCell>
                   <TableCell>₹{t.entryFee.toLocaleString()}</TableCell>
+                  <TableCell>{t.slots}</TableCell>
                   <TableCell>{format(new Date(t.matchTime), "PPp")}</TableCell>
                   <TableCell>
                     <DropdownMenu>
