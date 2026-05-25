@@ -459,8 +459,8 @@ export default function EditTournamentPage() {
                         <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="slots">Total Slots</Label>
-                        <Input id="slots" name="slots" type="number" value={formData.slots} onChange={handleChange} required min="1" disabled={isSubmitting} />
+                        <Label htmlFor="slots">Player Entry Limit</Label>
+                        <Input id="slots" name="slots" type="number" value={formData.slots} onChange={handleChange} required min="1" max="10000" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>

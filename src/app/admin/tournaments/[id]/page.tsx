@@ -279,7 +279,7 @@ export default function ManageTournamentPage() {
     { title: "Status", value: tournament.status, icon: Clock },
     { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
     { title: "Entry Fee", value: `₹${tournament.entryFee.toLocaleString()}`, icon: DollarSign },
-    { title: "Participants", value: `${tournament.participants.length} / 100`, icon: Users },
+    { title: "Participants", value: `${tournament.participants.length} / ${tournament.slots || 100}`, icon: Users },
   ];
 
   const filteredParticipants = tournament.participants.filter(p => {
