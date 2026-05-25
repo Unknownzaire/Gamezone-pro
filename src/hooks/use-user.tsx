@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
@@ -516,7 +517,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
     }
     
-    if ((tournament.participants.length + usersToJoin.length) > 100) {
+    if ((tournament.participants.length + usersToJoin.length) > tournament.slots) {
         return 'tournament_full';
     }
 

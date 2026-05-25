@@ -32,6 +32,7 @@ export default function EditTournamentPage() {
     matchType: 'Solo',
     entryFee: 0,
     prizePool: 0,
+    slots: 100,
     commissionPercentage: 0,
     liveStreamLink: '',
     imageUrl: '',
@@ -271,7 +272,7 @@ export default function EditTournamentPage() {
         let allTournaments: Tournament[];
         try {
             const storedTournaments = localStorage.getItem('allTournaments');
-            allTournaments = storedTournaments ? JSON.parse(storedTournaments) : initialMockTournaments;
+            allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
         } catch (error) {
             console.error("Failed to parse tournaments from localStorage", error);
             allTournaments = initialMockTournaments;
@@ -456,6 +457,10 @@ export default function EditTournamentPage() {
                       <div className="space-y-2">
                         <Label htmlFor="prizePool">Prize Pool (₹)</Label>
                         <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" disabled={isSubmitting} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="slots">Total Slots</Label>
+                        <Input id="slots" name="slots" type="number" value={formData.slots} onChange={handleChange} required min="1" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>

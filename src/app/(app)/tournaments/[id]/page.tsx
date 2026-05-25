@@ -247,7 +247,8 @@ export default function TournamentDetailsPage() {
     },
   ];
 
-  const isFull = tournament.participants.length >= 100;
+  const slots = tournament.slots || 100;
+  const isFull = tournament.participants.length >= slots;
   const isBlocked = currentUser?.isBlocked;
   const isGameMismatch = currentUser && currentUser.primaryGame !== tournament.gameName;
   const isTeamCorrectlySelected = requiredTeammates === 0 || selectedTeammates.length === requiredTeammates;
@@ -331,7 +332,7 @@ export default function TournamentDetailsPage() {
                 </div>
                  <div className="flex items-center gap-2">
                     <Users className="h-4 w-4 text-primary" />
-                    <span>Players: {tournament.participants.length} / 100 joined</span>
+                    <span>Players: {tournament.participants.length} / {slots} joined</span>
                      <Dialog>
                       <DialogTrigger asChild>
                         <Button variant="link" size="sm" className="h-auto p-0 text-xs">

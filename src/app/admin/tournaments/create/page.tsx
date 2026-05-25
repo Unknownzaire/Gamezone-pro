@@ -28,6 +28,7 @@ export default function CreateTournamentPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [gameName, setGameName] = useState('');
     const [matchType, setMatchType] = useState<'Solo' | 'Duo' | 'Squad'>('Solo');
+    const [slots, setSlots] = useState(100);
     const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([
         { rank: '1', percentage: 50 },
         { rank: '2', percentage: 25 },
@@ -213,6 +214,7 @@ export default function CreateTournamentPage() {
                 matchTime: matchTime,
                 entryFee: entryFee,
                 prizePool: prizePool,
+                slots: slots,
                 commissionPercentage: Number(formData.get('commission')),
                 liveStreamLink: formData.get('liveStreamLink') as string,
                 imageUrl,
@@ -412,6 +414,10 @@ export default function CreateTournamentPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="prize-pool">Prize Pool (₹)</Label>
                                     <Input id="prize-pool" name="prize-pool" type="number" placeholder="5000" required value={prizePool} onChange={(e) => setPrizePool(Number(e.target.value))} min="0" disabled={isSubmitting} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="slots">Total Slots</Label>
+                                    <Input id="slots" name="slots" type="number" placeholder="100" value={slots} onChange={(e) => setSlots(Number(e.target.value))} required min="1" disabled={isSubmitting} />
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="commission">Commission (%)</Label>

@@ -36,6 +36,7 @@ export type Tournament = {
   matchType: 'Solo' | 'Duo' | 'Squad';
   entryFee: number;
   prizePool: number;
+  slots: number;
   matchTime: Date;
   roomId?: string;
   roomPassword?: string;
