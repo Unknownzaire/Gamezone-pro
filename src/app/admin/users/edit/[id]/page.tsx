@@ -25,7 +25,16 @@ export default function EditUserPage() {
 
   const { toast } = useToast();
   const [user, setUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState<Partial<User>>({});
+  const [formData, setFormData] = useState<Partial<User>>({
+    username: '',
+    email: '',
+    password: '',
+    mobile: '',
+    walletBalance: 0,
+    referralCode: '',
+    primaryGame: '',
+    gameProfiles: {},
+  });
   const [totalDeposits, setTotalDeposits] = useState(0);
   const [totalReferrals, setTotalReferrals] = useState(0);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -46,7 +55,7 @@ export default function EditUserPage() {
 
     if (userToEdit) {
       setUser(userToEdit);
-      setFormData(userToEdit);
+      setFormData(prev => ({ ...prev, ...userToEdit }));
 
       const storedTransactions = localStorage.getItem('allTransactions');
       const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : mockTransactions;
@@ -221,19 +230,19 @@ export default function EditUserPage() {
                 <h3 className="font-bold text-lg border-b pb-2">Basic Info</h3>
                 <div className="space-y-2">
                     <Label htmlFor="username">Username</Label>
-                    <Input id="username" name="username" value={formData.username || ''} onChange={handleChange} />
+                    <Input id="username" name="username" value={formData.username ?? ''} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input id="email" name="email" type="email" value={formData.email || ''} onChange={handleChange} />
+                    <Input id="email" name="email" type="email" value={formData.email ?? ''} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
-                    <Input id="password" name="password" value={formData.password || ''} onChange={handleChange} />
+                    <Input id="password" name="password" value={formData.password ?? ''} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="mobile">Mobile</Label>
-                    <Input id="mobile" name="mobile" value={formData.mobile || ''} onChange={handleChange} />
+                    <Input id="mobile" name="mobile" value={formData.mobile ?? ''} onChange={handleChange} />
                 </div>
             </div>
 
@@ -241,7 +250,7 @@ export default function EditUserPage() {
                 <h3 className="font-bold text-lg border-b pb-2">Wallet & Referrals</h3>
                 <div className="space-y-2">
                     <Label htmlFor="walletBalance">Wallet Balance (₹)</Label>
-                    <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance || 0} onChange={handleChange} />
+                    <Input id="walletBalance" name="walletBalance" type="number" value={formData.walletBalance ?? 0} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="totalDeposits">Total Deposits (₹)</Label>
@@ -249,7 +258,7 @@ export default function EditUserPage() {
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="referralCode">Referral Code</Label>
-                    <Input id="referralCode" name="referralCode" value={formData.referralCode || ''} onChange={handleChange} />
+                    <Input id="referralCode" name="referralCode" value={formData.referralCode ?? ''} onChange={handleChange} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="totalReferrals">Total Referrals</Label>
@@ -275,7 +284,7 @@ export default function EditUserPage() {
               <h3 className="font-bold text-lg border-b pb-2">Game Profiles</h3>
               <div className="space-y-2">
                 <Label htmlFor="primaryGame">Primary Game</Label>
-                <Select name="primaryGame" value={formData.primaryGame} onValueChange={(value) => handleSelectChange('primaryGame', value)}>
+                <Select name="primaryGame" value={formData.primaryGame ?? ''} onValueChange={(value) => handleSelectChange('primaryGame', value)}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select a game" />
                     </SelectTrigger>
@@ -295,7 +304,7 @@ export default function EditUserPage() {
                         <Label htmlFor={`${game}-username`} className="text-xs">Username</Label>
                         <Input 
                           id={`${game}-username`} 
-                          value={formData.gameProfiles?.[game]?.inGameUsername || ''}
+                          value={formData.gameProfiles?.[game]?.inGameUsername ?? ''}
                           onChange={(e) => handleGameProfileChange(game, 'inGameUsername', e.target.value)}
                         />
                       </div>
@@ -303,7 +312,7 @@ export default function EditUserPage() {
                         <Label htmlFor={`${game}-id`} className="text-xs">User ID</Label>
                         <Input 
                           id={`${game}-id`}
-                          value={formData.gameProfiles?.[game]?.inGameId || ''}
+                          value={formData.gameProfiles?.[game]?.inGameId ?? ''}
                           onChange={(e) => handleGameProfileChange(game, 'inGameId', e.target.value)}
                         />
                       </div>

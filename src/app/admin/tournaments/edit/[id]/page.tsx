@@ -81,7 +81,7 @@ export default function EditTournamentPage() {
     if (tournamentToEdit) {
       setTournament(tournamentToEdit);
       const { matchTime, prizeDistribution, ...rest } = tournamentToEdit;
-      setFormData(rest);
+      setFormData(prev => ({ ...prev, ...rest }));
       setMatchTime(new Date(matchTime));
       setPrizeDistributions(prizeDistribution || [
           { rank: '1', percentage: 50 },
@@ -329,12 +329,12 @@ export default function EditTournamentPage() {
                     <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
                       <div className="space-y-2 md:col-span-2">
                         <Label htmlFor="title">Tournament Title</Label>
-                        <Input id="title" name="title" value={formData.title} onChange={handleChange} required disabled={isSubmitting} />
+                        <Input id="title" name="title" value={formData.title ?? ''} onChange={handleChange} required disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="gameName">Game Name</Label>
                         <div className="flex items-center gap-2">
-                          <Select value={formData.gameName} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
+                          <Select value={formData.gameName ?? ''} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
                               <SelectTrigger id="gameName">
                                   <SelectValue placeholder="Select a game" />
                               </SelectTrigger>
@@ -435,7 +435,7 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="matchType">Match Type</Label>
-                          <Select value={formData.matchType} onValueChange={(value) => handleSelectChange('matchType', value as 'Solo' | 'Duo' | 'Squad')} disabled={isSubmitting}>
+                          <Select value={formData.matchType ?? 'Solo'} onValueChange={(value) => handleSelectChange('matchType', value as 'Solo' | 'Duo' | 'Squad')} disabled={isSubmitting}>
                               <SelectTrigger id="matchType">
                                   <SelectValue placeholder="Select match type" />
                               </SelectTrigger>
@@ -452,27 +452,27 @@ export default function EditTournamentPage() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="entryFee">Entry Fee (₹)</Label>
-                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee} onChange={handleChange} required min="0" disabled={isSubmitting} />
+                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="prizePool">Prize Pool (₹)</Label>
-                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool} onChange={handleChange} required min="0" disabled={isSubmitting} />
+                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="slots">Entry Limit</Label>
-                        <Input id="slots" name="slots" type="number" value={formData.slots} onChange={handleChange} required min="1" max="10000" disabled={isSubmitting} />
+                        <Input id="slots" name="slots" type="number" value={formData.slots ?? 100} onChange={handleChange} required min="1" max="10000" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="commissionPercentage">Commission (%)</Label>
-                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage} onChange={handleChange} required min="0" disabled={isSubmitting} />
+                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
-                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink} onChange={handleChange} placeholder="https://youtube.com/live/..." disabled={isSubmitting} />
+                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink ?? ''} onChange={handleChange} placeholder="https://youtube.com/live/..." disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2">
                           <Label htmlFor="imageHint">Image Hint</Label>
-                          <Input id="imageHint" name="imageHint" value={formData.imageHint} onChange={handleChange} disabled={isSubmitting} />
+                          <Input id="imageHint" name="imageHint" value={formData.imageHint ?? ''} onChange={handleChange} disabled={isSubmitting} />
                       </div>
                       <div className="space-y-2 md:col-span-2">
                           <Label htmlFor="imageFile">Tournament Image</Label>
@@ -497,7 +497,7 @@ export default function EditTournamentPage() {
                                         <Input 
                                             id={`rank-${index}`}
                                             placeholder="e.g., 1 or 4-10" 
-                                            value={dist.rank}
+                                            value={dist.rank ?? ''}
                                             onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
                                             disabled={isSubmitting}
                                         />
@@ -510,7 +510,7 @@ export default function EditTournamentPage() {
                                             step="0.01"
                                             min="0"
                                             placeholder="e.g., 50"
-                                            value={dist.percentage}
+                                            value={dist.percentage ?? 0}
                                             onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
                                             disabled={isSubmitting}
                                         />
