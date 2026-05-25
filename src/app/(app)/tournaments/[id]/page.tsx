@@ -254,10 +254,11 @@ export default function TournamentDetailsPage() {
   const isTeamCorrectlySelected = requiredTeammates === 0 || selectedTeammates.length === requiredTeammates;
   const isParticipant = tournament.participants.some(p => p.user.id === currentUser?.id);
   
-  const canJoin = currentUser && tournament.status === 'Upcoming' && !isFull && !isBlocked && !isJoining && !isGameMismatch;
+  const canJoin = currentUser && tournament.status === 'Upcoming' && !isFull && !isBlocked && !isJoining && !isGameMismatch && !isParticipant;
 
   let joinButtonText = `Join Now for ₹${tournament.entryFee}`;
   if (isJoining) joinButtonText = 'Joining...';
+  else if (isParticipant) joinButtonText = 'Already Joined';
   else if (isFull) joinButtonText = 'Tournament Full';
   else if (tournament.status !== 'Upcoming') joinButtonText = 'Joining Closed';
   else if (isBlocked) joinButtonText = 'Account Blocked';
