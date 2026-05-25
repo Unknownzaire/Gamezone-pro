@@ -343,6 +343,9 @@ export default function RoyalPassPage() {
                                                                         ref={reelInputRef}
                                                                     />
                                                                 </div>
+                                                                <p className="text-[10px] text-muted-foreground italic mt-2">
+                                                                    * Note: Please upload game-related reels only. By submitting, you agree to our Terms and Conditions.
+                                                                </p>
                                                             </div>
                                                         ) : (
                                                             <div className="p-12 text-center border-2 border-dashed rounded-lg bg-muted/20">
