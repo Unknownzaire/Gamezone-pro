@@ -343,9 +343,34 @@ export default function RoyalPassPage() {
                                                                         ref={reelInputRef}
                                                                     />
                                                                 </div>
-                                                                <p className="text-[10px] text-muted-foreground italic mt-2">
-                                                                    * Note: Please upload game-related reels only. By submitting, you agree to our Terms and Conditions.
-                                                                </p>
+                                                                <div className="text-[10px] text-muted-foreground italic mt-2">
+                                                                    * Note: Please upload game-related reels only. By submitting, you agree to our 
+                                                                    <Dialog>
+                                                                        <DialogTrigger asChild>
+                                                                            <button className="underline ml-1 hover:text-primary transition-colors">Terms and Conditions</button>
+                                                                        </DialogTrigger>
+                                                                        <DialogContent>
+                                                                            <DialogHeader>
+                                                                                <DialogTitle>Giveaway Terms & Conditions</DialogTitle>
+                                                                            </DialogHeader>
+                                                                            <ScrollArea className="h-60 mt-4 pr-4">
+                                                                                <div className="space-y-4 text-xs leading-relaxed">
+                                                                                    <p>1. <strong>Eligibility:</strong> Only registered users of Gamezone Pro who have participated in at least one paid tournament match are eligible to join these draws.</p>
+                                                                                    <p>2. <strong>Submission Rules:</strong> For video-entry draws, users must upload an original gameplay reel. Plagiarized, copyrighted, or offensive content will lead to immediate disqualification without refund.</p>
+                                                                                    <p>3. <strong>Entry Fee:</strong> The entry fee specified for each draw is non-refundable once the user has successfully joined, regardless of the draw outcome or account status.</p>
+                                                                                    <p>4. <strong>Winner Selection:</strong> Winners are selected either randomly via our algorithm (for direct draws) or based on administrator review of submission quality (for video contests). The administrator's decision is final and binding.</p>
+                                                                                    <p>5. <strong>Prize Distribution:</strong> Prize money will be credited directly to the winner's app wallet within 24-48 hours after the winner is officially declared.</p>
+                                                                                    <p>6. <strong>Fair Play:</strong> Any attempt to manipulate entries, use bots, or create duplicate accounts to enter will result in a permanent ban and forfeiture of all balances.</p>
+                                                                                </div>
+                                                                            </ScrollArea>
+                                                                            <DialogFooter>
+                                                                                <DialogClose asChild>
+                                                                                    <Button variant="outline">I Understand</Button>
+                                                                                </DialogClose>
+                                                                            </DialogFooter>
+                                                                        </DialogContent>
+                                                                    </Dialog>
+                                                                </div>
                                                             </div>
                                                         ) : (
                                                             <div className="p-12 text-center border-2 border-dashed rounded-lg bg-muted/20">
