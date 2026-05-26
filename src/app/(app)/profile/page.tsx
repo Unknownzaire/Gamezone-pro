@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus, Trash2 } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -27,7 +27,7 @@ import Image from 'next/image';
 import type { User, SocialLink, GameProfile } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { compressImage } from '@/lib/utils';
@@ -95,6 +95,7 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   
   const [isEditing, setIsEditing] = useState(false);
+  const [isResetLoading, setIsResetLoading] = useState(false);
   
   const [isEmailChangeOpen, setIsEmailChangeOpen] = useState(false);
   const [emailReauthPassword, setEmailReauthPassword] = useState('');
@@ -334,6 +335,27 @@ export default function ProfilePage() {
       }
       console.error("Password change error:", error);
       toast({ variant: 'destructive', title: "Password Change Failed", description });
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!auth || !currentUser?.email) return;
+    setIsResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email);
+      toast({
+        title: "Reset Email Sent",
+        description: `A password reset link has been sent to ${currentUser.email}.`,
+      });
+    } catch (error) {
+      console.error("Forgot password error:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not send reset email. Please try again later.",
+      });
+    } finally {
+      setIsResetLoading(false);
     }
   };
 
@@ -701,6 +723,12 @@ export default function ProfilePage() {
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
               <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
+              <div className="text-center">
+                  <Button variant="link" size="sm" onClick={handleForgotPassword} disabled={isResetLoading}>
+                      {isResetLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      Forgot Password? Send Reset Email
+                  </Button>
+              </div>
           </CardContent>
         </Card>
         
