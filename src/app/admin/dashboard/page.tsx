@@ -91,9 +91,16 @@ export default function AdminDashboardPage() {
         loadData();
       }
     };
+    
+    // Auto-refresh every 15 seconds or on tab focus for real-time feel
+    const interval = setInterval(loadData, 15000);
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', loadData);
+
     return () => {
+      clearInterval(interval);
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
 

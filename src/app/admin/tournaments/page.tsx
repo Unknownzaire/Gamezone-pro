@@ -59,9 +59,18 @@ export default function AdminTournamentsPage() {
 
    useEffect(() => {
     loadData();
-    window.addEventListener('storage', loadData);
+    const handleStorageChange = (event: StorageEvent) => {
+      if (['allTournaments', 'gameList'].includes(event.key || '')) {
+        loadData();
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', loadData);
+    
     return () => {
-      window.removeEventListener('storage', loadData);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
 

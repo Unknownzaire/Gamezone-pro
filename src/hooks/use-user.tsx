@@ -180,7 +180,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const reload = useCallback(() => {
-    setLoading(true);
+    // Non-blocking load to avoid flickering during automatic updates
     loadInitialData();
   }, [loadInitialData]);
 
@@ -199,8 +199,11 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', reload);
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', reload);
     };
   }, [loadInitialData, reload]);
 

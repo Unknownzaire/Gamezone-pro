@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -88,8 +89,11 @@ export default function AdminUsersPage() {
     };
 
     window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', loadData);
+    
     return () => {
       window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
 

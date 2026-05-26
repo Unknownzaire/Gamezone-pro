@@ -59,9 +59,17 @@ export default function AdminTransactionsPage() {
 
   useEffect(() => {
     loadData();
-    window.addEventListener('storage', loadData);
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'allUsers' || event.key === 'allTransactions') {
+        loadData();
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    window.addEventListener('focus', loadData);
+    
     return () => {
-      window.removeEventListener('storage', loadData);
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
   
