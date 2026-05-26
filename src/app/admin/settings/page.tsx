@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -92,7 +91,7 @@ export default function AdminSettingsPage() {
         const storedAdmin = localStorage.getItem('adminCredentials');
         if (storedAdmin) {
             const parsed = JSON.parse(storedAdmin);
-            setAdminUsername(parsed.username);
+            setAdminUsername(parsed.username || 'unknownzaire94');
         }
 
         const storedWalletSettings = localStorage.getItem('walletSettings');
@@ -306,7 +305,7 @@ export default function AdminSettingsPage() {
                                     <Label htmlFor="username">Admin Username</Label>
                                     <Input 
                                         id="username" 
-                                        value={adminUsername} 
+                                        value={adminUsername || ''} 
                                         onChange={(e) => setAdminUsername(e.target.value)} 
                                         required 
                                     />
@@ -316,7 +315,7 @@ export default function AdminSettingsPage() {
                                     <Input 
                                         id="current-password" 
                                         type="password" 
-                                        value={currentPasswordInput}
+                                        value={currentPasswordInput || ''}
                                         onChange={(e) => setCurrentPasswordInput(e.target.value)}
                                         required 
                                     />
@@ -326,7 +325,7 @@ export default function AdminSettingsPage() {
                                     <Input 
                                         id="new-password" 
                                         type="password" 
-                                        value={newPasswordInput}
+                                        value={newPasswordInput || ''}
                                         onChange={(e) => setNewPasswordInput(e.target.value)}
                                         placeholder="Leave blank to keep current"
                                     />
@@ -350,11 +349,11 @@ export default function AdminSettingsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="minWithdrawal">Min Withdrawal (₹)</Label>
-                                        <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
+                                        <Input id="minWithdrawal" type="number" value={walletSettings.minWithdrawal ?? 0} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="maxWithdrawal">Max Withdrawal (₹)</Label>
-                                        <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
+                                        <Input id="maxWithdrawal" type="number" value={walletSettings.maxWithdrawal ?? 0} onChange={handleWalletInputChange} required disabled={isUpdatingWallet} />
                                     </div>
                                 </div>
 
@@ -369,7 +368,7 @@ export default function AdminSettingsPage() {
                                     <TabsContent value="upi" className="space-y-4 pt-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="depositUpiId">Deposit UPI ID</Label>
-                                            <Input id="depositUpiId" value={walletSettings.depositUpiId} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            <Input id="depositUpiId" value={walletSettings.depositUpiId || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="upi-qr">UPI QR Code</Label>
@@ -382,27 +381,27 @@ export default function AdminSettingsPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-2">
                                                 <Label htmlFor="bankName">Bank Name</Label>
-                                                <Input id="bankName" value={walletSettings.bankName} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                                <Input id="bankName" value={walletSettings.bankName || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="bankIfscCode">IFSC Code</Label>
-                                                <Input id="bankIfscCode" value={walletSettings.bankIfscCode} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                                <Input id="bankIfscCode" value={walletSettings.bankIfscCode || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="bankAccountNumber">Account Number</Label>
-                                            <Input id="bankAccountNumber" value={walletSettings.bankAccountNumber} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            <Input id="bankAccountNumber" value={walletSettings.bankAccountNumber || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="bankAccountHolderName">Account Holder Name</Label>
-                                            <Input id="bankAccountHolderName" value={walletSettings.bankAccountHolderName} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            <Input id="bankAccountHolderName" value={walletSettings.bankAccountHolderName || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                         </div>
                                     </TabsContent>
 
                                     <TabsContent value="binance" className="space-y-4 pt-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="binanceId">Binance ID</Label>
-                                            <Input id="binanceId" value={walletSettings.binanceId} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            <Input id="binanceId" value={walletSettings.binanceId || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="binance-qr">Binance Pay QR Code</Label>
@@ -414,7 +413,7 @@ export default function AdminSettingsPage() {
                                     <TabsContent value="paypal" className="space-y-4 pt-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="paypalEmail">PayPal Support Email</Label>
-                                            <Input id="paypalEmail" type="email" value={walletSettings.paypalEmail} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
+                                            <Input id="paypalEmail" type="email" value={walletSettings.paypalEmail || ''} onChange={handleWalletInputChange} disabled={isUpdatingWallet} />
                                         </div>
                                     </TabsContent>
                                 </Tabs>
@@ -441,12 +440,12 @@ export default function AdminSettingsPage() {
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="referralBonus">Referrer Bonus (₹)</Label>
-                                        <Input id="referralBonus" type="number" value={referralSettings.referralBonus} onChange={handleReferralInputChange} required />
+                                        <Input id="referralBonus" type="number" value={referralSettings.referralBonus ?? 0} onChange={handleReferralInputChange} required />
                                         <p className="text-xs text-muted-foreground">Bonus for the user who refers a new player.</p>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="newUserBonus">New User Bonus (₹)</Label>
-                                        <Input id="newUserBonus" type="number" value={referralSettings.newUserBonus} onChange={handleReferralInputChange} required />
+                                        <Input id="newUserBonus" type="number" value={referralSettings.newUserBonus ?? 0} onChange={handleReferralInputChange} required />
                                         <p className="text-xs text-muted-foreground">Bonus for the new user who signs up with a referral code.</p>
                                     </div>
                                 </div>
@@ -471,15 +470,15 @@ export default function AdminSettingsPage() {
                                         <div className="grid w-full grid-cols-[1fr,1fr,auto] gap-2">
                                             <div className="space-y-1">
                                                 <Label htmlFor={`name-${link.id}`} className="text-xs">Name</Label>
-                                                <Input id={`name-${link.id}`} value={link.name} onChange={(e) => handleSocialLinkChange(link.id, 'name', e.target.value)} />
+                                                <Input id={`name-${link.id}`} value={link.name || ''} onChange={(e) => handleSocialLinkChange(link.id, 'name', e.target.value)} />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label htmlFor={`url-${link.id}`} className="text-xs">URL</Label>
-                                                <Input id={`url-${link.id}`} value={link.url} onChange={(e) => handleSocialLinkChange(link.id, 'url', e.target.value)} />
+                                                <Input id={`url-${link.id}`} value={link.url || ''} onChange={(e) => handleSocialLinkChange(link.id, 'url', e.target.value)} />
                                             </div>
                                             <div className="space-y-1">
                                                 <Label htmlFor={`icon-${link.id}`} className="text-xs">Icon</Label>
-                                                <Select value={link.icon} onValueChange={(value) => handleSocialLinkChange(link.id, 'icon', value)}>
+                                                <Select value={link.icon || 'link'} onValueChange={(value) => handleSocialLinkChange(link.id, 'icon', value as any)}>
                                                     <SelectTrigger id={`icon-${link.id}`} className="w-28">
                                                         <SelectValue />
                                                     </SelectTrigger>
@@ -521,11 +520,11 @@ export default function AdminSettingsPage() {
                                 <div className="grid md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="helplineNumber">Helpline Number</Label>
-                                        <Input id="helplineNumber" type="tel" value={helpAndSupportSettings.helplineNumber} onChange={handleHelpInputChange} required />
+                                        <Input id="helplineNumber" type="tel" value={helpAndSupportSettings.helplineNumber || ''} onChange={handleHelpInputChange} required />
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="supportEmail">Support Email</Label>
-                                        <Input id="supportEmail" type="email" value={helpAndSupportSettings.supportEmail} onChange={handleHelpInputChange} required />
+                                        <Input id="supportEmail" type="email" value={helpAndSupportSettings.supportEmail || ''} onChange={handleHelpInputChange} required />
                                     </div>
                                 </div>
                                 <div className="flex justify-end">
