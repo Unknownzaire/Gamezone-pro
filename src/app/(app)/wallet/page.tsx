@@ -1,7 +1,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -203,16 +203,25 @@ export default function WalletPage() {
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
 
-  const loadWalletSettings = () => {
+  const loadWalletSettings = useCallback(() => {
     const storedSettings = localStorage.getItem('walletSettings');
     if (storedSettings) {
       setWalletSettings(JSON.parse(storedSettings));
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadWalletSettings();
-  }, []);
+    
+    // Auto-refresh when returning to the tab or when settings change in another tab
+    window.addEventListener('storage', loadWalletSettings);
+    window.addEventListener('focus', loadWalletSettings);
+    
+    return () => {
+        window.removeEventListener('storage', loadWalletSettings);
+        window.removeEventListener('focus', loadWalletSettings);
+    };
+  }, [loadWalletSettings]);
 
   const handleWithdraw = () => {
     if (!user) return;
@@ -323,6 +332,7 @@ export default function WalletPage() {
   
   const handleRefresh = () => {
     reloadUser();
+    loadWalletSettings();
     toast({ title: "Wallet Updated", description: "Your balance and transactions are up to date." });
   };
   
