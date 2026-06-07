@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, RefreshCw, Trash2, Search, Copy, CheckCircle, Clock } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw, Trash2, Search, Copy, CheckCircle, Clock, Users } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { RedeemCode, User } from '@/lib/types';
@@ -32,6 +32,7 @@ export default function AdminRedeemCodesPage() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [newAmount, setNewAmount] = useState('100');
+    const [usageLimit, setUsageLimit] = useState('1');
     const [customCode, setCustomCode] = useState('');
     const { toast } = useToast();
 
@@ -73,6 +74,12 @@ export default function AdminRedeemCodesPage() {
             return;
         }
 
+        const limit = parseInt(usageLimit);
+        if (isNaN(limit) || limit <= 0) {
+            toast({ variant: 'destructive', title: "Invalid Usage Limit" });
+            return;
+        }
+
         const finalCode = customCode.trim() || generateCode();
         
         if (codes.some(c => c.code.toUpperCase() === finalCode.toUpperCase())) {
@@ -85,6 +92,9 @@ export default function AdminRedeemCodesPage() {
             code: finalCode.toUpperCase(),
             amount: amount,
             status: 'active',
+            usageLimit: limit,
+            usedCount: 0,
+            usedBy: [],
             createdAt: new Date().toISOString()
         };
 
@@ -95,6 +105,7 @@ export default function AdminRedeemCodesPage() {
         toast({ title: "Redeem Code Created", description: `Code ${finalCode.toUpperCase()} is now active.` });
         setIsCreateOpen(false);
         setCustomCode('');
+        setUsageLimit('1');
     };
 
     const handleDeleteCode = (id: string) => {
@@ -112,8 +123,7 @@ export default function AdminRedeemCodesPage() {
     const getUserById = (userId: string) => users.find(u => u.id === userId);
 
     const filteredCodes = codes.filter(c => 
-        c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (c.usedBy && getUserById(c.usedBy)?.username.toLowerCase().includes(searchTerm.toLowerCase()))
+        c.code.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     return (
@@ -149,10 +159,15 @@ export default function AdminRedeemCodesPage() {
                         <CardDescription>Enter details for the new redeemable voucher.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-4 md:grid-cols-3">
                             <div className="space-y-2">
                                 <Label htmlFor="amount">Voucher Value (₹)</Label>
                                 <Input id="amount" type="number" value={newAmount} onChange={(e) => setNewAmount(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="usageLimit">Usage Limit (Users)</Label>
+                                <Input id="usageLimit" type="number" value={usageLimit} onChange={(e) => setUsageLimit(e.target.value)} />
+                                <p className="text-[10px] text-muted-foreground">How many people can use this code.</p>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="customCode">Custom Code (Optional)</Label>
@@ -174,7 +189,7 @@ export default function AdminRedeemCodesPage() {
                         <div className="relative w-64">
                             <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input 
-                                placeholder="Search codes or users..." 
+                                placeholder="Search codes..." 
                                 className="pl-8" 
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -189,21 +204,21 @@ export default function AdminRedeemCodesPage() {
                                 <TableRow>
                                     <TableHead>Code</TableHead>
                                     <TableHead>Amount</TableHead>
+                                    <TableHead>Usage Limit</TableHead>
                                     <TableHead>Status</TableHead>
-                                    <TableHead>Used By</TableHead>
                                     <TableHead>Created At</TableHead>
                                     <TableHead className="text-right">Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredCodes.map((code) => {
-                                    const user = code.usedBy ? getUserById(code.usedBy) : null;
+                                    const isExhausted = code.usedCount >= code.usageLimit;
                                     return (
                                         <TableRow key={code.id}>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <code className="bg-muted px-2 py-1 rounded font-bold text-primary">{code.code}</code>
-                                                    {code.status === 'active' && (
+                                                    {!isExhausted && (
                                                         <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => copyToClipboard(code.code)}>
                                                             <Copy className="h-3 w-3" />
                                                         </Button>
@@ -212,20 +227,18 @@ export default function AdminRedeemCodesPage() {
                                             </TableCell>
                                             <TableCell className="font-bold">₹{code.amount.toLocaleString()}</TableCell>
                                             <TableCell>
-                                                <Badge variant={code.status === 'active' ? 'default' : 'secondary'}>
-                                                    {code.status === 'active' ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle className="mr-1 h-3 w-3" />}
-                                                    {code.status}
-                                                </Badge>
+                                                <div className="flex items-center gap-2">
+                                                    <Users className="h-3 w-3 text-muted-foreground" />
+                                                    <span className="text-sm">
+                                                        <span className="font-bold text-primary">{code.usedCount}</span> / {code.usageLimit}
+                                                    </span>
+                                                </div>
                                             </TableCell>
                                             <TableCell>
-                                                {user ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-xs">{user.username}</span>
-                                                        <span className="text-[10px] text-muted-foreground">{format(new Date(code.usedAt!), 'PP')}</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-muted-foreground text-xs">—</span>
-                                                )}
+                                                <Badge variant={!isExhausted ? 'default' : 'secondary'}>
+                                                    {!isExhausted ? <Clock className="mr-1 h-3 w-3" /> : <CheckCircle className="mr-1 h-3 w-3" />}
+                                                    {isExhausted ? 'Exhausted' : 'Active'}
+                                                </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">
                                                 {format(new Date(code.createdAt), 'PPp')}
@@ -241,7 +254,7 @@ export default function AdminRedeemCodesPage() {
                                                         <AlertDialogHeader>
                                                             <AlertDialogTitle>Delete Redeem Code?</AlertDialogTitle>
                                                             <AlertDialogDescription>
-                                                                This will remove the code "{code.code}" from the system. If it's already used, the user will keep their balance.
+                                                                This will remove the code "{code.code}" from the system. Users who already redeemed it will keep their balance.
                                                             </AlertDialogDescription>
                                                         </AlertDialogHeader>
                                                         <AlertDialogFooter>

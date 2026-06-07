@@ -139,7 +139,8 @@ export type RedeemCode = {
   code: string;
   amount: number;
   status: 'active' | 'used';
-  usedBy?: string; // userId
-  usedAt?: string; // date string
-  createdAt: string; // date string
+  usageLimit: number;
+  usedCount: number;
+  usedBy: string[]; // List of user IDs who redeemed it
+  createdAt: string;
 };

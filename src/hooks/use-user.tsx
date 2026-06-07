@@ -42,6 +42,7 @@ interface UserContextType {
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
   markNotificationsAsRead: () => void;
   removeUserFromTeam: (userId: string) => void;
+  joinTeam: (teamName: string) => 'success' | 'already_in_team' | 'team_full' | 'error';
   redeemCode: (code: string) => Promise<'success' | 'invalid' | 'already_used' | 'error'>;
 }
 
@@ -132,65 +133,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedNotifications) {
             setAllNotifications(JSON.parse(storedNotifications).map((n: any) => ({...n, createdAt: new Date(n.createdAt)})));
         } else {
-            const mockNotifications: Notification[] = [
-                {
-                  id: 'notif-1',
-                  userId: 'user-1',
-                  title: 'Tournament Starting!',
-                  description: 'Midnight Mayhem is about to start in 15 minutes.',
-                  createdAt: new Date(Date.now() - 5 * 60 * 1000),
-                  read: false,
-                  link: '/tournaments/t-2',
-                },
-                {
-                  id: 'notif-2',
-                  userId: 'user-1',
-                  title: 'Prize Credited',
-                  description: 'You won ₹1,500 from Victory Valley.',
-                  createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000),
-                  read: false,
-                  link: '/wallet',
-                },
-                {
-                  id: 'notif-3',
-                  userId: 'user-1',
-                  title: 'Withdrawal Processed',
-                  description: 'Your withdrawal of ₹500 was successful.',
-                  createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-                  read: true,
-                  link: '/wallet',
-                },
-            ];
+            const mockNotifications: Notification[] = [];
             localStorage.setItem('allNotifications', JSON.stringify(mockNotifications));
             setAllNotifications(mockNotifications);
         }
 
-        if (!localStorage.getItem('supportTickets')) {
-            localStorage.setItem('supportTickets', JSON.stringify([]));
-        }
-
     } catch(e) {
         console.error("Error loading data from localStorage", e);
-        setAllUsers(mockUsers);
-        setAllTransactions(mockTransactions);
-        setTournaments(initialMockTournaments);
-        setPromotionalAds([]);
-        setAllNotifications([]);
     }
     setLoading(false);
   }, []);
 
   const reload = useCallback(() => {
-    // Non-blocking load to avoid flickering during automatic updates
     loadInitialData();
   }, [loadInitialData]);
 
-  useEffect(() => {
-    if (!loading) {
-      saveToStorage('promotionalAds', promotionalAds, toast);
-    }
-  }, [promotionalAds, loading, toast]);
-  
   useEffect(() => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
@@ -255,14 +212,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
     if (userDetails.username && allUsers.some(u => u.username.toLowerCase() === userDetails.username.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
-        return 'error';
-    }
-    if (userDetails.inGameUsername && allUsers.some(u => u.gameProfiles && Object.values(u.gameProfiles).some(p => p.inGameUsername?.toLowerCase() === userDetails.inGameUsername?.toLowerCase()))) {
-        toast({ variant: 'destructive', title: 'In-Game Username Taken', description: 'This in-game username is already in use.' });
-        return 'error';
-    }
-     if (userDetails.inGameId && allUsers.some(u => u.gameProfiles && Object.values(u.gameProfiles).some(p => p.inGameId === userDetails.inGameId))) {
-        toast({ variant: 'destructive', title: 'In-Game User ID Taken', description: 'This in-game User ID is already in use.' });
         return 'error';
     }
     
@@ -361,13 +310,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       }
     }).catch((error) => {
         console.error("Logout Error: ", error);
-        toast({
-            variant: 'destructive',
-            title: 'Logout Failed',
-            description: 'An error occurred during logout. Please try again.',
-        });
     });
-  }, [auth, pathname, router, toast]);
+  }, [auth, pathname, router]);
 
   const loadUserContext = useCallback((userId: string, currentAllUsers: User[], currentAllTransactions: Transaction[], currentAllNotifications: Notification[]) => {
     const liveUserData = currentAllUsers.find(u => u.id === userId);
@@ -429,21 +373,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const updateUser = (updatedFields: Partial<User>) => {
     if (user) {
-      if (updatedFields.teamName && updatedFields.teamName !== user.teamName) {
-        const teamMembersCount = allUsers.filter(u => u.teamName === updatedFields.teamName).length;
-        if (teamMembersCount >= 4) {
-          toast({
-            variant: 'destructive',
-            title: 'Team is Full',
-            description: `The team "${updatedFields.teamName}" already has 4 members.`,
-          });
-          return;
-        }
-        updatedFields.teamJoinedAt = new Date();
-      }
-      if ('teamName' in updatedFields && !updatedFields.teamName) {
-        updatedFields.teamJoinedAt = undefined;
-      }
       const updatedUsers = allUsers.map(u => u.id === user.id ? {...u, ...updatedFields} : u);
       saveAllUsers(updatedUsers);
     }
@@ -456,19 +385,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return 'error';
     }
     if (user.teamName) {
-        if (user.teamName === teamName) {
-            toast({ title: 'Already in Team', description: `You are already a member of team "${teamName}".` });
-        } else {
-            toast({ variant: 'destructive', title: 'Already in a Team', description: 'You must leave your current team before joining a new one.' });
-        }
         return 'already_in_team';
     }
     const teamMembersCount = allUsers.filter(u => u.teamName === teamName).length;
     if (teamMembersCount >= 4) {
-        toast({ variant: 'destructive', title: 'Team is Full', description: `The team "${teamName}" is full.` });
         return 'team_full';
     }
-    updateUser({ teamName });
+    updateUser({ teamName, teamJoinedAt: new Date() });
     toast({ title: 'Joined Team!', description: `You are now a member of "${teamName}".` });
     return 'success';
   };
@@ -502,23 +425,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     if (!tournament) return false;
 
-    // First, run checks for all users before making any changes
     for (const userToJoin of usersToJoin) {
-        if (!userToJoin) {
-            return 'not_logged_in';
-        }
-        if (userToJoin.isBlocked) {
-            return { error: `Account is blocked and cannot join tournaments.`, user: userToJoin };
-        }
-        if (userToJoin.primaryGame !== tournament.gameName) {
-            return { error: `Only ${tournament.gameName} players can join this tournament.`, user: userToJoin };
-        }
-        if (tournament.participants.some(p => p.user.id === userToJoin.id)) {
-            return { error: `Already joined this tournament.`, user: userToJoin };
-        }
-        if (userToJoin.walletBalance < tournament.entryFee) {
-            return { error: `Insufficient balance (needs ₹${tournament.entryFee}).`, user: userToJoin };
-        }
+        if (!userToJoin) return 'not_logged_in';
+        if (userToJoin.isBlocked) return { error: `Account is blocked.`, user: userToJoin };
+        if (userToJoin.walletBalance < tournament.entryFee) return { error: `Insufficient balance.`, user: userToJoin };
     }
     
     if ((tournament.participants.length + usersToJoin.length) > tournament.slots) {
@@ -527,20 +437,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
     let updatedUsers = [...allUsers];
     let updatedTransactions = [...allTransactions];
-    
     const newParticipants: Participant[] = [];
 
-    // All checks passed, now perform the updates
     for (const userToJoin of usersToJoin) {
         const isFirstTournament = !hasUserJoinedTournament(userToJoin.id);
         const updatedUser = { ...userToJoin, walletBalance: userToJoin.walletBalance - tournament.entryFee };
 
-        // Deduct balance
-        updatedUsers = updatedUsers.map(u => 
-            u.id === userToJoin.id ? updatedUser : u
-        );
+        updatedUsers = updatedUsers.map(u => u.id === userToJoin.id ? updatedUser : u);
 
-        // Add transaction
         const newTransaction: Transaction = {
             id: generateUniqueId('tx-join', userToJoin.id),
             userId: userToJoin.id,
@@ -552,7 +456,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         };
         updatedTransactions.push(newTransaction);
         
-        // Create participant record
         newParticipants.push({
             id: generateUniqueId(`p-${tournament.id}`, userToJoin.id),
             user: updatedUser,
@@ -561,7 +464,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             joinedAt: new Date(),
         });
         
-        // Handle referral bonus for the referrer if it's the user's first tournament
         if (isFirstTournament && userToJoin.referredBy) {
             const referrer = updatedUsers.find(u => u.id === userToJoin.referredBy);
             if (referrer) {
@@ -569,12 +471,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 const settings: ReferralSettings = storedSettings ? JSON.parse(storedSettings) : { referralBonus: 25, newUserBonus: 25 };
                 const bonus = settings.referralBonus;
 
-                updatedUsers = updatedUsers.map(u => {
-                    if (u.id === referrer.id) {
-                        return { ...u, referralBalance: (u.referralBalance || 0) + bonus };
-                    }
-                    return u;
-                });
+                updatedUsers = updatedUsers.map(u => u.id === referrer.id ? { ...u, referralBalance: (u.referralBalance || 0) + bonus } : u);
 
                 const bonusTransaction: Transaction = {
                     id: generateUniqueId('tx-referral-bonus', referrer.id),
@@ -608,16 +505,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     
     const bonusAmount = user.referralBalance;
 
-    const updatedUsers = allUsers.map(u => {
-        if (u.id === user.id) {
-            return {
-                ...u,
-                walletBalance: u.walletBalance + bonusAmount,
-                referralBalance: 0,
-            };
-        }
-        return u;
-    });
+    const updatedUsers = allUsers.map(u => u.id === user.id ? { ...u, walletBalance: u.walletBalance + bonusAmount, referralBalance: 0 } : u);
     saveAllUsers(updatedUsers);
     
     addTransaction({
@@ -630,16 +518,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   
   const addSupportTicket = (message: string, imageUrl?: string) => {
     if (!user) return;
-    
-    const initialMessage: SupportTicketMessage = {
-      sender: 'user',
-      text: message,
-      createdAt: new Date(),
-    };
-    if (imageUrl) {
-      initialMessage.imageUrl = imageUrl;
-    }
-    
+    const initialMessage: SupportTicketMessage = { sender: 'user', text: message, createdAt: new Date(), imageUrl };
     const newTicket: SupportTicket = {
       id: generateUniqueId('ticket', user.id),
       userId: user.id,
@@ -648,63 +527,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       createdAt: new Date(),
       messages: [initialMessage],
     };
-
     const storedTickets = localStorage.getItem('supportTickets');
     const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
-    const updatedTickets = [newTicket, ...allTickets];
-    saveToStorage('supportTickets', updatedTickets, toast);
+    saveToStorage('supportTickets', [newTicket, ...allTickets], toast);
   };
   
   const addMessageToTicket = (ticketId: string, message: string, imageUrl?: string) => {
     const storedTickets = localStorage.getItem('supportTickets');
     const allTickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
-    
     const updatedTickets = allTickets.map(ticket => {
       if (ticket.id === ticketId) {
-        const newMessage: SupportTicketMessage = {
-          sender: 'user',
-          text: message,
-          createdAt: new Date(),
-        };
-        if (imageUrl) {
-          newMessage.imageUrl = imageUrl;
-        }
-        return {
-          ...ticket,
-          status: 'open' as const,
-          messages: [...ticket.messages, newMessage]
-        };
+        return { ...ticket, status: 'open' as const, messages: [...ticket.messages, { sender: 'user', text: message, createdAt: new Date(), imageUrl }] };
       }
       return ticket;
     });
-
     saveToStorage('supportTickets', updatedTickets, toast);
     reload(); 
   };
   
   const addNotification = (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => {
-      const newNotification: Notification = {
-          ...notification,
-          id: generateUniqueId('notif', notification.userId),
-          createdAt: new Date(),
-          read: false,
-      };
-      const updatedNotifications = [newNotification, ...allNotifications];
-      saveAllNotifications(updatedNotifications);
+      const newNotification: Notification = { ...notification, id: generateUniqueId('notif', notification.userId), createdAt: new Date(), read: false };
+      saveAllNotifications([newNotification, ...allNotifications]);
   };
 
   const markNotificationsAsRead = () => {
       if (!user) return;
-      const hasUnread = notifications.some(n => !n.read);
-      if (!hasUnread) return;
-
-      const updatedNotifications = allNotifications.map(n => {
-          if (n.userId === user.id) {
-              return { ...n, read: true };
-          }
-          return n;
-      });
-      saveAllNotifications(updatedNotifications);
+      saveAllNotifications(allNotifications.map(n => n.userId === user.id ? { ...n, read: true } : n));
   };
 
   const redeemCode = async (code: string): Promise<'success' | 'invalid' | 'already_used' | 'error'> => {
@@ -714,22 +562,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     const codes: RedeemCode[] = storedCodes ? JSON.parse(storedCodes) : [];
     
     const redeemCodeIndex = codes.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
-    
     if (redeemCodeIndex === -1) return 'invalid';
     
     const redeemCode = codes[redeemCodeIndex];
+    if (redeemCode.usedBy.includes(user.id)) return 'already_used';
+    if (redeemCode.usedCount >= redeemCode.usageLimit) return 'already_used';
     
-    if (redeemCode.status === 'used') return 'already_used';
-    
-    // Process redemption
     const updatedUser = { ...user, walletBalance: user.walletBalance + redeemCode.amount };
     const updatedUsers = allUsers.map(u => u.id === user.id ? updatedUser : u);
     
     const updatedCodes = codes.map((c, i) => i === redeemCodeIndex ? {
         ...c,
-        status: 'used' as const,
-        usedBy: user.id,
-        usedAt: new Date().toISOString()
+        status: (c.usedCount + 1 >= c.usageLimit) ? 'used' as const : 'active' as const,
+        usedCount: c.usedCount + 1,
+        usedBy: [...c.usedBy, user.id]
     } : c);
 
     const newTransaction: Transaction = {
@@ -740,10 +586,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         description: `Redeemed Code: ${code.toUpperCase()}`,
         createdAt: new Date(),
         status: 'completed',
-        paymentDetails: {
-            method: 'redeem_code',
-            code: code.toUpperCase()
-        }
+        paymentDetails: { method: 'redeem_code', code: code.toUpperCase() }
     };
 
     saveToStorage('redeemCodes', updatedCodes, toast);
