@@ -33,18 +33,6 @@ interface Giveaway {
     requiresReel: boolean;
 }
 
-const BenefitCard = ({ icon: Icon, title, description }: { icon: any, title: string, description: string }) => (
-    <div className="flex flex-col gap-2 p-3 rounded-xl bg-card/30 border border-white/5 hover:border-primary/20 transition-colors group">
-        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-            <Icon className="h-4 w-4 text-primary" />
-        </div>
-        <div>
-            <p className="text-xs font-bold text-foreground">{title}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">{description}</p>
-        </div>
-    </div>
-);
-
 export default function RoyalPassPage() {
     const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers } = useUser();
     const { toast } = useToast();
@@ -196,55 +184,6 @@ export default function RoyalPassPage() {
                     <p className="text-muted-foreground text-sm">Elevate your game with premium perks!</p>
                 </div>
             </div>
-
-            {/* Benefits Section */}
-            <Card className="border-primary/20 bg-primary/5 overflow-hidden">
-                <CardHeader className="pb-3">
-                    <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-full bg-yellow-500/20">
-                            <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                        </div>
-                        <div>
-                            <CardTitle className="font-headline text-lg">Royal Pass Benefits</CardTitle>
-                            <CardDescription className="text-[10px]">Unlock the ultimate gaming experience.</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="grid grid-cols-2 gap-3">
-                        <BenefitCard 
-                            icon={Gift} 
-                            title="Exclusive Draws" 
-                            description="Access to massive prize pools only for RP members." 
-                        />
-                        <BenefitCard 
-                            icon={ShieldCheck} 
-                            title="Zero Commission" 
-                            description="Keep 100% of your tournament winnings." 
-                        />
-                        <BenefitCard 
-                            icon={Zap} 
-                            title="Priority Payouts" 
-                            description="Withdrawals processed ahead of the queue." 
-                        />
-                        <BenefitCard 
-                            icon={Heart} 
-                            title="Elite Badge" 
-                            description="Stand out with a prestigious badge on your profile." 
-                        />
-                        <BenefitCard 
-                            icon={Users} 
-                            title="2x Referral Bonus" 
-                            description="Earn double for every friend you refer to GZPro." 
-                        />
-                        <BenefitCard 
-                            icon={Sparkles} 
-                            title="Special Events" 
-                            description="Early access to seasonal tournaments and events." 
-                        />
-                    </div>
-                </CardContent>
-            </Card>
 
             <div className="space-y-4">
                 <h2 className="font-headline text-xl font-bold flex items-center gap-2 px-1">
