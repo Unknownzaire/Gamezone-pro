@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { compressImage } from '@/lib/utils';
-import { Switch } from '@/components/ui/switch';
 
 export default function EditUserPage() {
   const params = useParams();
@@ -75,7 +73,8 @@ export default function EditUserPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
+    const val = type === 'number' ? parseFloat(value) : value;
+    setFormData(prev => ({ ...prev, [name]: val }));
   };
   
   const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -91,10 +90,6 @@ export default function EditUserPage() {
   };
 
   const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleSwitchChange = (name: string, value: boolean) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -204,28 +199,6 @@ export default function EditUserPage() {
         </div>
         <form onSubmit={handleSubmit}>
           <CardContent className="pt-6 grid gap-6 md:grid-cols-2">
-            <div className="space-y-4 md:col-span-2">
-                <h3 className="font-bold text-lg border-b pb-2">Premium Status</h3>
-                <div className="flex flex-wrap gap-8">
-                    <div className="flex items-center space-x-2">
-                        <Switch 
-                            id="hasRoyalPass" 
-                            checked={!!formData.hasRoyalPass} 
-                            onCheckedChange={(val) => handleSwitchChange('hasRoyalPass', val)} 
-                        />
-                        <Label htmlFor="hasRoyalPass" className="font-medium cursor-pointer">Royal Pass Active</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                        <Switch 
-                            id="hasElitePass" 
-                            checked={!!formData.hasElitePass} 
-                            onCheckedChange={(val) => handleSwitchChange('hasElitePass', val)} 
-                        />
-                        <Label htmlFor="hasElitePass" className="font-medium cursor-pointer">Elite Pass Active</Label>
-                    </div>
-                </div>
-            </div>
-
             <div className="space-y-4">
                 <h3 className="font-bold text-lg border-b pb-2">Basic Info</h3>
                 <div className="space-y-2">
