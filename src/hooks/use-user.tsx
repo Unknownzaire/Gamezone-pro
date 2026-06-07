@@ -401,7 +401,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         tx.userId === userId && 
         tx.type === 'debit' && 
         tx.status === 'completed' &&
-        tx.description.toLowerCase().startsWith('joined')
+        tx.description.toLowerCase().startsWith('joined "') &&
+        !tx.description.toLowerCase().includes('lucky draw')
     );
   };
   

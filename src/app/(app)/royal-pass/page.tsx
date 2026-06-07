@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,7 @@ interface Giveaway {
 }
 
 export default function RoyalPassPage() {
-    const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers } = useUser();
+    const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers, hasUserJoinedTournament } = useUser();
     const { toast } = useToast();
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [winners, setWinners] = useState<any[]>([]);
@@ -79,9 +80,7 @@ export default function RoyalPassPage() {
         return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
-    const hasJoinedAnyTournament = (tournaments || []).some(t => 
-        t.participants.some(p => p.user.id === user?.id)
-    );
+    const hasJoinedAnyTournament = user ? hasUserJoinedTournament(user.id) : false;
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
