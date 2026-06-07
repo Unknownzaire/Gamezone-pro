@@ -15,3 +15,18 @@ This is the Gamezone Pro BGMI Tournament platform.
 - Firebase (Auth, Firestore)
 - Genkit (AI Flows)
 - Tailwind CSS & ShadCN UI
+
+## GitHub Setup Instructions
+
+To safely push this project to your GitHub repository, run the following commands in your terminal:
+
+```bash
+git init
+git add .
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/Unknownzaire/Gamezone-Pro-94.git
+git push -u origin main
+```
+
+*Note: The included `.gitignore` file ensures that your sensitive environment variables and build folders are not uploaded to GitHub.*
