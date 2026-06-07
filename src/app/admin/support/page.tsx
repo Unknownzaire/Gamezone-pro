@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
@@ -57,8 +56,10 @@ export default function AdminSupportPage() {
   useEffect(() => {
     loadData();
     window.addEventListener('storage', loadData);
+    window.addEventListener('focus', loadData);
     return () => {
       window.removeEventListener('storage', loadData);
+      window.removeEventListener('focus', loadData);
     };
   }, [loadData]);
 
