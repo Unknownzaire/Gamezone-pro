@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, RefreshCw, Trash2, Search, Copy, CheckCircle, Clock, Users } from "lucide-react";
+import { ArrowLeft, Plus, RefreshCw, Trash2, Search, Copy, CheckCircle, Clock, Users, RefreshCcw } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { RedeemCode, User } from '@/lib/types';
@@ -171,7 +171,24 @@ export default function AdminRedeemCodesPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="customCode">Custom Code (Optional)</Label>
-                                <Input id="customCode" placeholder="Leave blank for random" value={customCode} onChange={(e) => setCustomCode(e.target.value)} />
+                                <div className="flex items-center gap-2">
+                                    <Input 
+                                        id="customCode" 
+                                        placeholder="Leave blank for random" 
+                                        value={customCode} 
+                                        onChange={(e) => setCustomCode(e.target.value.toUpperCase())} 
+                                        className="font-mono"
+                                    />
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="icon" 
+                                        title="Auto Generate"
+                                        onClick={() => setCustomCode(generateCode())}
+                                    >
+                                        <RefreshCcw className="h-4 w-4" />
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                         <div className="flex justify-end gap-2">
