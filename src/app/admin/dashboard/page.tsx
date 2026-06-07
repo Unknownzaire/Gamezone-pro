@@ -99,7 +99,6 @@ export default function AdminDashboardPage() {
       }
     };
     
-    // Auto-refresh every 15 seconds or on tab focus for real-time feel
     const interval = setInterval(loadData, 15000);
     window.addEventListener('storage', handleStorageChange);
     window.addEventListener('focus', loadData);
@@ -140,7 +139,7 @@ export default function AdminDashboardPage() {
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Active Giveaways", value: activeGiveawaysCount, icon: Gift, href: '/admin/royal-pass'},
-    { title: "Active Redeem Codes", value: activeRedeemCodesCount, icon: Tags, href: '/admin/redeem-codes' },
+    { title: "Redeem Codes", value: activeRedeemCodesCount, icon: Tags, href: '/admin/redeem-codes' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];
@@ -171,10 +170,8 @@ export default function AdminDashboardPage() {
             localAllUsers[userIndex].walletBalance += transaction.amount;
         }
         if (type === 'debit' && newStatus === 'declined') {
-            // Refund the user if a withdrawal is declined
             localAllUsers[userIndex].walletBalance += transaction.amount;
             
-            // Create a refund transaction
             const refundTx: Transaction = {
                 id: `tx-refund-${Date.now()}-${Math.random()}`,
                 userId: transaction.userId,
