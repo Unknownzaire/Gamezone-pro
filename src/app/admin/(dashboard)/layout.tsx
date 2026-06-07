@@ -20,7 +20,7 @@ import {
   SidebarMenuSubItem,
 } from '@/components/ui/sidebar';
 import Logo from '@/components/Logo';
-import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign, ChevronDown, Banknote, Gift, Megaphone, UserPlus, LifeBuoy, Bot, Ticket } from 'lucide-react';
+import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign, ChevronDown, Banknote, Gift, Megaphone, UserPlus, LifeBuoy, Bot, Ticket, Tags } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
@@ -31,6 +31,7 @@ const menuItems = [
   { href: '/admin/users', label: 'Users', icon: Users },
   { href: '/admin/support', label: 'Support', icon: LifeBuoy },
   { href: '/admin/referrals', label: 'Referrals', icon: UserPlus },
+  { href: '/admin/redeem-codes', label: 'Redeem Codes', icon: Tags },
   { href: '/admin/transactions', label: 'Transactions', icon: Banknote },
   { href: '/admin/promotions', label: 'Promotions', icon: Gift },
   { href: '/admin/promotional-ads', label: 'Promotional Ads', icon: Megaphone },

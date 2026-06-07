@@ -3,7 +3,7 @@
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
 import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
-import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification, GameProfile } from '@/lib/types';
+import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification, GameProfile, RedeemCode } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
 import type { ReferralSettings } from '@/app/admin/settings/page';
@@ -42,6 +42,7 @@ interface UserContextType {
   addNotification: (notification: Omit<Notification, 'id' | 'createdAt' | 'read'>) => void;
   markNotificationsAsRead: () => void;
   removeUserFromTeam: (userId: string) => void;
+  redeemCode: (code: string) => Promise<'success' | 'invalid' | 'already_used' | 'error'>;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -193,7 +194,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     loadInitialData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets', 'allNotifications'].includes(event.key || '')) {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'walletSettings', 'referralSettings', 'supportTickets', 'allNotifications', 'redeemCodes'].includes(event.key || '')) {
         reload();
       }
     };
@@ -706,9 +707,55 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       saveAllNotifications(updatedNotifications);
   };
 
+  const redeemCode = async (code: string): Promise<'success' | 'invalid' | 'already_used' | 'error'> => {
+    if (!user) return 'error';
+
+    const storedCodes = localStorage.getItem('redeemCodes');
+    const codes: RedeemCode[] = storedCodes ? JSON.parse(storedCodes) : [];
+    
+    const redeemCodeIndex = codes.findIndex(c => c.code.toUpperCase() === code.toUpperCase());
+    
+    if (redeemCodeIndex === -1) return 'invalid';
+    
+    const redeemCode = codes[redeemCodeIndex];
+    
+    if (redeemCode.status === 'used') return 'already_used';
+    
+    // Process redemption
+    const updatedUser = { ...user, walletBalance: user.walletBalance + redeemCode.amount };
+    const updatedUsers = allUsers.map(u => u.id === user.id ? updatedUser : u);
+    
+    const updatedCodes = codes.map((c, i) => i === redeemCodeIndex ? {
+        ...c,
+        status: 'used' as const,
+        usedBy: user.id,
+        usedAt: new Date().toISOString()
+    } : c);
+
+    const newTransaction: Transaction = {
+        id: generateUniqueId('tx-redeem', user.id),
+        userId: user.id,
+        amount: redeemCode.amount,
+        type: 'credit',
+        description: `Redeemed Code: ${code.toUpperCase()}`,
+        createdAt: new Date(),
+        status: 'completed',
+        paymentDetails: {
+            method: 'redeem_code',
+            code: code.toUpperCase()
+        }
+    };
+
+    saveToStorage('redeemCodes', updatedCodes, toast);
+    saveAllUsers(updatedUsers);
+    saveAllTransactions([newTransaction, ...allTransactions]);
+    
+    return 'success';
+  };
+
 
   return (
-    <UserContext.Provider value={{ user, setUser, transactions, allTransactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam, joinTeam }}>
+    <UserContext.Provider value={{ user, setUser, transactions, allTransactions, tournaments, setTournaments, promotionalAds, setPromotionalAds, addTransaction, updateUser, joinTournament, login, signup, logout, reload, toast, referredUsers, hasUserJoinedTournament, moveReferralBonusToWallet, allUsers, addSupportTicket, addMessageToTicket, notifications, addNotification, markNotificationsAsRead, removeUserFromTeam, joinTeam, redeemCode }}>
       {!loading && children}
     </UserContext.Provider>
   );

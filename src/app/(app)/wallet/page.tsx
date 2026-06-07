@@ -5,7 +5,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle, Gift, Copy, Building2, Wallet as WalletIcon, Share2 } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, Clock, RefreshCw, XCircle, Gift, Copy, Building2, Wallet as WalletIcon, Share2, Tags, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -175,7 +175,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
 }
 
 export default function WalletPage() {
-  const { user, transactions, addTransaction, updateUser, reload: reloadUser } = useUser();
+  const { user, transactions, addTransaction, updateUser, reload: reloadUser, redeemCode } = useUser();
   const { toast } = useToast();
   const [walletSettings, setWalletSettings] = useState<WalletSettings>({
     minWithdrawal: 100,
@@ -202,6 +202,9 @@ export default function WalletPage() {
 
   const [isAddMoneyOpen, setIsAddMoneyOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
+  const [isRedeemOpen, setIsRedeemOpen] = useState(false);
+  const [redeemInput, setRedeemInput] = useState('');
+  const [isRedeeming, setIsRedeeming] = useState(false);
 
   const loadWalletSettings = useCallback(() => {
     const storedSettings = localStorage.getItem('walletSettings');
@@ -329,6 +332,30 @@ export default function WalletPage() {
     setTransactionRef('');
     setIsAddMoneyOpen(false);
   }
+
+  const handleRedeem = async () => {
+    if (!redeemInput.trim()) return;
+    setIsRedeeming(true);
+    
+    try {
+        const result = await redeemCode(redeemInput);
+        if (result === 'success') {
+            toast({ title: "Redeemed!", description: "Funds have been added to your wallet." });
+            setRedeemInput('');
+            setIsRedeemOpen(false);
+        } else if (result === 'invalid') {
+            toast({ variant: 'destructive', title: "Invalid Code", description: "This redeem code does not exist." });
+        } else if (result === 'already_used') {
+            toast({ variant: 'destructive', title: "Used Code", description: "This redeem code has already been used." });
+        } else {
+            toast({ variant: 'destructive', title: "Error", description: "Could not redeem code. Try again." });
+        }
+    } catch (e) {
+        toast({ variant: 'destructive', title: "Error", description: "An unexpected error occurred." });
+    } finally {
+        setIsRedeeming(false);
+    }
+  };
   
   const handleRefresh = () => {
     reloadUser();
@@ -387,10 +414,46 @@ export default function WalletPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="font-headline text-3xl font-bold">My Wallet</h1>
-        <Button variant="ghost" size="icon" onClick={handleRefresh}>
-            <RefreshCw className="h-5 w-5" />
-            <span className="sr-only">Refresh Wallet</span>
-        </Button>
+        <div className="flex items-center gap-2">
+            <Dialog open={isRedeemOpen} onOpenChange={setIsRedeemOpen}>
+                <DialogTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <Tags className="h-5 w-5" />
+                        <span className="sr-only">Redeem Code</span>
+                    </Button>
+                </DialogTrigger>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Redeem Code</DialogTitle>
+                        <DialogDescription>Enter your alphanumeric code to top up your balance.</DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="redeem-code">Voucher Code</Label>
+                            <Input 
+                                id="redeem-code" 
+                                placeholder="e.g. GZPRO-XXXXX" 
+                                value={redeemInput} 
+                                onChange={(e) => setRedeemInput(e.target.value.toUpperCase())}
+                                className="font-mono text-center tracking-widest"
+                                disabled={isRedeeming}
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
+                        <Button onClick={handleRedeem} disabled={!redeemInput.trim() || isRedeeming}>
+                            {isRedeeming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Redeem Now
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+            <Button variant="ghost" size="icon" onClick={handleRefresh}>
+                <RefreshCw className="h-5 w-5" />
+                <span className="sr-only">Refresh Wallet</span>
+            </Button>
+        </div>
       </div>
 
       <Card>

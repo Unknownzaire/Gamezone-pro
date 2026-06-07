@@ -4,8 +4,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
-import { User, Transaction, Tournament, PromotionalAd, SupportTicket } from '@/lib/types';
-import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket, Pencil } from "lucide-react";
+import { User, Transaction, Tournament, PromotionalAd, SupportTicket, RedeemCode } from '@/lib/types';
+import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket, Pencil, Tags } from "lucide-react";
 import Link from "next/link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -30,6 +30,7 @@ export default function AdminDashboardPage() {
   const [openSupportTicketsCount, setOpenSupportTicketsCount] = useState(0);
   const [activeRoyalPassCount, setActiveRoyalPassCount] = useState(0);
   const [activeGiveawaysCount, setActiveGiveawaysCount] = useState(0);
+  const [activeRedeemCodesCount, setActiveRedeemCodesCount] = useState(0);
 
 
   const { toast } = useToast();
@@ -79,6 +80,12 @@ export default function AdminDashboardPage() {
           setActiveGiveawaysCount(giveaways.filter((g: any) => g.isActive).length);
       }
 
+      const storedRedeemCodes = localStorage.getItem('redeemCodes');
+      if (storedRedeemCodes) {
+          const codes: RedeemCode[] = JSON.parse(storedRedeemCodes);
+          setActiveRedeemCodesCount(codes.filter(c => c.status === 'active').length);
+      }
+
     } catch (e) {
       console.error("Failed to load data from localStorage", e);
     }
@@ -87,7 +94,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadData();
     const handleStorageChange = (event: StorageEvent) => {
-      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'supportTickets', 'luckyDrawSettingsList'].includes(event.key || '')) {
+      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'supportTickets', 'luckyDrawSettingsList', 'redeemCodes'].includes(event.key || '')) {
         loadData();
       }
     };
@@ -133,6 +140,7 @@ export default function AdminDashboardPage() {
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
     { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Active Giveaways", value: activeGiveawaysCount, icon: Gift, href: '/admin/royal-pass'},
+    { title: "Active Redeem Codes", value: activeRedeemCodesCount, icon: Tags, href: '/admin/redeem-codes' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
   ];
@@ -247,16 +255,16 @@ export default function AdminDashboardPage() {
           </Button>
         </Link>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
         {stats.map((stat, index) => {
           const cardContent = (
             <Card key={index} className="hover:bg-muted/50 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
+                <CardTitle className="text-xs font-medium">{stat.title}</CardTitle>
                 {stat.icon && <stat.icon className="h-4 w-4 text-muted-foreground" />}
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{stat.value}</div>
+                <div className="text-xl font-bold">{stat.value}</div>
               </CardContent>
             </Card>
           );

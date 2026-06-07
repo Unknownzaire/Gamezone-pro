@@ -68,7 +68,7 @@ export type Transaction = {
   status: 'completed' | 'pending' | 'declined';
   declineReason?: string;
   paymentDetails?: {
-    method: 'upi' | 'bank' | 'binance' | 'paypal' | 'giveaway';
+    method: 'upi' | 'bank' | 'binance' | 'paypal' | 'giveaway' | 'redeem_code';
     upiId?: string;
     accountNumber?: string;
     ifscCode?: string;
@@ -77,6 +77,7 @@ export type Transaction = {
     binanceNickname?: string;
     paypalEmail?: string;
     reelUrl?: string;
+    code?: string;
   }
 };
 
@@ -131,4 +132,14 @@ export type Notification = {
   payload?: {
     teamName?: string;
   };
+};
+
+export type RedeemCode = {
+  id: string;
+  code: string;
+  amount: number;
+  status: 'active' | 'used';
+  usedBy?: string; // userId
+  usedAt?: string; // date string
+  createdAt: string; // date string
 };
