@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, ChevronRight, Video, Loader2, Users, PlayCircle, ShieldCheck, Zap, Heart } from "lucide-react";
+import { ArrowLeft, Gift, Sparkles, Trophy, Star, AlertTriangle, XCircle, Lock, Video, Loader2, PlayCircle } from "lucide-react";
 import Link from "next/link";
 import { useUser } from "@/hooks/use-user";
 import { Badge } from "@/components/ui/badge";
@@ -97,7 +97,6 @@ export default function RoyalPassPage() {
     const handleJoinDraw = async () => {
         if (!user || !joiningGiveaway) return;
         
-        // Strict check: One entry per user
         const alreadyEntered = (transactions || []).some(tx => 
             tx.description === `Joined Lucky Draw: ${joiningGiveaway.jackpotName}` && 
             (tx.status === 'completed' || tx.status === 'pending')
@@ -181,7 +180,6 @@ export default function RoyalPassPage() {
                 </Link>
                 <div>
                     <h1 className="font-headline text-3xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-white">Royal Pass</h1>
-                    <p className="text-muted-foreground text-sm">Elevate your game with premium perks!</p>
                 </div>
             </div>
 
@@ -429,7 +427,6 @@ export default function RoyalPassPage() {
                 )}
             </div>
 
-            {/* Recent Winners */}
             <Card className="border-white/5 bg-card/50">
                 <CardHeader className="py-4">
                     <CardTitle className="flex items-center gap-2 text-lg font-headline">
