@@ -34,7 +34,7 @@ interface Giveaway {
 }
 
 export default function RoyalPassPage() {
-    const { user, updateUser, addTransaction, transactions, tournaments, allUsers } = useUser();
+    const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers } = useUser();
     const { toast } = useToast();
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [winners, setWinners] = useState<any[]>([]);
@@ -97,8 +97,25 @@ export default function RoyalPassPage() {
     const handleJoinDraw = async () => {
         if (!user || !joiningGiveaway) return;
         
+        // Strict check: One entry per user
+        const alreadyEntered = (transactions || []).some(tx => 
+            tx.description === `Joined Lucky Draw: ${joiningGiveaway.jackpotName}` && 
+            (tx.status === 'completed' || tx.status === 'pending')
+        );
+
+        if (alreadyEntered) {
+            toast({ variant: 'destructive', title: "Already Entered", description: "You can only enter this draw once." });
+            setJoiningGiveaway(null);
+            return;
+        }
+
         if (joiningGiveaway.requiresReel && !selectedReel) {
             toast({ variant: 'destructive', title: "Reel Required", description: "Please upload a video reel to join this giveaway." });
+            return;
+        }
+
+        if (user.walletBalance < joiningGiveaway.entryFee) {
+            toast({ variant: 'destructive', title: "Insufficient Balance", description: "You don't have enough funds to join this draw." });
             return;
         }
 
@@ -146,7 +163,7 @@ export default function RoyalPassPage() {
         }
     };
 
-    const giveawayEntries = (jackpotName: string) => (transactions || []).filter(tx => 
+    const getGiveawayEntries = (jackpotName: string) => (allTransactions || []).filter(tx => 
         tx.description === `Joined Lucky Draw: ${jackpotName}` && 
         tx.status === 'completed'
     );
@@ -178,11 +195,11 @@ export default function RoyalPassPage() {
                         {activeGiveaways.map((giveaway) => {
                             const isJoined = (transactions || []).some(tx => 
                                 tx.description === `Joined Lucky Draw: ${giveaway.jackpotName}` && 
-                                tx.status === 'completed' &&
+                                (tx.status === 'completed' || tx.status === 'pending') &&
                                 tx.userId === user?.id
                             );
 
-                            const entries = giveawayEntries(giveaway.jackpotName);
+                            const entries = getGiveawayEntries(giveaway.jackpotName);
 
                             return (
                                 <Card key={giveaway.id} className="overflow-hidden border-primary/30 bg-gradient-to-br from-primary/10 via-background to-accent/5 shadow-xl shadow-primary/5">
