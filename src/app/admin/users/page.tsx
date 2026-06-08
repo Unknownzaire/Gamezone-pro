@@ -72,7 +72,7 @@ export default function AdminUsersPage() {
 
     const storedGames = localStorage.getItem('gameList');
     if (storedGames) {
-      setGameList(JSON.parse(storedGames));
+        setGameList(JSON.parse(storedGames));
     } else {
       const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
       setGameList(defaultGames);
@@ -256,7 +256,6 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead className="text-center">Royal Pass</TableHead>
                   <TableHead className="text-center">Elite Pass</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Total Deposits</TableHead>
@@ -284,18 +283,6 @@ export default function AdminUsersPage() {
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                        {user.hasRoyalPass ? (
-                            <div className="flex justify-center">
-                                <Badge className="bg-yellow-500 hover:bg-yellow-600 text-white">
-                                    <Star className="mr-1 h-3 w-3 fill-white" />
-                                    Active
-                                </Badge>
-                            </div>
-                        ) : (
-                            <span className="text-xs text-muted-foreground">None</span>
-                        )}
                     </TableCell>
                     <TableCell className="text-center">
                         {user.hasElitePass ? (
