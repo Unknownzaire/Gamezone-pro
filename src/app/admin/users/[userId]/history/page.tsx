@@ -2,7 +2,7 @@
 'use client';
 
 import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { User, Tournament, Participant, Transaction } from '@/lib/types';
 import { mockTournaments, mockUsers, mockTransactions } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,11 +11,22 @@ import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Edit, Wallet, Hourglass, ArrowUpRight, ArrowDownLeft } from 'lucide-react';
+import { ArrowLeft, Edit, Wallet, Hourglass, ArrowUpRight, ArrowDownLeft, Trash2 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from '@/hooks/use-toast';
 
 type UserMatchHistory = {
   tournament: Tournament;
@@ -27,6 +38,7 @@ export default function UserHistoryPage() {
   const userId = params.userId as string;
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { toast } = useToast();
   const initialTab = searchParams.get('tab') || 'matches';
 
   const [user, setUser] = useState<User | null>(null);
@@ -34,9 +46,9 @@ export default function UserHistoryPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [transactionFilter, setTransactionFilter] = useState<'all' | 'credit' | 'debit' | 'pending'>('all');
+  const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
 
-
-  useEffect(() => {
+  const loadData = useCallback(() => {
     if (!userId) return;
 
     const storedUsers = localStorage.getItem('allUsers');
@@ -69,12 +81,33 @@ export default function UserHistoryPage() {
     setLoading(false);
   }, [userId, router]);
 
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const handleDeleteTransaction = () => {
+    if (!transactionToDelete) return;
+    
+    const stored = localStorage.getItem('allTransactions');
+    let allTransactions: Transaction[] = stored ? JSON.parse(stored) : [];
+    
+    const updatedTransactions = allTransactions.filter(tx => tx.id !== transactionToDelete.id);
+    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+    
+    toast({
+      title: "Transaction Deleted",
+      description: `The transaction has been removed from global history.`,
+    });
+    
+    setTransactionToDelete(null);
+    loadData(); // Reload to refresh local lists
+  };
+
   if (loading) {
-    return <div>Loading...</div>; // Or a skeleton loader
+    return <div>Loading...</div>;
   }
 
   if (!user) {
-    // This will be brief as the useEffect will redirect.
     return <div>User not found. Redirecting...</div>;
   }
 
@@ -87,8 +120,6 @@ export default function UserHistoryPage() {
   });
 
   const pendingAmount = transactions.filter(tx => tx.status === 'pending').reduce((acc, tx) => {
-      if (tx.type === 'credit') return acc + tx.amount;
-      // For pending debits, the amount is effectively "reserved"
       return acc + tx.amount;
   }, 0);
   
@@ -202,15 +233,16 @@ export default function UserHistoryPage() {
                                         <TableHead>Details</TableHead>
                                         <TableHead>Date</TableHead>
                                         <TableHead className="text-right">Amount</TableHead>
+                                        <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {filteredTransactions.map(tx => (
-                                        <Dialog key={tx.id}>
-                                            <DialogTrigger asChild>
-                                                <TableRow className="cursor-pointer">
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
+                                        <TableRow key={tx.id}>
+                                            <TableCell>
+                                                <Dialog>
+                                                    <DialogTrigger asChild>
+                                                        <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
                                                             <div className="p-2 bg-muted rounded-full">
                                                                 {tx.type === 'credit' ? <ArrowDownLeft className="h-4 w-4 text-green-500" /> : <ArrowUpRight className="h-4 w-4 text-red-500" />}
                                                             </div>
@@ -219,104 +251,68 @@ export default function UserHistoryPage() {
                                                                 <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize mt-1">{tx.status}</Badge>
                                                             </div>
                                                         </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-xs text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</TableCell>
-                                                     <TableCell className={`text-right font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                                                        {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                                    </TableCell>
-                                                </TableRow>
-                                            </DialogTrigger>
-                                            <DialogContent>
-                                                <DialogHeader>
-                                                    <DialogTitle>Transaction Details</DialogTitle>
-                                                </DialogHeader>
-                                                <div className="space-y-3 text-sm">
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Transaction ID:</span>
-                                                        <span className="font-mono text-xs">{tx.id}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Date:</span>
-                                                        <span className="font-medium">{format(new Date(tx.createdAt), 'PPp')}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Description:</span>
-                                                        <span className="font-medium">{tx.description}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Amount:</span>
-                                                        <span className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
-                                                        {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
-                                                        </span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Type:</span>
-                                                        <span className="font-medium capitalize">{tx.type}</span>
-                                                    </div>
-                                                    <div className="flex justify-between">
-                                                        <span className="text-muted-foreground">Status:</span>
-                                                        <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">{tx.status}</Badge>
-                                                    </div>
-                                                    {tx.status === 'declined' && tx.declineReason && (
-                                                        <div className="flex justify-between items-start">
-                                                        <span className="text-muted-foreground">Reason:</span>
-                                                        <span className="font-medium text-right text-destructive w-2/3">{tx.declineReason}</span>
-                                                        </div>
-                                                    )}
-                                                    {tx.paymentDetails && (
-                                                        <>
-                                                        <Separator />
-                                                        <p className="font-semibold">Payment Details</p>
-                                                        <div className="flex justify-between">
-                                                            <span className="text-muted-foreground">Method:</span>
-                                                            <span className="font-medium uppercase">{tx.paymentDetails.method}</span>
-                                                        </div>
-                                                        {tx.paymentDetails.method === 'upi' && tx.paymentDetails.upiId && (
+                                                    </DialogTrigger>
+                                                    <DialogContent>
+                                                        <DialogHeader>
+                                                            <DialogTitle>Transaction Details</DialogTitle>
+                                                        </DialogHeader>
+                                                        <div className="space-y-3 text-sm">
                                                             <div className="flex justify-between">
-                                                                <span className="text-muted-foreground">{tx.description.includes('Withdrawal') ? 'UPI ID:' : 'Reference No.:'}</span>
-                                                                <span className="font-mono text-xs">{tx.paymentDetails.upiId}</span>
+                                                                <span className="text-muted-foreground">Transaction ID:</span>
+                                                                <span className="font-mono text-xs">{tx.id}</span>
                                                             </div>
-                                                        )}
-                                                        {tx.paymentDetails.method === 'binance' && (
-                                                            <>
-                                                                {tx.paymentDetails.binanceNickname && (
-                                                                    <div className="flex justify-between">
-                                                                        <span className="text-muted-foreground">Nickname:</span>
-                                                                        <span className="font-medium">{tx.paymentDetails.binanceNickname}</span>
-                                                                    </div>
-                                                                )}
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Date:</span>
+                                                                <span className="font-medium">{format(new Date(tx.createdAt), 'PPp')}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Description:</span>
+                                                                <span className="font-medium">{tx.description}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Amount:</span>
+                                                                <span className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Type:</span>
+                                                                <span className="font-medium capitalize">{tx.type}</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-muted-foreground">Status:</span>
+                                                                <Badge variant={tx.status === 'pending' ? 'outline' : tx.status === 'declined' ? 'destructive' : 'default'} className="capitalize">{tx.status}</Badge>
+                                                            </div>
+                                                            {tx.paymentDetails && (
+                                                                <>
+                                                                <Separator />
+                                                                <p className="font-semibold">Payment Details</p>
                                                                 <div className="flex justify-between">
-                                                                    <span className="text-muted-foreground">Binance ID:</span>
-                                                                    <span className="font-mono text-xs">{tx.paymentDetails.binanceId}</span>
+                                                                    <span className="text-muted-foreground">Method:</span>
+                                                                    <span className="font-medium uppercase">{tx.paymentDetails.method}</span>
                                                                 </div>
-                                                            </>
-                                                        )}
-                                                        {tx.paymentDetails.method === 'bank' && (
-                                                            <>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-muted-foreground">Account Holder:</span>
-                                                                <span>{tx.paymentDetails.accountHolderName}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-muted-foreground">Account Number:</span>
-                                                                <span>{tx.paymentDetails.accountNumber}</span>
-                                                            </div>
-                                                            <div className="flex justify-between">
-                                                                <span className="text-muted-foreground">IFSC Code:</span>
-                                                                <span className="font-mono">{tx.paymentDetails.ifscCode}</span>
-                                                            </div>
-                                                            </>
-                                                        )}
-                                                        </>
-                                                    )}
-                                                </div>
-                                                <DialogFooter>
-                                                    <DialogClose asChild>
-                                                        <Button variant="outline">Close</Button>
-                                                    </DialogClose>
-                                                </DialogFooter>
-                                            </DialogContent>
-                                        </Dialog>
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <DialogFooter>
+                                                            <DialogClose asChild>
+                                                                <Button variant="outline">Close</Button>
+                                                            </DialogClose>
+                                                        </DialogFooter>
+                                                    </DialogContent>
+                                                </Dialog>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</TableCell>
+                                             <TableCell className={`text-right font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
+                                                {tx.type === 'credit' ? '+' : '-'}₹{tx.amount.toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setTransactionToDelete(tx)}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Delete</span>
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
                                 </TableBody>
                             </Table>
@@ -328,6 +324,23 @@ export default function UserHistoryPage() {
                 </Tabs>
             </CardContent>
         </Card>
+
+        <AlertDialog open={!!transactionToDelete} onOpenChange={(open) => !open && setTransactionToDelete(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Transaction?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This will permanently remove this record from both the admin history and the user's wallet history panel. This action cannot be undone.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setTransactionToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteTransaction} className="bg-destructive hover:bg-destructive/90">
+                        Delete
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
     </div>
   );
 }

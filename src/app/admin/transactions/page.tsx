@@ -87,7 +87,7 @@ export default function AdminTransactionsPage() {
     const stored = localStorage.getItem('allTransactions');
     let allTransactions: Transaction[] = stored ? JSON.parse(stored) : [];
     
-    // Remove the specific transaction
+    // Remove the specific transaction from global storage
     const updatedTransactions = allTransactions.filter(tx => tx.id !== transactionToDelete.id);
     
     // Save back to global storage so it's removed from user panels too
@@ -98,7 +98,7 @@ export default function AdminTransactionsPage() {
     
     toast({
       title: "Transaction Deleted",
-      description: `The transaction has been removed from the system and user panels.`,
+      description: `The transaction has been removed from both admin and user history panels.`,
     });
     setTransactionToDelete(null);
   };
@@ -391,7 +391,7 @@ export default function AdminTransactionsPage() {
                     <TransactionTable txs={bonuses} />
                 </CardContent>
             </Card>
-        </TabsContent>
+         </TabsContent>
          <TabsContent value="declined" className="mt-4">
             <Card>
                 <CardContent className='p-0'>
