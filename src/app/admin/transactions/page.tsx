@@ -82,12 +82,23 @@ export default function AdminTransactionsPage() {
 
   const handleDeleteTransaction = () => {
     if (!transactionToDelete) return;
-    const updatedTransactions = transactions.filter(tx => tx.id !== transactionToDelete.id);
-    setTransactions(updatedTransactions);
+    
+    // Read directly from storage to ensure we have the full global list
+    const stored = localStorage.getItem('allTransactions');
+    let allTransactions: Transaction[] = stored ? JSON.parse(stored) : [];
+    
+    // Remove the specific transaction
+    const updatedTransactions = allTransactions.filter(tx => tx.id !== transactionToDelete.id);
+    
+    // Save back to global storage so it's removed from user panels too
     localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
+    
+    // Update local state for immediate feedback
+    setTransactions(updatedTransactions.map(t => ({...t, createdAt: new Date(t.createdAt)})).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
+    
     toast({
       title: "Transaction Deleted",
-      description: `The transaction has been successfully deleted.`,
+      description: `The transaction has been removed from the system and user panels.`,
     });
     setTransactionToDelete(null);
   };
@@ -394,7 +405,7 @@ export default function AdminTransactionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the transaction record.
+              This action cannot be undone. This will permanently delete the transaction record from both the admin and the user panels.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
