@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
 import { Tournament, PrizeDistribution, User } from '@/lib/types';
 import { mockTournaments as initialMockTournaments, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 
-export default function EditTournamentPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function EditTournamentPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const { toast } = useToast();
 

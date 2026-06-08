@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useState, useEffect, Suspense, use } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,10 +14,10 @@ import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { useFirebase } from '@/firebase';
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 
-function ResetPasswordComponent() {
+function ResetPasswordComponent({ searchParams }: { searchParams: Promise<{ oobCode?: string }> }) {
+  const { oobCode: codeFromParams } = use(searchParams);
   const { auth } = useFirebase();
   const router = useRouter();
-  const searchParams = useSearchParams();
   const { toast } = useToast();
 
   const [oobCode, setOobCode] = useState<string | null>(null);
@@ -30,8 +30,7 @@ function ResetPasswordComponent() {
   const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
-    const code = searchParams.get('oobCode');
-    if (!code) {
+    if (!codeFromParams) {
       toast({
         variant: 'destructive',
         title: 'Invalid Link',
@@ -40,10 +39,10 @@ function ResetPasswordComponent() {
       router.push('/login');
       return;
     }
-    setOobCode(code);
+    setOobCode(codeFromParams);
 
     if (auth) {
-      verifyPasswordResetCode(auth, code)
+      verifyPasswordResetCode(auth, codeFromParams)
         .then(() => {
           setIsValidCode(true);
         })
@@ -60,7 +59,7 @@ function ResetPasswordComponent() {
           setIsLoading(false);
         });
     }
-  }, [searchParams, auth, router, toast]);
+  }, [codeFromParams, auth, router, toast]);
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -176,7 +175,7 @@ function ResetPasswordComponent() {
   );
 }
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ oobCode?: string }> }) {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
             <div className="w-full max-w-md space-y-8">
@@ -184,10 +183,9 @@ export default function ResetPasswordPage() {
                     <Logo />
                 </div>
                 <Suspense fallback={<div>Loading...</div>}>
-                    <ResetPasswordComponent />
+                    <ResetPasswordComponent searchParams={searchParams} />
                 </Suspense>
             </div>
         </div>
     );
 }
-

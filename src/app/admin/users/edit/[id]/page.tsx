@@ -1,8 +1,9 @@
+
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter, useParams } from 'next/navigation';
-import { User, Transaction, GameProfile } from '@/lib/types';
+import { useState, useEffect, use } from 'react';
+import { useRouter } from 'next/navigation';
+import { User, Transaction } from '@/lib/types';
 import { mockTransactions, mockUsers } from '@/lib/mock-data';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,9 +17,8 @@ import Image from 'next/image';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { compressImage } from '@/lib/utils';
 
-export default function EditUserPage() {
-  const params = useParams();
-  const id = params.id as string;
+export default function EditUserPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
 
   const { toast } = useToast();

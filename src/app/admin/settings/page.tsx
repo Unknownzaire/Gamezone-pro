@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -7,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Loader2, RefreshCcw, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useSearchParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState, use } from "react";
 import type { SocialLink } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { compressImage } from "@/lib/utils";
@@ -53,11 +54,10 @@ export interface HelpAndSupportSettings {
 }
 
 
-export default function AdminSettingsPage() {
+export default function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
+    const { show: showOnly } = use(searchParams);
     const { toast } = useToast();
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const showOnly = searchParams.get('show');
 
     const [adminUsername, setAdminUsername] = useState('unknownzaire94');
     const [currentPasswordInput, setCurrentPasswordInput] = useState('');

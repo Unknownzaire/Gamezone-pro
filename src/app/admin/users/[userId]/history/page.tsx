@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useRouter, useSearchParams, useParams } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState, useCallback, use } from 'react';
 import { User, Tournament, Participant, Transaction } from '@/lib/types';
 import { mockTournaments, mockUsers, mockTransactions } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,13 +33,10 @@ type UserMatchHistory = {
   participant: Participant;
 };
 
-export default function UserHistoryPage() {
-  const params = useParams();
-  const userId = params.userId as string;
-  const searchParams = useSearchParams();
+export default function UserHistoryPage({ params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = use(params);
   const router = useRouter();
   const { toast } = useToast();
-  const initialTab = searchParams.get('tab') || 'matches';
 
   const [user, setUser] = useState<User | null>(null);
   const [matchHistory, setMatchHistory] = useState<UserMatchHistory[]>([]);
@@ -156,7 +153,7 @@ export default function UserHistoryPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <Tabs defaultValue={initialTab} className="w-full">
+                <Tabs defaultValue="matches" className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="matches">Match History</TabsTrigger>
                         <TabsTrigger value="transactions">Transaction History</TabsTrigger>
