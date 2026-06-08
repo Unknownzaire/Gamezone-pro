@@ -69,6 +69,14 @@ export default function AdminRoyalPassPage() {
     const [entryToDelete, setEntryToDelete] = useState<Transaction | null>(null);
     const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
 
+    // Automatic refresh every second
+    useEffect(() => {
+        const interval = setInterval(() => {
+            reload();
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [reload]);
+
     useEffect(() => {
         const stored = localStorage.getItem('luckyDrawSettingsList');
         if (stored) {
@@ -95,18 +103,24 @@ export default function AdminRoyalPassPage() {
             localStorage.setItem('luckyDrawSettingsList', JSON.stringify(defaultGiveaway));
         }
 
-        const storedWinners = localStorage.getItem('luckyDrawWinners');
-        if (storedWinners) {
-            setRecentWinners(JSON.parse(storedWinners));
-        } else {
-            const initialWinners = [
-                { id: 'w1', name: "SkyKiller99", amount: 2500, date: "Feb 26", jackpot: "Daily Lucky Draw" },
-                { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", jackpot: "Mini Draw" },
-                { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "Feb 24", jackpot: "Mega Jackpot" },
-            ];
-            setRecentWinners(initialWinners);
-            localStorage.setItem('luckyDrawWinners', JSON.stringify(initialWinners));
-        }
+        const loadWinners = () => {
+            const storedWinners = localStorage.getItem('luckyDrawWinners');
+            if (storedWinners) {
+                setRecentWinners(JSON.parse(storedWinners));
+            } else {
+                const initialWinners = [
+                    { id: 'w1', name: "SkyKiller99", amount: 2500, date: "Feb 26", jackpot: "Daily Lucky Draw" },
+                    { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", jackpot: "Mini Draw" },
+                    { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "Feb 24", jackpot: "Mega Jackpot" },
+                ];
+                setRecentWinners(initialWinners);
+                localStorage.setItem('luckyDrawWinners', JSON.stringify(initialWinners));
+            }
+        };
+
+        loadWinners();
+        window.addEventListener('storage', loadWinners);
+        return () => window.removeEventListener('storage', loadWinners);
     }, []);
 
     const saveGiveaways = (list: Giveaway[]) => {
