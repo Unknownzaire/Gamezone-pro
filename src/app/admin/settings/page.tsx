@@ -87,6 +87,8 @@ export default function AdminSettingsPage() {
     const [binanceQrFile, setBinanceQrFile] = useState<File | null>(null);
     const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
+    const [resetPasswordInput, setResetPasswordInput] = useState('');
+
     useEffect(() => {
         const storedAdmin = localStorage.getItem('adminCredentials');
         if (storedAdmin) {
@@ -266,6 +268,20 @@ export default function AdminSettingsPage() {
     }
 
     const handleResetAppData = () => {
+        const storedAdmin = localStorage.getItem('adminCredentials');
+        const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
+        const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
+
+        if (resetPasswordInput !== credentials.password) {
+            toast({
+                variant: 'destructive',
+                title: "Authentication Failed",
+                description: "The password you entered is incorrect. Reset cancelled."
+            });
+            setResetPasswordInput('');
+            return;
+        }
+
         localStorage.clear();
         toast({
             title: "App Data Reset",
@@ -498,7 +514,7 @@ export default function AdminSettingsPage() {
                                         </Button>
                                     </div>
                                 ))}
-                                <Button variant="outline" size="sm" onClick={addSocialLink} type="button">
+                                <Button variant="outline" size="sm" onClick={addSocialLink} type="button" >
                                     <Plus className="mr-2 h-4 w-4" /> Add Link
                                 </Button>
                                 <div className="flex justify-end pt-4">
@@ -561,12 +577,22 @@ export default function AdminSettingsPage() {
                                         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                                         <AlertDialogDescription>
                                             This will permanently clear all mock data, users, tournaments, and transactions from your browser's local storage. This action cannot be undone.
+                                            <div className="mt-4 space-y-2 text-left">
+                                                <Label htmlFor="reset-verify-pw">Admin Password</Label>
+                                                <Input 
+                                                    id="reset-verify-pw" 
+                                                    type="password" 
+                                                    placeholder="Enter admin password to confirm"
+                                                    value={resetPasswordInput}
+                                                    onChange={(e) => setResetPasswordInput(e.target.value)}
+                                                />
+                                            </div>
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleResetAppData} className="bg-destructive hover:bg-destructive/90 text-white">
-                                            Yes, Reset Everything
+                                        <AlertDialogCancel onClick={() => setResetPasswordInput('')}>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleResetAppData} className="bg-destructive hover:bg-destructive/90 text-white" disabled={!resetPasswordInput}>
+                                            tap to enter admin password
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
