@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Trash2, Loader2, RefreshCcw, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Loader2, RefreshCcw, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -88,6 +88,7 @@ export default function AdminSettingsPage() {
     const [isUpdatingWallet, setIsUpdatingWallet] = useState(false);
 
     const [resetPasswordInput, setResetPasswordInput] = useState('');
+    const [showResetPassword, setShowResetPassword] = useState(false);
 
     useEffect(() => {
         const storedAdmin = localStorage.getItem('adminCredentials');
@@ -579,18 +580,31 @@ export default function AdminSettingsPage() {
                                             This will permanently clear all mock data, users, tournaments, and transactions from your browser's local storage. This action cannot be undone.
                                             <div className="mt-4 space-y-2 text-left">
                                                 <Label htmlFor="reset-verify-pw">Admin Password</Label>
-                                                <Input 
-                                                    id="reset-verify-pw" 
-                                                    type="password" 
-                                                    placeholder="Enter admin password to confirm"
-                                                    value={resetPasswordInput}
-                                                    onChange={(e) => setResetPasswordInput(e.target.value)}
-                                                />
+                                                <div className="relative">
+                                                  <Input 
+                                                      id="reset-verify-pw" 
+                                                      type={showResetPassword ? "text" : "password"} 
+                                                      placeholder="Enter admin password to confirm"
+                                                      value={resetPasswordInput}
+                                                      onChange={(e) => setResetPasswordInput(e.target.value)}
+                                                      className="pr-10"
+                                                  />
+                                                  <Button
+                                                      type="button"
+                                                      variant="ghost"
+                                                      size="icon"
+                                                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-muted-foreground"
+                                                      onClick={() => setShowResetPassword(!showResetPassword)}
+                                                  >
+                                                      {showResetPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                                      <span className="sr-only">{showResetPassword ? "Hide password" : "Show password"}</span>
+                                                  </Button>
+                                                </div>
                                             </div>
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel onClick={() => setResetPasswordInput('')}>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel onClick={() => {setResetPasswordInput(''); setShowResetPassword(false);}}>Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleResetAppData} className="bg-destructive hover:bg-destructive/90 text-white" disabled={!resetPasswordInput}>
                                             tap to enter admin password
                                         </AlertDialogAction>
