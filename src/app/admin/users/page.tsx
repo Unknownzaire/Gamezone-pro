@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -256,7 +255,6 @@ export default function AdminUsersPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>User</TableHead>
-                  <TableHead className="text-center">Elite Pass</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Total Deposits</TableHead>
                   {gameList.map(game => (
@@ -283,18 +281,6 @@ export default function AdminUsersPage() {
                           <p className="text-sm text-muted-foreground">{user.email}</p>
                         </div>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                        {user.hasElitePass ? (
-                            <div className="flex justify-center">
-                                <Badge className="bg-purple-600 hover:bg-purple-700 text-white">
-                                    <ShieldCheck className="mr-1 h-3 w-3 fill-white" />
-                                    Elite
-                                </Badge>
-                            </div>
-                        ) : (
-                            <span className="text-xs text-muted-foreground">None</span>
-                        )}
                     </TableCell>
                     <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
