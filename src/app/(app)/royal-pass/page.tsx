@@ -35,7 +35,7 @@ interface Giveaway {
 }
 
 export default function RoyalPassPage() {
-    const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers, hasUserJoinedTournament } = useUser();
+    const { user, updateUser, addTransaction, transactions, allTransactions, tournaments, allUsers, hasUserJoinedTournament, reload } = useUser();
     const { toast } = useToast();
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [winners, setWinners] = useState<any[]>([]);
@@ -45,6 +45,14 @@ export default function RoyalPassPage() {
     const [joiningGiveaway, setJoiningGiveaway] = useState<Giveaway | null>(null);
     const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
     const reelInputRef = useRef<HTMLInputElement>(null);
+
+    // Automatic refresh every second
+    useEffect(() => {
+        const interval = setInterval(() => {
+            reload();
+        }, 1000);
+        return () => clearInterval(interval);
+    }, [reload]);
 
     useEffect(() => {
         const stored = localStorage.getItem('luckyDrawSettingsList');
