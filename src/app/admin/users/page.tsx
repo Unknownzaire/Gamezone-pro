@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -257,6 +258,7 @@ export default function AdminUsersPage() {
                   <TableHead>User</TableHead>
                   <TableHead>Balance</TableHead>
                   <TableHead>Total Deposits</TableHead>
+                  <TableHead>Password</TableHead>
                   {gameList.map(game => (
                     <TableHead key={game} className="text-center">{game.toUpperCase()}</TableHead>
                   ))}
@@ -284,6 +286,7 @@ export default function AdminUsersPage() {
                     </TableCell>
                     <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell className="font-mono text-xs">{user.password || 'N/A'}</TableCell>
                     {gameList.map(game => (
                       <TableCell key={game} className="text-center font-bold text-primary">{getParticipationCount(user.id, game)}</TableCell>
                     ))}
