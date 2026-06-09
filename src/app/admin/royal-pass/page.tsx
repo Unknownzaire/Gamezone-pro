@@ -287,7 +287,7 @@ export default function AdminRoyalPassPage() {
                     </Link>
                     <div>
                         <h1 className="font-headline text-3xl font-bold">Royal Pass & Giveaway</h1>
-                        <p className="text-muted-foreground">Manage prizes, winners, and pass holders.</p>
+                        <p className="text-muted-foreground">Manage prizes, winners, and participants.</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -360,12 +360,12 @@ export default function AdminRoyalPassPage() {
                 </Card>
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Passes</CardTitle>
-                        <Star className="h-4 w-4 text-yellow-500" />
+                        <CardTitle className="text-sm font-medium">Total Giveaways</CardTitle>
+                        <Gift className="h-4 w-4 text-primary" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{allUsers.filter(u => u.hasRoyalPass).length}</div>
-                        <p className="text-xs text-muted-foreground">Total users with premium</p>
+                        <div className="text-2xl font-bold">{giveaways.length}</div>
+                        <p className="text-xs text-muted-foreground">All time giveaways created</p>
                     </CardContent>
                 </Card>
             </div>
