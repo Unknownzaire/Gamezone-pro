@@ -26,7 +26,7 @@ import Image from 'next/image';
 import type { User, SocialLink, GameProfile } from '@/lib/types';
 import Link from 'next/link';
 import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
-import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail } from 'firebase/auth';
+import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { compressImage } from '@/lib/utils';
@@ -333,6 +333,24 @@ export default function ProfilePage() {
       }
       console.error("Password change error:", error);
       toast({ variant: 'destructive', title: "Password Change Failed", description });
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    if (!auth || !currentUser?.email) return;
+    try {
+      await sendPasswordResetEmail(auth, currentUser.email);
+      toast({
+        title: "Reset Email Sent",
+        description: `A password reset link has been sent to ${currentUser.email}.`,
+      });
+    } catch (error: any) {
+      console.error("Forgot password error:", error);
+      toast({
+        variant: 'destructive',
+        title: "Error",
+        description: "Could not send reset email. Please try again later.",
+      });
     }
   };
 
@@ -699,7 +717,12 @@ export default function ProfilePage() {
                 <Label htmlFor="new-password">New Password</Label>
                 <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               </div>
-              <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
+              <div className="flex flex-col gap-2">
+                <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
+                <Button onClick={handleForgotPassword} variant="link" className="text-muted-foreground text-xs h-auto py-0">
+                  Forgot Password?
+                </Button>
+              </div>
           </CardContent>
         </Card>
         
