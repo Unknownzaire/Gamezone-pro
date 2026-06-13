@@ -1,5 +1,5 @@
 
-import { User, Tournament, Participant, Transaction } from './types';
+import { User, Tournament, Participant, Transaction, PromotionalAd } from './types';
 
 const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
   const gameId = `5${Math.floor(100000000 + Math.random() * 900000000)}`;
@@ -31,6 +31,30 @@ const mockUsers: User[] = Array.from({ length: 100 }, (_, i) => {
 
 
 export { mockUsers };
+
+export const mockPromotionalAds: PromotionalAd[] = [
+  {
+    id: 'ad-1',
+    title: 'Grand Championship 2025 - Register Now!',
+    imageUrl: 'https://picsum.photos/seed/bgmi_tourney/1200/600',
+    link: '/tournaments/t-1',
+    status: 'active',
+  },
+  {
+    id: 'ad-2',
+    title: 'Unlock Premium Rewards with Royal Pass',
+    imageUrl: 'https://picsum.photos/seed/royal_pass_promo/1200/600',
+    link: '/royal-pass',
+    status: 'active',
+  },
+  {
+    id: 'ad-3',
+    title: 'Refer & Earn Unlimited Cash!',
+    imageUrl: 'https://picsum.photos/seed/refer_earn/1200/600',
+    link: '/refer-earn',
+    status: 'active',
+  }
+];
 
 
 export const mockParticipants: Participant[] = [

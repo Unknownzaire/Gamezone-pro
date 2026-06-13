@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback } from 'react';
-import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
+import { mockUsers, mockTransactions, mockTournaments as initialMockTournaments, mockPromotionalAds } from '@/lib/mock-data';
 import { User, Transaction, Tournament, PromotionalAd, Participant, SupportTicket, SupportTicketMessage, Notification, GameProfile, RedeemCode } from '@/lib/types';
 import { usePathname, useRouter } from 'next/navigation';
 import { useToast } from './use-toast';
@@ -83,6 +83,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [promotionalAds, setPromotionalAds] = useState<PromotionalAd[]>([]);
   const [referredUsers, setReferredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [adsInitialized, setAdsInitialized] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
@@ -125,9 +126,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         if (storedAds) {
             setPromotionalAds(JSON.parse(storedAds));
         } else {
-            localStorage.setItem('promotionalAds', JSON.stringify([]));
-            setPromotionalAds([]);
+            localStorage.setItem('promotionalAds', JSON.stringify(mockPromotionalAds));
+            setPromotionalAds(mockPromotionalAds);
         }
+        setAdsInitialized(true);
         
         let storedNotifications = localStorage.getItem('allNotifications');
         if (storedNotifications) {
@@ -164,6 +166,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
       window.removeEventListener('focus', reload);
     };
   }, [loadInitialData, reload]);
+
+  // Sync promotionalAds to localStorage
+  useEffect(() => {
+    if (adsInitialized) {
+      localStorage.setItem('promotionalAds', JSON.stringify(promotionalAds));
+    }
+  }, [promotionalAds, adsInitialized]);
 
   const saveAllUsers = useCallback((updatedUsers: User[]) => {
       setAllUsers(updatedUsers);
