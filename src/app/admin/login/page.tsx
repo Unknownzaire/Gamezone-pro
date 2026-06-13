@@ -25,6 +25,9 @@ export default function AdminLoginPage() {
     const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
 
     if (username === credentials.username && password === credentials.password) {
+      // Set session authentication
+      sessionStorage.setItem('isAdminAuthenticated', 'true');
+      
       toast({
         title: 'Admin Login Successful',
         description: 'Welcome to the Admin Panel.',
