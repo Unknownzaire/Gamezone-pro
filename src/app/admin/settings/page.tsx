@@ -8,8 +8,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Trash2, Loader2, RefreshCcw, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, use } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import type { SocialLink } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { compressImage } from "@/lib/utils";
@@ -53,9 +53,9 @@ export interface HelpAndSupportSettings {
     supportEmail: string;
 }
 
-
-export default function AdminSettingsPage({ searchParams }: { searchParams: Promise<{ show?: string }> }) {
-    const { show: showOnly } = use(searchParams);
+function SettingsContent() {
+    const searchParams = useSearchParams();
+    const showOnly = searchParams.get('show');
     const { toast } = useToast();
     const router = useRouter();
 
@@ -93,25 +93,35 @@ export default function AdminSettingsPage({ searchParams }: { searchParams: Prom
     useEffect(() => {
         const storedAdmin = localStorage.getItem('adminCredentials');
         if (storedAdmin) {
-            const parsed = JSON.parse(storedAdmin);
-            setAdminUsername(parsed.username || 'unknownzaire94');
+            try {
+                const parsed = JSON.parse(storedAdmin);
+                setAdminUsername(parsed.username || 'unknownzaire94');
+            } catch (e) {}
         }
 
         const storedWalletSettings = localStorage.getItem('walletSettings');
         if (storedWalletSettings) {
-            setWalletSettings(JSON.parse(storedWalletSettings));
+            try {
+                setWalletSettings(JSON.parse(storedWalletSettings));
+            } catch (e) {}
         }
         const storedReferralSettings = localStorage.getItem('referralSettings');
         if (storedReferralSettings) {
-            setReferralSettings(JSON.parse(storedReferralSettings));
+            try {
+                setReferralSettings(JSON.parse(storedReferralSettings));
+            } catch (e) {}
         }
         const storedSocialMediaSettings = localStorage.getItem('socialMediaLinks');
         if (storedSocialMediaSettings) {
-            setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
+            try {
+                setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
+            } catch (e) {}
         }
         const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
         if (storedHelpSettings) {
-            setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
+            try {
+                setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
+            } catch (e) {}
         }
     }, []);
 
@@ -120,7 +130,12 @@ export default function AdminSettingsPage({ searchParams }: { searchParams: Prom
         
         const storedAdmin = localStorage.getItem('adminCredentials');
         const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
-        const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
+        let credentials = defaultAdmin;
+        if (storedAdmin) {
+            try {
+                credentials = JSON.parse(storedAdmin);
+            } catch (e) {}
+        }
 
         if (currentPasswordInput !== credentials.password) {
             toast({
@@ -271,7 +286,12 @@ export default function AdminSettingsPage({ searchParams }: { searchParams: Prom
     const handleResetAppData = () => {
         const storedAdmin = localStorage.getItem('adminCredentials');
         const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
-        const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
+        let credentials = defaultAdmin;
+        if (storedAdmin) {
+            try {
+                credentials = JSON.parse(storedAdmin);
+            } catch (e) {}
+        }
 
         if (resetPasswordInput !== credentials.password) {
             toast({
@@ -292,7 +312,6 @@ export default function AdminSettingsPage({ searchParams }: { searchParams: Prom
             window.location.href = '/login';
         }, 1500);
     };
-
 
     return (
         <div className="space-y-6">
@@ -616,5 +635,13 @@ export default function AdminSettingsPage({ searchParams }: { searchParams: Prom
                 </Card>
             </div>
         </div>
+    );
+}
+
+export default function AdminSettingsPage() {
+    return (
+        <Suspense fallback={<div>Loading settings...</div>}>
+            <SettingsContent />
+        </Suspense>
     );
 }

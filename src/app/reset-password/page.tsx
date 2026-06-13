@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState, useEffect, Suspense, use } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,9 @@ import { ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react";
 import { useFirebase } from '@/firebase';
 import { confirmPasswordReset, verifyPasswordResetCode } from "firebase/auth";
 
-function ResetPasswordComponent({ searchParams }: { searchParams: Promise<{ oobCode?: string }> }) {
-  const { oobCode: codeFromParams } = use(searchParams);
+function ResetPasswordComponent() {
+  const searchParams = useSearchParams();
+  const codeFromParams = searchParams.get('oobCode');
   const { auth } = useFirebase();
   const router = useRouter();
   const { toast } = useToast();
@@ -175,7 +176,7 @@ function ResetPasswordComponent({ searchParams }: { searchParams: Promise<{ oobC
   );
 }
 
-export default function ResetPasswordPage({ searchParams }: { searchParams: Promise<{ oobCode?: string }> }) {
+export default function ResetPasswordPage() {
     return (
         <div className="flex min-h-screen items-center justify-center bg-background p-4">
             <div className="w-full max-w-md space-y-8">
@@ -183,7 +184,7 @@ export default function ResetPasswordPage({ searchParams }: { searchParams: Prom
                     <Logo />
                 </div>
                 <Suspense fallback={<div>Loading...</div>}>
-                    <ResetPasswordComponent searchParams={searchParams} />
+                    <ResetPasswordComponent />
                 </Suspense>
             </div>
         </div>
