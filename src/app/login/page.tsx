@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -78,23 +77,26 @@ export default function LoginPage() {
   }, [user, router, action, joinTeamName, joinTeam]);
 
   useEffect(() => {
-    const storedGames = localStorage.getItem('gameList');
-    const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
-    let gamesToShow: string[] = [];
+    const loadGames = () => {
+        const storedGames = localStorage.getItem('gameList');
+        const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
+        let gamesToShow: string[] = [];
 
-    if (storedGames) {
-        try {
-            gamesToShow = JSON.parse(storedGames);
-        } catch (e) {
+        if (storedGames) {
+            try {
+                gamesToShow = JSON.parse(storedGames);
+            } catch (e) {
+                gamesToShow = defaultGames;
+            }
+        } else {
             gamesToShow = defaultGames;
         }
-    } else {
-        gamesToShow = defaultGames;
-    }
-    setGameList(gamesToShow);
-    if (gamesToShow.length > 0) {
-        setSignupForm(prev => ({ ...prev, primaryGame: gamesToShow[0] }));
-    }
+        setGameList(gamesToShow);
+        if (gamesToShow.length > 0) {
+            setSignupForm(prev => ({ ...prev, primaryGame: gamesToShow[0] }));
+        }
+    };
+    loadGames();
   }, []);
   
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
@@ -206,7 +208,7 @@ export default function LoginPage() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
-      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string} = {
           username: signupForm.username,
           email: signupForm.email,
           mobile: signupForm.mobile,
@@ -276,7 +278,7 @@ export default function LoginPage() {
       } else {
         // New user: auto-signup and login
         const randomPassword = Math.random().toString(36).slice(-8);
-        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified'> = {
+        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string} = {
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
             email: googleUser.email!,
             googleId: googleUser.uid,
@@ -336,7 +338,15 @@ export default function LoginPage() {
                     <Input id="login-email" name="email" type="email" placeholder="you@example.com" required value={loginForm.email} onChange={handleLoginChange} />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="login-password">Password</Label>
+                      <Link 
+                        href="/forgot-password" 
+                        className="text-xs font-medium text-primary hover:underline"
+                      >
+                        Forgot password?
+                      </Link>
+                    </div>
                     <div className="relative">
                       <Input id="login-password" name="password" type={showLoginPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} />
                       <Button
