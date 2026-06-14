@@ -1,8 +1,6 @@
-
 'use client';
 
 import * as React from 'react';
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -25,7 +23,6 @@ import { LayoutDashboard, LogOut, Settings, Swords, Users, BarChart3, DollarSign
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Skeleton } from '@/components/ui/skeleton';
 
 const menuItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -41,40 +38,19 @@ const menuItems = [
   { href: '/admin/help-agent', label: 'Help Agent', icon: Bot },
 ];
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+/**
+ * Dashboard layout for admin pages.
+ * Note: Access control is handled by the parent AdminRootLayout in src/app/admin/layout.tsx
+ */
+export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const auth = sessionStorage.getItem('isAdminAuthenticated');
-    if (auth !== 'true') {
-      router.replace('/admin/login');
-      setIsAuthenticated(false);
-    } else {
-      setIsAuthenticated(true);
-    }
-  }, [router]);
 
   const handleLogout = () => {
+    // Clear session and return to login
     sessionStorage.removeItem('isAdminAuthenticated');
     router.push('/admin/login');
   };
-
-  if (isAuthenticated === null) {
-    return (
-      <div className="flex h-screen w-full items-center justify-center bg-background">
-        <div className="space-y-4 text-center">
-          <Skeleton className="h-12 w-48 mx-auto" />
-          <p className="text-muted-foreground animate-pulse">Authenticating Admin Session...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (isAuthenticated === false) {
-    return null;
-  }
 
   return (
     <SidebarProvider>

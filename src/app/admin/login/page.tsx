@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -8,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import Logo from "@/components/Logo";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -16,28 +15,37 @@ export default function AdminLoginPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
+  // If already authenticated, skip login and go to dashboard
+  useEffect(() => {
+    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+      router.replace('/admin/dashboard');
+    }
+  }, [router]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Check localStorage for admin credentials, fallback to defaults
-    const storedAdmin = localStorage.getItem('adminCredentials');
+    // Check credentials (using fallback for initial setup)
+    const storedAdmin = typeof window !== 'undefined' ? localStorage.getItem('adminCredentials') : null;
     const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
     const credentials = storedAdmin ? JSON.parse(storedAdmin) : defaultAdmin;
 
     if (username === credentials.username && password === credentials.password) {
-      // Set session authentication
+      // Set session-only authentication flag
       sessionStorage.setItem('isAdminAuthenticated', 'true');
       
       toast({
         title: 'Admin Login Successful',
         description: 'Welcome to the Admin Panel.',
       });
+      
+      // Redirect to the protected dashboard
       router.push('/admin/dashboard');
     } else {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: 'Invalid credentials. Please try again.',
+        description: 'Invalid username or password. Please try again.',
       });
     }
   };
@@ -59,7 +67,7 @@ export default function AdminLoginPage() {
                 <Label htmlFor="username">Username</Label>
                 <Input 
                   id="username" 
-                  placeholder="admin" 
+                  placeholder="Admin username" 
                   required 
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -70,6 +78,7 @@ export default function AdminLoginPage() {
                 <Input 
                   id="password" 
                   type="password" 
+                  placeholder="Admin password"
                   required 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
