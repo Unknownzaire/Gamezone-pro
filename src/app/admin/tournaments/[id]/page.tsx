@@ -18,6 +18,7 @@ import { useState, useEffect, use } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Tournament, Participant, User, Transaction } from '@/lib/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { cn } from '@/lib/utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,6 +60,7 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
   const [roomId, setRoomId] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [liveStreamLink, setLiveStreamLink] = useState('');
+  const [isEditingRoom, setIsEditingRoom] = useState(false);
   const [participantSearch, setParticipantSearch] = useState('');
   const [participantToRemove, setParticipantToRemove] = useState<Participant | null>(null);
   
@@ -121,11 +123,37 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
     
     updateAndSaveTournaments(updatedTournaments);
     setTournament(updatedTournaments.find(t => t.id === id));
-
+    setIsEditingRoom(false);
 
     toast({
       title: 'Tournament is Live!',
       description: 'Room details have been updated and status is set to Live.',
+    });
+  };
+
+  const handleSaveRoomDetails = () => {
+    if (!roomId || !roomPassword) {
+      toast({
+        variant: 'destructive',
+        title: 'Missing Details',
+        description: 'Please provide both a Room ID and a Password.',
+      });
+      return;
+    }
+
+    const updatedTournaments = tournaments.map(t => 
+      t.id === tournament.id 
+        ? { ...t, roomId, roomPassword, liveStreamLink } 
+        : t
+    );
+
+    updateAndSaveTournaments(updatedTournaments);
+    setTournament(updatedTournaments.find(t => t.id === id));
+    setIsEditingRoom(false);
+
+    toast({
+      title: 'Room Details Updated',
+      description: 'The match details have been successfully updated.',
     });
   };
 
@@ -356,26 +384,60 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
 
       <div className="grid gap-6 md:grid-cols-2">
         <Card>
-            <CardHeader>
-                <CardTitle className="font-headline">Match Controls</CardTitle>
-                <CardDescription>Update room info or manually complete the tournament.</CardDescription>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle className="font-headline">Match Controls</CardTitle>
+                    <CardDescription>Update room info or manually complete the tournament.</CardDescription>
+                </div>
+                <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    onClick={() => setIsEditingRoom(!isEditingRoom)}
+                    disabled={tournament.status === 'Completed'}
+                    title="Edit room details"
+                >
+                    <Pencil className={cn("h-4 w-4", isEditingRoom && "text-primary")} />
+                    <span className="sr-only">Edit room details</span>
+                </Button>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="room-id">Room ID</Label>
-                    <Input id="room-id" value={roomId} onChange={(e) => setRoomId(e.target.value)} disabled={tournament.status !== 'Upcoming'} />
+                    <Input 
+                        id="room-id" 
+                        value={roomId} 
+                        onChange={(e) => setRoomId(e.target.value)} 
+                        disabled={!isEditingRoom && tournament.status !== 'Upcoming'} 
+                    />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="room-password">Room Password</Label>
-                    <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} disabled={tournament.status !== 'Upcoming'}/>
+                    <Input 
+                        id="room-password" 
+                        value={roomPassword} 
+                        onChange={(e) => setRoomPassword(e.target.value)} 
+                        disabled={!isEditingRoom && tournament.status !== 'Upcoming'}
+                    />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="live-stream">Live Stream URL (Optional)</Label>
-                    <Input id="live-stream" value={liveStreamLink} onChange={(e) => setLiveStreamLink(e.target.value)} placeholder="https://..." disabled={tournament.status === 'Completed'} />
+                    <Input 
+                        id="live-stream" 
+                        value={liveStreamLink} 
+                        onChange={(e) => setLiveStreamLink(e.target.value)} 
+                        placeholder="https://..." 
+                        disabled={!isEditingRoom && tournament.status === 'Completed'} 
+                    />
                 </div>
                 <div className="flex gap-2">
-                    <Button onClick={handleUpdateAndGoLive} disabled={tournament.status !== 'Upcoming'} className="w-full">
-                        {tournament.status === 'Upcoming' ? 'Update & Go Live' : `Already ${tournament.status}`}
+                    <Button 
+                        onClick={tournament.status === 'Upcoming' ? handleUpdateAndGoLive : handleSaveRoomDetails} 
+                        disabled={tournament.status === 'Completed' || (tournament.status === 'Live' && !isEditingRoom)} 
+                        className="w-full"
+                    >
+                        {tournament.status === 'Upcoming' ? 'Update & Go Live' : 
+                         tournament.status === 'Live' && isEditingRoom ? 'Save Changes' : 
+                         `Already ${tournament.status}`}
                     </Button>
                     <Button onClick={handleCompleteTournament} variant="destructive" disabled={tournament.status !== 'Live'} className="w-full">
                         Complete Tournament
