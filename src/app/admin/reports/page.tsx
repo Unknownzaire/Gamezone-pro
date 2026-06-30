@@ -1,19 +1,20 @@
-
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockTournaments } from "@/lib/mock-data";
 import { Tournament } from "@/lib/types";
-import { format, getWeek, getYear, parseISO, startOfWeek, endOfWeek, formatISO } from 'date-fns';
+import { format, getWeek, getYear, startOfWeek, endOfWeek } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowLeft, Eye } from 'lucide-react';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, query, where, Timestamp } from 'firebase/firestore';
 
 type PrizeReport = {
   [key: string]: {
@@ -93,35 +94,29 @@ const ReportTable = ({ data, title }: { data: PrizeReport, title: string }) => {
 
 
 export default function AdminReportsPage() {
+  const { firestore } = useFirebase();
   const [completed, setCompleted] = useState<Tournament[]>([]);
 
-  const loadCompletedTournaments = useCallback(() => {
-    try {
-      const storedTournaments = localStorage.getItem('allTournaments');
-      const allTournaments = storedTournaments 
-        ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) 
-        : mockTournaments;
-      setCompleted(allTournaments.filter((t: Tournament) => t.status === 'Completed'));
-    } catch (error) {
-      console.error("Failed to load tournament data", error);
-      setCompleted(mockTournaments.filter((t: Tournament) => t.status === 'Completed'));
-    }
-  }, []);
-
   useEffect(() => {
-    loadCompletedTournaments();
+    if (!firestore) return;
 
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allTournaments') {
-        loadCompletedTournaments();
-      }
-    };
+    // Listen for Completed Tournaments in Firestore
+    const q = query(collection(firestore, 'tournaments'), where('status', '==', 'Completed'));
+    const unsub = onSnapshot(q, (snapshot) => {
+      const tournamentsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Convert Firestore Timestamp to Date
+          matchTime: data.matchTime instanceof Timestamp ? data.matchTime.toDate() : (data.matchTime ? new Date(data.matchTime) : new Date())
+        };
+      }) as Tournament[];
+      setCompleted(tournamentsData);
+    });
 
-    window.addEventListener('storage', handleStorageChange);
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [loadCompletedTournaments]);
+    return () => unsub();
+  }, [firestore]);
 
   const dailyReport = completed.reduce((acc: PrizeReport, t) => {
     const day = format(t.matchTime, 'yyyy-MM-dd (EEEE)');
