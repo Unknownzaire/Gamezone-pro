@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -16,17 +15,22 @@ import {
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, PlusCircle, Trash2, Pencil } from 'lucide-react';
+import { ArrowLeft, PlusCircle, Trash2, Pencil, Loader2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { useRouter } from 'next/navigation';
 import { compressImage } from '@/lib/utils';
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, doc, addDoc, deleteDoc, updateDoc, query } from 'firebase/firestore';
+
 export default function AdminPromotionalAdsPage() {
-  const { promotionalAds, setPromotionalAds, tournaments } = useUser();
+  const { firestore } = useFirebase();
+  const { tournaments } = useUser();
+  const [promotionalAds, setPromotionalAds] = useState<PromotionalAd[]>([]);
   const [adToDelete, setAdToDelete] = useState<PromotionalAd | null>(null);
   const { toast } = useToast();
   
@@ -37,6 +41,21 @@ export default function AdminPromotionalAdsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    if (!firestore) return;
+
+    // Listen for Promotional Ads in Firestore
+    const unsubAds = onSnapshot(collection(firestore, 'promotional_ads'), (snapshot) => {
+      const adsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as PromotionalAd[];
+      setPromotionalAds(adsData);
+    });
+
+    return () => unsubAds();
+  }, [firestore]);
+
+  useEffect(() => {
     if (!isFormVisible) {
       setTitle('');
       setLink('');
@@ -44,9 +63,10 @@ export default function AdminPromotionalAdsPage() {
     }
   }, [isFormVisible]);
 
-
   const handleCreateAd = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!firestore) return;
+
     if (!title || !link || !imageFile) {
       toast({
         variant: 'destructive',
@@ -58,30 +78,34 @@ export default function AdminPromotionalAdsPage() {
 
     setIsSubmitting(true);
     try {
-        // Use conservative compression for localStorage
-        const imageUrl = await compressImage(imageFile, { maxWidth: 800, maxHeight: 450, quality: 0.6 });
-        const newAd: PromotionalAd = {
-            id: `ad-${Date.now()}`,
+        const imageUrl = await compressImage(imageFile, { maxWidth: 1200, maxHeight: 600, quality: 0.7 });
+        
+        await addDoc(collection(firestore, 'promotional_ads'), {
             title,
             imageUrl,
             link,
             status: 'active',
-        };
-        setPromotionalAds(prev => [...prev, newAd]);
+        });
+
         toast({ title: 'Promotional Ad Created', description: `The ad "${title}" is now live.` });
         setIsFormVisible(false);
     } catch (error) {
         console.error("Ad creation error:", error);
-        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not process the image.' });
+        toast({ variant: 'destructive', title: 'Upload Failed', description: 'Could not process the image or save to Firestore.' });
     } finally {
         setIsSubmitting(false);
     }
   };
   
-  const handleDeleteAd = () => {
-    if (!adToDelete) return;
-    setPromotionalAds(prev => prev.filter(ad => ad.id !== adToDelete.id));
-    toast({ title: 'Ad Deleted', description: `The ad "${adToDelete.title}" has been removed.` });
+  const handleDeleteAd = async () => {
+    if (!adToDelete || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'promotional_ads', adToDelete.id));
+      toast({ title: 'Ad Deleted', description: `The ad "${adToDelete.title}" has been removed.` });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete the ad.' });
+    }
     setAdToDelete(null);
   };
 
@@ -91,10 +115,17 @@ export default function AdminPromotionalAdsPage() {
     }
   };
   
-  const handleToggleStatus = (ad: PromotionalAd) => {
-    setPromotionalAds(prev => prev.map(a => 
-      a.id === ad.id ? { ...a, status: a.status === 'active' ? 'inactive' : 'active' } : a
-    ));
+  const handleToggleStatus = async (ad: PromotionalAd) => {
+    if (!firestore) return;
+    try {
+      const adRef = doc(firestore, 'promotional_ads', ad.id);
+      await updateDoc(adRef, {
+        status: ad.status === 'active' ? 'inactive' : 'active'
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update ad status.' });
+    }
   };
   
   const handleTournamentLinkSelect = (tournamentId: string) => {
@@ -144,11 +175,12 @@ export default function AdminPromotionalAdsPage() {
                         onChange={(e) => setTitle(e.target.value)}
                         placeholder="e.g., Grand Championship - Join Now!"
                         required
+                        disabled={isSubmitting}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="ad-link-select">Link to Tournament</Label>
-                         <Select onValueChange={handleTournamentLinkSelect} >
+                         <Select onValueChange={handleTournamentLinkSelect} disabled={isSubmitting}>
                             <SelectTrigger id="ad-link-select">
                                 <SelectValue placeholder="show only live and upcoming" />
                             </SelectTrigger>
@@ -166,6 +198,7 @@ export default function AdminPromotionalAdsPage() {
                             onChange={(e) => setLink(e.target.value)}
                             placeholder="Or enter a custom URL"
                             className="mt-2"
+                            disabled={isSubmitting}
                         />
                     </div>
                     <div className="space-y-2">
@@ -176,11 +209,17 @@ export default function AdminPromotionalAdsPage() {
                             accept="image/*"
                             onChange={handleImageFileChange}
                             required
+                            disabled={isSubmitting}
                         />
-                         <p className="text-xs text-muted-foreground">Smaller images help improve performance.</p>
+                         <p className="text-xs text-muted-foreground">Recommended ratio: 2:1 (e.g., 1200x600).</p>
                     </div>
                     <Button type="submit" className="w-full" disabled={isSubmitting}>
-                        {isSubmitting ? 'Creating...' : 'Create Ad'}
+                        {isSubmitting ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Creating Ad...
+                          </>
+                        ) : 'Create Ad'}
                     </Button>
                 </CardContent>
             </form>
@@ -239,7 +278,7 @@ export default function AdminPromotionalAdsPage() {
                                                 <AlertDialogHeader>
                                                     <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                                     <AlertDialogDescription>
-                                                        This will permanently delete the ad "{ad.title}". This action cannot be undone.
+                                                        This will permanently delete the ad "{ad.title}" from Firestore. This action cannot be undone.
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
