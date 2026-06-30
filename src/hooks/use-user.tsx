@@ -122,7 +122,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (userDetails: any, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): Promise<"success" | "error"> => {
-    if (!allUsersData) return 'error';
+    if (!allUsersData || !firestore) return 'error';
     
     if (allUsersData.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
         toast({ variant: 'destructive', title: 'Email Taken' });
@@ -130,7 +130,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     let newUserBonus = 0;
-    let referredBy: string | undefined = undefined;
+    let referredBy: string | null = null;
     if (referralCode && referralSettings) {
         const referrer = allUsersData.find(u => u.referralCode === referralCode);
         if (referrer) {
@@ -152,14 +152,14 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         mobile: userDetails.mobile || null,
         primaryGame: userDetails.primaryGame,
         referralCode: referralCodeGenerated,
-        googleId: userDetails.googleId,
-        password: password,
+        googleId: userDetails.googleId || null,
+        password: password || null,
         walletBalance: newUserBonus,
         referralBalance: 0,
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
-        referredBy,
+        referredBy: referredBy,
         emailVerified,
         mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
