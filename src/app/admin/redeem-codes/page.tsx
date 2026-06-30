@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/table";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, RefreshCw, Trash2, Search, Copy, CheckCircle, Clock, Users, RefreshCcw } from "lucide-react";
@@ -25,7 +25,22 @@ import {
 } from "@/components/ui/alert-dialog";
 import { ScrollArea } from '@/components/ui/scroll-area';
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  setDoc, 
+  deleteDoc, 
+  addDoc, 
+  query, 
+  orderBy, 
+  Timestamp 
+} from 'firebase/firestore';
+
 export default function AdminRedeemCodesPage() {
+    const { firestore } = useFirebase();
     const [codes, setCodes] = useState<RedeemCode[]>([]);
     const [users, setUsers] = useState<User[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
@@ -35,27 +50,35 @@ export default function AdminRedeemCodesPage() {
     const [customCode, setCustomCode] = useState('');
     const { toast } = useToast();
 
-    const loadData = useCallback(() => {
-        const storedCodes = localStorage.getItem('redeemCodes');
-        if (storedCodes) {
-            setCodes(JSON.parse(storedCodes));
-        }
-
-        const storedUsers = localStorage.getItem('allUsers');
-        if (storedUsers) {
-            setUsers(JSON.parse(storedUsers));
-        }
-    }, []);
-
     useEffect(() => {
-        loadData();
-        window.addEventListener('storage', loadData);
-        window.addEventListener('focus', loadData);
+        if (!firestore) return;
+
+        // Listen for Redeem Codes in Firestore
+        const qCodes = query(collection(firestore, 'redeem_codes'), orderBy('createdAt', 'desc'));
+        const unsubCodes = onSnapshot(qCodes, (snapshot) => {
+            const list = snapshot.docs.map(doc => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    ...data,
+                    // Handle Firestore Timestamp conversion
+                    createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : data.createdAt
+                } as RedeemCode;
+            });
+            setCodes(list);
+        });
+
+        // Listen for Users in Firestore (needed to potentially display who used the codes)
+        const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+            const list = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[];
+            setUsers(list);
+        });
+
         return () => {
-            window.removeEventListener('storage', loadData);
-            window.removeEventListener('focus', loadData);
+            unsubCodes();
+            unUsers();
         };
-    }, [loadData]);
+    }, [firestore]);
 
     const generateCode = () => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -66,7 +89,9 @@ export default function AdminRedeemCodesPage() {
         return result;
     };
 
-    const handleCreateCode = () => {
+    const handleCreateCode = async () => {
+        if (!firestore) return;
+        
         const amount = parseFloat(newAmount);
         if (isNaN(amount) || amount <= 0) {
             toast({ variant: 'destructive', title: "Invalid Amount" });
@@ -86,40 +111,44 @@ export default function AdminRedeemCodesPage() {
             return;
         }
 
-        const newRedeemCode: RedeemCode = {
-            id: `rc-${Date.now()}`,
-            code: finalCode.toUpperCase(),
-            amount: amount,
-            status: 'active',
-            usageLimit: limit,
-            usedCount: 0,
-            usedBy: [],
-            createdAt: new Date().toISOString()
-        };
+        try {
+            const newRedeemCode = {
+                code: finalCode.toUpperCase(),
+                amount: amount,
+                status: 'active',
+                usageLimit: limit,
+                usedCount: 0,
+                usedBy: [],
+                createdAt: Timestamp.now()
+            };
 
-        const updatedCodes = [newRedeemCode, ...codes];
-        setCodes(updatedCodes);
-        localStorage.setItem('redeemCodes', JSON.stringify(updatedCodes));
-        
-        toast({ title: "Redeem Code Created", description: `Code ${finalCode.toUpperCase()} is now active.` });
-        setIsCreateOpen(false);
-        setCustomCode('');
-        setUsageLimit('1');
+            await addDoc(collection(firestore, 'redeem_codes'), newRedeemCode);
+            
+            toast({ title: "Redeem Code Created", description: `Code ${finalCode.toUpperCase()} is now active.` });
+            setIsCreateOpen(false);
+            setCustomCode('');
+            setUsageLimit('1');
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error", description: "Failed to create redeem code." });
+        }
     };
 
-    const handleDeleteCode = (id: string) => {
-        const updatedCodes = codes.filter(c => c.id !== id);
-        setCodes(updatedCodes);
-        localStorage.setItem('redeemCodes', JSON.stringify(updatedCodes));
-        toast({ title: "Code Deleted" });
+    const handleDeleteCode = async (id: string) => {
+        if (!firestore) return;
+        try {
+            await deleteDoc(doc(firestore, 'redeem_codes', id));
+            toast({ title: "Code Deleted" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error", description: "Failed to delete redeem code." });
+        }
     };
 
     const copyToClipboard = (text: string) => {
         navigator.clipboard.writeText(text);
         toast({ title: "Code Copied!" });
     };
-
-    const getUserById = (userId: string) => users.find(u => u.id === userId);
 
     const filteredCodes = codes.filter(c => 
         c.code.toLowerCase().includes(searchTerm.toLowerCase())
@@ -141,7 +170,7 @@ export default function AdminRedeemCodesPage() {
                     </div>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={loadData}>
+                    <Button variant="outline" size="icon" onClick={() => toast({ title: "Refreshing", description: "Syncing with Firestore..." })}>
                         <RefreshCw className="h-4 w-4" />
                     </Button>
                     <Button onClick={() => setIsCreateOpen(!isCreateOpen)}>
@@ -257,7 +286,7 @@ export default function AdminRedeemCodesPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">
-                                                {format(new Date(code.createdAt), 'PPp')}
+                                                {code.createdAt ? format(new Date(code.createdAt), 'PPp') : 'N/A'}
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <AlertDialog>
