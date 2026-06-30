@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -15,9 +14,10 @@ import { useUser } from "@/hooks/use-user.tsx";
 import { User } from "@/lib/types";
 import { Eye, EyeOff, Loader2, AlertTriangle } from "lucide-react";
 import { useFirebase } from '@/firebase';
-import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { doc, getDoc } from "firebase/firestore";
 
 
 export default function LoginPage() {
@@ -33,7 +33,7 @@ export default function LoginPage() {
   
   const [activeTab, setActiveTab] = useState(initialTab);
   const { login, signup, user, allUsers, joinTeam } = useUser();
-  const { auth } = useFirebase();
+  const { auth, firestore } = useFirebase();
   
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -55,6 +55,7 @@ export default function LoginPage() {
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [gameList, setGameList] = useState<string[]>([]);
   const [isSigningUp, setIsSigningUp] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   const usernameRef = useRef<HTMLInputElement>(null);
   const inGameUsernameRef = useRef<HTMLInputElement>(null);
@@ -149,22 +150,25 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
         return;
     }
+    setIsLoggingIn(true);
     try {
       await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
       const loggedIn = await login(loginForm.email);
       if (loggedIn === true) {
-        // Successful login is handled by useEffect
+        // Successful login is handled by the redirect useEffect
       } else if (loggedIn === 'blocked') {
+        await signOut(auth);
         toast({
           variant: 'destructive',
           title: 'Account Blocked',
           description: 'Your account has been blocked. Please contact support.',
         });
       } else {
+        await signOut(auth);
         toast({
           variant: 'destructive',
           title: 'Login Failed',
-          description: 'Invalid email or password. Please try again.',
+          description: 'User record not found in our database.',
         });
       }
     } catch (error: any) {
@@ -177,6 +181,8 @@ export default function LoginPage() {
         title: 'Login Failed',
         description: description,
       });
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -257,8 +263,8 @@ export default function LoginPage() {
   };
 
   const handleGoogleSignIn = async () => {
-    if (!auth) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+    if (!auth || !firestore) {
+        toast({ variant: 'destructive', title: 'Error', description: 'Services not ready.' });
         return;
     }
     const provider = new GoogleAuthProvider();
@@ -266,18 +272,21 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
-      const existingUser = allUsers.find(u => u.email === googleUser.email);
+      const docRef = doc(firestore, 'users', googleUser.uid);
+      const docSnap = await getDoc(docRef);
 
-      if (existingUser) {
-        if (await login(existingUser.email)) {
-          // Successful login handled by useEffect
-        } else {
-           toast({
+      if (docSnap.exists()) {
+        const existingUser = docSnap.data() as User;
+        if (existingUser.isBlocked) {
+          await signOut(auth);
+          toast({
             variant: 'destructive',
-            title: 'Login Failed',
-            description: 'Could not log in with your Google account.',
+            title: 'Account Blocked',
+            description: 'Your account has been blocked. Please contact support.',
           });
+          return;
         }
+        // Redirect handled by useEffect
       } else {
         // New user: auto-signup and login
         const randomPassword = Math.random().toString(36).slice(-8);
@@ -290,12 +299,13 @@ export default function LoginPage() {
         const signupResult = await signup(newUserDetails, randomPassword, true, false);
 
         if (signupResult === 'success') {
-          await login(googleUser.email!);
           toast({
             title: 'Welcome!',
             description: 'Your account has been created.',
           });
+          // Redirect handled by useEffect
         } else {
+            await signOut(auth);
             toast({
                 variant: 'destructive',
                 title: 'Sign Up Failed',
@@ -334,7 +344,7 @@ export default function LoginPage() {
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="login-email">Email</Label>
-                    <Input id="login-email" name="email" type="email" placeholder="you@example.com" required value={loginForm.email} onChange={handleLoginChange} />
+                    <Input id="login-email" name="email" type="email" placeholder="you@example.com" required value={loginForm.email} onChange={handleLoginChange} disabled={isLoggingIn} />
                   </div>
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -347,7 +357,7 @@ export default function LoginPage() {
                       </Link>
                     </div>
                     <div className="relative">
-                      <Input id="login-password" name="password" type={showLoginPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} />
+                      <Input id="login-password" name="password" type={showLoginPassword ? "text" : "password"} required value={loginForm.password} onChange={handleLoginChange} disabled={isLoggingIn} />
                       <Button
                         type="button"
                         variant="ghost"
@@ -362,7 +372,10 @@ export default function LoginPage() {
                       </Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90">Login</Button>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoggingIn}>
+                    {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {isLoggingIn ? 'Logging in...' : 'Login'}
+                  </Button>
                    <div className="relative">
                       <div className="absolute inset-0 flex items-center">
                           <span className="w-full border-t" />
@@ -373,7 +386,7 @@ export default function LoginPage() {
                           </span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoggingIn}>
                         <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
                         Sign in with Google
                     </Button>
@@ -468,7 +481,7 @@ export default function LoginPage() {
                     </div>
                     <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isSigningUp}>
                         <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
-                        Sign up with Google
+                        Sign in with Google
                     </Button>
                 </form>
               </CardContent>

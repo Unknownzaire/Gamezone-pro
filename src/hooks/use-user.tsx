@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback, useMemo } from 'react';
@@ -114,11 +113,29 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   // 3. Functions
   const login = async (email: string): Promise<boolean | 'blocked'> => {
-    if (!allUsersData) return false;
-    const userToLogin = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (!userToLogin) return false;
-    if (userToLogin.isBlocked) return 'blocked';
-    return true;
+    const currentUser = auth?.currentUser;
+    if (currentUser) {
+      try {
+        const docSnap = await getDoc(doc(firestore, 'users', currentUser.uid));
+        if (docSnap.exists()) {
+          const u = docSnap.data() as User;
+          if (u.isBlocked) return 'blocked';
+          return true;
+        }
+      } catch (e) {
+        console.error("Login verification error:", e);
+      }
+    }
+
+    // Fallback: check allUsersData if document fetch fails or is pending
+    if (allUsersData) {
+      const userToLogin = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (userToLogin) {
+        if (userToLogin.isBlocked) return 'blocked';
+        return true;
+      }
+    }
+    return false;
   };
 
   const signup = async (userDetails: any, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): Promise<"success" | "error"> => {
@@ -127,7 +144,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let newUserBonus = 0;
     let referredBy: string | null = null;
     if (referralCode && referralSettings) {
-        // Try to find referrer in local data if available
         const referrer = allUsersData?.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
@@ -136,7 +152,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     }
 
     const referralCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
-    const newUserId = userDetails.googleId || doc(collection(firestore, 'users')).id;
+    const newUserId = userDetails.googleId || auth?.currentUser?.uid || doc(collection(firestore, 'users')).id;
 
     const newUser: User = {
         id: newUserId,
@@ -152,7 +168,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
-        referredBy: referredBy || null, // Ensure this is never undefined
+        referredBy: referredBy || null,
         emailVerified,
         mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
