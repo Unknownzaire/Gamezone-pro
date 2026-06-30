@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, PlusCircle, ArrowLeft, Search, Clock, Trophy, Swords } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -24,7 +23,12 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, doc, deleteDoc, Timestamp } from 'firebase/firestore';
+
 export default function AdminTournamentsPage() {
+  const { firestore } = useFirebase();
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
   const [tournamentToDelete, setTournamentToDelete] = useState<Tournament | null>(null);
   const [gameFilter, setGameFilter] = useState<string>('ALL');
@@ -33,20 +37,24 @@ export default function AdminTournamentsPage() {
   const [gameList, setGameList] = useState<string[]>([]);
   const { toast } = useToast();
 
-  const loadData = useCallback(() => {
-    try {
-      const storedTournaments = localStorage.getItem('allTournaments');
-      if (storedTournaments) {
-        setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
-      } else {
-        setTournaments(initialMockTournaments);
-        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
-      }
-    } catch (error) {
-      console.error("Failed to parse tournaments from localStorage", error);
-      setTournaments(initialMockTournaments);
-    }
+  useEffect(() => {
+    if (!firestore) return;
 
+    // Listen to tournaments collection in real-time
+    const unsubTournaments = onSnapshot(collection(firestore, 'tournaments'), (snapshot) => {
+      const tournamentsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          // Convert Firestore Timestamp to Date object
+          matchTime: data.matchTime instanceof Timestamp ? data.matchTime.toDate() : (data.matchTime ? new Date(data.matchTime) : new Date())
+        } as Tournament;
+      });
+      setTournaments(tournamentsData);
+    });
+
+    // Load game list from localStorage (still used for platform-wide consistency)
     const storedGames = localStorage.getItem('gameList');
     if (storedGames) {
         setGameList(JSON.parse(storedGames));
@@ -55,36 +63,29 @@ export default function AdminTournamentsPage() {
         setGameList(defaultGames);
         localStorage.setItem('gameList', JSON.stringify(defaultGames));
     }
-  }, []);
 
-   useEffect(() => {
-    loadData();
-    const handleStorageChange = (event: StorageEvent) => {
-      if (['allTournaments', 'gameList'].includes(event.key || '')) {
-        loadData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', loadData);
-    
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', loadData);
+      unsubTournaments();
     };
-  }, [loadData]);
+  }, [firestore]);
 
-  const handleDeleteTournament = () => {
-    if (!tournamentToDelete) return;
+  const handleDeleteTournament = async () => {
+    if (!tournamentToDelete || !firestore) return;
 
-    const updatedTournaments = tournaments.filter(t => t.id !== tournamentToDelete.id);
-    setTournaments(updatedTournaments);
-    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
-
-    toast({
-        title: "Tournament Deleted",
-        description: `The tournament "${tournamentToDelete.title}" has been successfully deleted.`,
-    });
+    try {
+      await deleteDoc(doc(firestore, 'tournaments', tournamentToDelete.id));
+      toast({
+          title: "Tournament Deleted",
+          description: `The tournament "${tournamentToDelete.title}" has been successfully removed.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({
+          variant: 'destructive',
+          title: "Error",
+          description: "Could not delete tournament. Please try again.",
+      });
+    }
 
     setTournamentToDelete(null);
   };
@@ -233,14 +234,15 @@ export default function AdminTournamentsPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Image 
-                      src={t.imageUrl} 
-                      alt={t.title} 
-                      width={80} 
-                      height={45} 
-                      className="rounded-md object-cover"
-                      data-ai-hint={t.imageHint}
-                    />
+                    <div className="relative w-20 h-11 rounded-md overflow-hidden border">
+                        <Image 
+                        src={t.imageUrl} 
+                        alt={t.title} 
+                        fill
+                        className="object-cover"
+                        data-ai-hint={t.imageHint}
+                        />
+                    </div>
                   </TableCell>
                   <TableCell>
                     <Badge 
@@ -253,8 +255,8 @@ export default function AdminTournamentsPage() {
                   </TableCell>
                   <TableCell>₹{t.prizePool.toLocaleString()}</TableCell>
                   <TableCell>₹{t.entryFee.toLocaleString()}</TableCell>
-                  <TableCell>{t.participants.length} / {t.slots || 100}</TableCell>
-                  <TableCell>{format(new Date(t.matchTime), "PPp")}</TableCell>
+                  <TableCell>{t.participants?.length || 0} / {t.slots || 100}</TableCell>
+                  <TableCell className="text-xs">{format(new Date(t.matchTime), "PPp")}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -268,7 +270,7 @@ export default function AdminTournamentsPage() {
                         <Link href={`/admin/tournaments/${t.id}`}><DropdownMenuItem>Manage</DropdownMenuItem></Link>
                         <Link href={`/admin/tournaments/edit/${t.id}`}><DropdownMenuItem>Edit</DropdownMenuItem></Link>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-500" onClick={() => setTournamentToDelete(t)}>Delete</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => setTournamentToDelete(t)}>Delete</DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </TableCell>
@@ -289,11 +291,11 @@ export default function AdminTournamentsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the tournament "{tournamentToDelete?.title}".
+              This action cannot be undone. This will permanently delete the tournament "{tournamentToDelete?.title}" and all its matching records from Cloud Firestore.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setTournamentToDelete(null)}>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
