@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments as initialMockTournaments } from "@/lib/mock-data";
 import { MoreHorizontal, ArrowLeft, RefreshCw, Wallet, CheckCircle, Mail, Phone, Search, Star, ShieldCheck } from "lucide-react";
 import { useEffect, useState, useCallback } from "react";
 import { User, Transaction, Tournament } from "@/lib/types";
@@ -29,9 +28,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 
-const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  runTransaction, 
+  Timestamp, 
+  collectionGroup, 
+  query 
+} from 'firebase/firestore';
 
 export default function AdminUsersPage() {
+  const { firestore } = useFirebase();
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [tournaments, setTournaments] = useState<Tournament[]>([]);
@@ -46,30 +58,49 @@ export default function AdminUsersPage() {
 
   const { toast } = useToast();
 
-  const loadData = useCallback(() => {
-    const storedUsers = localStorage.getItem('allUsers');
-    if (storedUsers) {
-      setUsers(JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })));
-    } else {
-      setUsers(initialUsers);
-      localStorage.setItem('allUsers', JSON.stringify(initialUsers));
-    }
-    
-    const storedTransactions = localStorage.getItem('allTransactions');
-    if (storedTransactions) {
-      setTransactions(JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})));
-    } else {
-      setTransactions(initialTransactions);
-      localStorage.setItem('allTransactions', JSON.stringify(initialTransactions));
-    }
+  useEffect(() => {
+    if (!firestore) return;
 
-    const storedTournaments = localStorage.getItem('allTournaments');
-    if (storedTournaments) {
-      setTournaments(JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})));
-    } else {
-      setTournaments(initialMockTournaments);
-    }
+    // Users Listener
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        };
+      }) as User[];
+      setUsers(usersData);
+    });
 
+    // Tournaments Listener
+    const unsubTournaments = onSnapshot(collection(firestore, 'tournaments'), (snapshot) => {
+      const tournamentsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          matchTime: data.matchTime instanceof Timestamp ? data.matchTime.toDate() : (data.matchTime ? new Date(data.matchTime) : new Date())
+        };
+      }) as Tournament[];
+      setTournaments(tournamentsData);
+    });
+
+    // Transactions Listener (Collection Group)
+    const unsubTransactions = onSnapshot(query(collectionGroup(firestore, 'transactions')), (snapshot) => {
+      const transactionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        };
+      }) as Transaction[];
+      setTransactions(transactionsData);
+    });
+
+    // Local Game List
     const storedGames = localStorage.getItem('gameList');
     if (storedGames) {
         setGameList(JSON.parse(storedGames));
@@ -78,52 +109,44 @@ export default function AdminUsersPage() {
       setGameList(defaultGames);
       localStorage.setItem('gameList', JSON.stringify(defaultGames));
     }
-  }, []);
 
-  useEffect(() => {
-    loadData();
-    const handleStorageChange = (event: StorageEvent) => {
-      if (['allUsers', 'allTransactions', 'allTournaments', 'gameList'].includes(event.key || '')) {
-        loadData();
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', loadData);
-    
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', loadData);
+      unsubUsers();
+      unsubTournaments();
+      unsubTransactions();
     };
-  }, [loadData]);
+  }, [firestore]);
 
-  const saveUsers = (updatedUsers: User[]) => {
-    setUsers(updatedUsers);
-    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
-  };
-  
-  const saveTransactions = (updatedTransactions: Transaction[]) => {
-    setTransactions(updatedTransactions);
-    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
-  };
-
-  const handleDeleteUser = () => {
-    if (!userToDelete) return;
-    const updatedUsers = users.filter(user => user.id !== userToDelete.id);
-    saveUsers(updatedUsers);
-    toast({ title: "User Deleted", description: `User ${userToDelete.username} has been deleted.` });
-    setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
+  const handleDeleteUser = async () => {
+    if (!userToDelete || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'users', userToDelete.id));
+      toast({ title: "User Deleted", description: `User ${userToDelete.username} has been deleted from Firestore.` });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: "Error", description: "Could not delete user." });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setUserToDelete(null);
+    }
   };
 
-  const handleBlockUser = (userId: string) => {
-    const updatedUsers = users.map(user => 
-        user.id === userId ? { ...user, isBlocked: !user.isBlocked } : user
-    );
-    saveUsers(updatedUsers);
-    const userObj = updatedUsers.find(u => u.id === userId);
-    if(userObj) {
-        toast({ title: `User ${userObj.isBlocked ? 'Blocked' : 'Unblocked'}`, description: `User ${userObj.username} has been ${userObj.isBlocked ? 'blocked' : 'unblocked'}.` });
+  const handleBlockUser = async (userId: string) => {
+    if (!firestore) return;
+    const userToUpdate = users.find(u => u.id === userId);
+    if (!userToUpdate) return;
+
+    try {
+      await updateDoc(doc(firestore, 'users', userId), {
+        isBlocked: !userToUpdate.isBlocked
+      });
+      toast({ 
+        title: `User ${!userToUpdate.isBlocked ? 'Blocked' : 'Unblocked'}`, 
+        description: `User ${userToUpdate.username} has been ${!userToUpdate.isBlocked ? 'blocked' : 'unblocked'}.` 
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: "Error", description: "Failed to update block status." });
     }
   };
 
@@ -137,8 +160,8 @@ export default function AdminUsersPage() {
     setIsFundDialogOpen(true);
   };
   
-  const handleAddFunds = () => {
-    if (!userToFund || !fundAmount) return;
+  const handleAddFunds = async () => {
+    if (!userToFund || !fundAmount || !firestore) return;
 
     const amount = parseFloat(fundAmount);
     if (isNaN(amount) || amount <= 0) {
@@ -146,37 +169,45 @@ export default function AdminUsersPage() {
       return;
     }
 
-    const updatedUsers = users.map(u => 
-      u.id === userToFund.id ? { ...u, walletBalance: u.walletBalance + amount } : u
-    );
-    saveUsers(updatedUsers);
+    try {
+      const userRef = doc(firestore, 'users', userToFund.id);
+      const txRef = doc(collection(firestore, 'users', userToFund.id, 'transactions'));
 
-    const newTransaction: Transaction = {
-      id: generateUniqueId('tx-admin-deposit', userToFund.id),
-      userId: userToFund.id,
-      amount,
-      type: 'credit',
-      description: 'Admin Deposit',
-      createdAt: new Date(),
-      status: 'completed'
-    };
-    saveTransactions([newTransaction, ...transactions]);
+      await runTransaction(firestore, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists()) throw new Error("User does not exist!");
 
-    toast({
-      title: "Funds Added",
-      description: `₹${amount.toLocaleString()} has been added to ${userToFund.username}'s wallet.`,
-    });
-    
-    setIsFundDialogOpen(false);
-    setFundAmount('');
-    setUserToFund(null);
+        const currentBalance = userSnap.data().walletBalance || 0;
+        transaction.update(userRef, { walletBalance: currentBalance + amount });
+        transaction.set(txRef, {
+          userId: userToFund.id,
+          amount,
+          type: 'credit',
+          description: 'Admin Deposit',
+          createdAt: Timestamp.now(),
+          status: 'completed'
+        });
+      });
+
+      toast({
+        title: "Funds Added",
+        description: `₹${amount.toLocaleString()} has been added to ${userToFund.username}'s wallet.`,
+      });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: "Error", description: "Failed to add funds." });
+    } finally {
+      setIsFundDialogOpen(false);
+      setFundAmount('');
+      setUserToFund(null);
+    }
   };
 
   const getAvailableBalance = (user: User) => {
     const pendingDebits = transactions
       .filter(tx => tx.userId === user.id && tx.status === 'pending' && tx.type === 'debit')
       .reduce((acc, tx) => acc + tx.amount, 0);
-    return user.walletBalance - pendingDebits;
+    return (user.walletBalance || 0) - pendingDebits;
   };
 
   const getTotalDeposits = (user: User) => {
@@ -191,7 +222,7 @@ export default function AdminUsersPage() {
   const getParticipationCount = (userId: string, gameName: string) => {
     return tournaments.filter(t => 
       t.gameName.toUpperCase() === gameName.toUpperCase() && 
-      t.participants.some(p => p.user.id === userId)
+      t.participants?.some(p => p.user.id === userId)
     ).length;
   };
 
@@ -206,6 +237,10 @@ export default function AdminUsersPage() {
     
     return matchesGame && matchesSearch;
   });
+
+  const handleRefresh = () => {
+    toast({ title: "Refreshing", description: "Data is synced in real-time with Firestore." });
+  };
 
   return (
     <div className="space-y-6">
@@ -233,7 +268,7 @@ export default function AdminUsersPage() {
                     {game} user
                 </Button>
             ))}
-            <Button variant="outline" size="icon" onClick={() => loadData()}>
+            <Button variant="outline" size="icon" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh users</span>
             </Button>
@@ -284,7 +319,7 @@ export default function AdminUsersPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>₹{user.walletBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
+                    <TableCell>₹{(user.walletBalance || 0).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell>₹{getTotalDeposits(user).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</TableCell>
                     <TableCell className="font-mono text-xs">{user.password || 'N/A'}</TableCell>
                     {gameList.map(game => (
@@ -346,7 +381,7 @@ export default function AdminUsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this user?</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the user '{userToDelete?.username}' and all associated data.
+              This will permanently delete the user '{userToDelete?.username}' and all associated data from Cloud Firestore.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -363,7 +398,7 @@ export default function AdminUsersPage() {
           <DialogHeader>
             <DialogTitle>Add Funds to {userToFund?.username}</DialogTitle>
             <DialogDescription>
-              Manually credit the user's wallet.
+              Manually credit the user's wallet via a secure Firestore transaction.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
