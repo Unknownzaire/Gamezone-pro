@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, memo, useCallback } from 'react';
@@ -9,15 +8,15 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { getWinnerSuggestion } from '../actions';
 import { Loader2, Sparkles, Trophy } from 'lucide-react';
-import { Tournament, User, Participant, PrizeDistribution } from '@/lib/types';
+import { Tournament, Participant, PrizeDistribution } from '@/lib/types';
 import type { SuggestWinnerFromMatchDataOutput } from '@/ai/flows/suggest-winner-from-match-data';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
-const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { doc, runTransaction, Timestamp, collection } from 'firebase/firestore';
 
-
-// Memoized component for each participant rank item to prevent unnecessary re-renders
 const ParticipantRankItem = memo(({
   participant,
   rank,
@@ -44,14 +43,12 @@ const ParticipantRankItem = memo(({
   return (
     <div className="flex items-center justify-between gap-4">
        <div className="flex-1 truncate">
-        <p className="font-semibold">{participant.user.username}</p>
-        <p className="text-xs text-muted-foreground">
-          {participant.user.inGameUsername} ({participant.user.inGameId})
-        </p>
+        <p className="font-semibold text-sm">{participant.user.username}</p>
+        <p className="text-[10px] text-muted-foreground">{participant.user.email}</p>
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline" className="w-32 justify-start">
+            <Button variant="outline" className="w-32 justify-start text-xs h-8">
               {rank ? `Rank #${rank}` : 'Unranked'}
             </Button>
           </DialogTrigger>
@@ -87,6 +84,7 @@ ParticipantRankItem.displayName = 'ParticipantRankItem';
 
 
 export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: Tournament, onWinnerDeclare: (updatedTournament: Tournament) => void }) {
+  const { firestore } = useFirebase();
   const [file, setFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [suggestion, setSuggestion] = useState<SuggestWinnerFromMatchDataOutput | null>(null);
@@ -94,9 +92,8 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
   const { toast } = useToast();
 
   useEffect(() => {
-    // Pre-fill ranks if they already exist on the tournament participants
     const initialRanks: { [participantId: string]: number | null } = {};
-    tournament.participants.forEach(p => {
+    (tournament.participants || []).forEach(p => {
         if (p.result && p.result.startsWith('Rank #')) {
             initialRanks[p.id] = parseInt(p.result.replace('Rank #', ''), 10);
         } else if (p.result === 'Winner') {
@@ -109,17 +106,11 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
   }, [tournament]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFile(e.target.files[0]);
-    }
+    if (e.target.files) setFile(e.target.files[0]);
   };
 
   const handleSubmit = async () => {
-    if (!file) {
-      toast({ variant: 'destructive', title: 'No file selected', description: 'Please upload a match data file.' });
-      return;
-    }
-
+    if (!file) return;
     setIsLoading(true);
     setSuggestion(null);
 
@@ -127,18 +118,14 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     reader.readAsDataURL(file);
     reader.onload = async () => {
       const matchDataUri = reader.result as string;
-      const tournamentRules = `Prize: ${tournament.prizePool}, Commission: ${tournament.commissionPercentage}%. Winner takes all after commission.`;
-
+      const tournamentRules = `Prize: ${tournament.prizePool}, Commission: ${tournament.commissionPercentage}%.`;
       const result = await getWinnerSuggestion({ matchDataUri, tournamentRules });
-      if (result.success && result.data) {
-        setSuggestion(result.data);
-      } else {
-        toast({ variant: 'destructive', title: 'AI Suggestion Failed', description: result.error });
-      }
+      if (result.success && result.data) setSuggestion(result.data);
+      else toast({ variant: 'destructive', title: 'AI Failed', description: result.error });
       setIsLoading(false);
     };
     reader.onerror = () => {
-      toast({ variant: 'destructive', title: 'File Read Error', description: 'Could not read the selected file.' });
+      toast({ variant: 'destructive', title: 'File Error' });
       setIsLoading(false);
     };
   };
@@ -163,67 +150,79 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
     return 0;
   };
   
-  const handleDeclareWinner = () => {
+  const handleDeclareWinner = async () => {
     const winnerRanks = Object.entries(ranks).filter(([, rank]) => rank !== null && rank > 0);
-    if(winnerRanks.length === 0){
-        toast({variant: 'destructive', title: 'No Ranks Assigned', description: 'Please assign at least one rank.'});
-        return;
-    }
+    if(winnerRanks.length === 0 || !firestore) return;
 
-    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    let allTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]');
+    setIsLoading(true);
+    try {
+        const prizeDistribution = tournament.prizeDistribution || [
+            { rank: '1', percentage: 50 },
+            { rank: '2', percentage: 25 },
+            { rank: '3', percentage: 15 },
+            { rank: '4-10', percentage: 10 },
+        ];
 
-    const prizeDistribution = tournament.prizeDistribution || [
-        { rank: '1', percentage: 50 },
-        { rank: '2', percentage: 25 },
-        { rank: '3', percentage: 15 },
-        { rank: '4-10', percentage: 10 },
-    ];
-    
-    const updatedParticipants = tournament.participants.map(p => {
-        const rank = ranks[p.id] ?? null;
-        let newResult = 'Participated';
-        
-        if (rank) {
-            newResult = rank === 1 ? 'Winner' : `Rank #${rank}`;
-            const prizeAmount = getPrizeForRank(rank, tournament.prizePool, prizeDistribution);
-            
-            if (prizeAmount > 0) {
-                 const userIndex = allUsers.findIndex(u => u.id === p.user.id);
-                if(userIndex !== -1){
-                    allUsers[userIndex].walletBalance += prizeAmount;
-                    allTransactions.push({
-                        id: generateUniqueId('tx-prize', p.user.id),
-                        userId: p.user.id,
-                        amount: prizeAmount,
-                        type: 'credit',
-                        description: `Prize for Rank #${rank} in "${tournament.title}"`,
-                        createdAt: new Date(),
-                        status: 'completed'
-                    });
+        await runTransaction(firestore, async (transaction) => {
+            const tournamentRef = doc(firestore, 'tournaments', tournament.id);
+            const updatedParticipants = (tournament.participants || []).map(p => {
+                const rank = ranks[p.id] ?? null;
+                const newResult = rank ? (rank === 1 ? 'Winner' : `Rank #${rank}`) : 'Participated';
+                
+                if (rank) {
+                    const prizeAmount = getPrizeForRank(rank, tournament.prizePool, prizeDistribution);
+                    if (prizeAmount > 0) {
+                        const userRef = doc(firestore, 'users', p.user.id);
+                        const txRef = doc(collection(firestore, 'users', p.user.id, 'transactions'));
+                        
+                        // We must get user to update balance accurately
+                        // Note: In real app we might need to await these within the loop carefully
+                        // but since transaction.get returns a promise we can't easily map it here.
+                        // Transaction strategy: we'll update the user balances individually.
+                    }
+                }
+                return { ...p, result: newResult };
+            });
+
+            // Updating user balances and adding prize transactions inside the transaction
+            for (const p of (tournament.participants || [])) {
+                const rank = ranks[p.id] ?? null;
+                if (rank) {
+                    const prizeAmount = getPrizeForRank(rank, tournament.prizePool, prizeDistribution);
+                    if (prizeAmount > 0) {
+                        const userRef = doc(firestore, 'users', p.user.id);
+                        const userSnap = await transaction.get(userRef);
+                        if (userSnap.exists()) {
+                            const newBal = (userSnap.data().walletBalance || 0) + prizeAmount;
+                            transaction.update(userRef, { walletBalance: newBal });
+                            const txRef = doc(collection(firestore, 'users', p.user.id, 'transactions'));
+                            transaction.set(txRef, {
+                                userId: p.user.id,
+                                amount: prizeAmount,
+                                type: 'credit',
+                                description: `Prize for Rank #${rank} in "${tournament.title}"`,
+                                createdAt: Timestamp.now(),
+                                status: 'completed'
+                            });
+                        }
+                    }
                 }
             }
-        }
-        
-        return {
-            ...p,
-            result: newResult
-        };
-    });
 
-    const updatedTournament: Tournament = {
-        ...tournament,
-        status: 'Completed',
-        participants: updatedParticipants,
-        winner: updatedParticipants.find(p => p.result === 'Winner')?.user,
-    };
-    
-    localStorage.setItem('allUsers', JSON.stringify(allUsers));
-    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
+            transaction.update(tournamentRef, {
+                status: 'Completed',
+                participants: updatedParticipants,
+                winner: updatedParticipants.find(p => p.result === 'Winner')?.user || null
+            });
+        });
 
-    onWinnerDeclare(updatedTournament);
-    
-    toast({ title: 'Winners Declared!', description: 'Ranks assigned and prizes have been distributed.' });
+        toast({ title: 'Winners Declared!', description: 'Prizes distributed via Firestore.' });
+    } catch (e) {
+        console.error(e);
+        toast({ variant: 'destructive', title: 'Error', description: 'Failed to declare winners.' });
+    } finally {
+        setIsLoading(false);
+    }
   }
 
   const usedRanks = Object.values(ranks).filter(rank => rank !== null) as number[];
@@ -236,37 +235,20 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
             <Sparkles className="text-primary" />
             AI Winner Suggestion
           </CardTitle>
-          <CardDescription>Upload match data (screenshot) to get an AI-powered winner suggestion.</CardDescription>
+          <CardDescription>Upload match data for analysis.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="match-data">Match Data File</Label>
-            <Input id="match-data" type="file" onChange={handleFileChange} accept="image/*" />
-          </div>
+          <Input id="match-data" type="file" onChange={handleFileChange} accept="image/*" />
           <Button onClick={handleSubmit} disabled={isLoading || !file}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Get Suggestion
           </Button>
-
-          {isLoading && (
-            <div className="flex items-center justify-center p-8">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="ml-4 text-muted-foreground">Analyzing match data...</p>
-            </div>
-          )}
-
           {suggestion && (
             <Card className="mt-4 bg-muted">
-              <CardHeader>
-                <CardTitle className="text-lg">Suggestion Result</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <p><span className="font-semibold">Suggested Winner:</span> <span className="text-primary">{suggestion.suggestedWinner}</span></p>
-                <p><span className="font-semibold">Confidence:</span> {Math.round(suggestion.confidence * 100)}%</p>
-                <div>
-                  <p className="font-semibold">Explanation:</p>
-                  <p className="text-sm text-muted-foreground">{suggestion.explanation}</p>
-                </div>
+              <CardContent className="p-4 text-xs space-y-2">
+                <p><strong>Winner:</strong> {suggestion.suggestedWinner}</p>
+                <p><strong>Confidence:</strong> {Math.round(suggestion.confidence * 100)}%</p>
+                <p><strong>Reason:</strong> {suggestion.explanation}</p>
               </CardContent>
             </Card>
           )}
@@ -279,12 +261,12 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
             <Trophy className="text-primary" />
             Declare Winners
           </CardTitle>
-          <CardDescription>Manually assign ranks to participants. This will distribute prizes and complete the tournament.</CardDescription>
+          <CardDescription>Finalize match and distribute prize money.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
             <ScrollArea className="h-72">
                 <div className="space-y-3 pr-4">
-                    {tournament.participants.map(p => (
+                    {tournament.participants?.map(p => (
                        <ParticipantRankItem 
                             key={p.id}
                             participant={p}
@@ -295,8 +277,9 @@ export function WinnerSuggestion({ tournament, onWinnerDeclare }: { tournament: 
                     ))}
                 </div>
             </ScrollArea>
-            <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleDeclareWinner} disabled={tournament.status === 'Completed'}>
-                {tournament.status === 'Completed' ? 'Already Completed' : 'Declare Winners & Distribute Prizes'}
+            <Button className="w-full bg-accent hover:bg-accent/90" onClick={handleDeclareWinner} disabled={tournament.status === 'Completed' || isLoading}>
+                {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {tournament.status === 'Completed' ? 'Already Completed' : 'Declare Winners & Distribute'}
             </Button>
         </CardContent>
       </Card>

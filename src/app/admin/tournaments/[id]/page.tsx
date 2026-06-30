@@ -1,7 +1,5 @@
-
 'use client';
 
-import { mockUsers, mockTournaments as initialMockTournaments } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -49,14 +47,17 @@ import {
   DialogClose,
 } from "@/components/ui/dialog";
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { doc, onSnapshot, updateDoc, deleteDoc, Timestamp, runTransaction, collection } from 'firebase/firestore';
 
 export default function ManageTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { toast } = useToast();
+  const { firestore } = useFirebase();
   const router = useRouter();
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [tournament, setTournament] = useState<Tournament | undefined>(undefined);
-
+  
+  const [tournament, setTournament] = useState<Tournament | null>(null);
   const [roomId, setRoomId] = useState('');
   const [roomPassword, setRoomPassword] = useState('');
   const [liveStreamLink, setLiveStreamLink] = useState('');
@@ -71,249 +72,175 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
   const [newPrizePool, setNewPrizePool] = useState(0);
 
   useEffect(() => {
-    let allTournaments: Tournament[];
-    try {
-        const storedTournaments = localStorage.getItem('allTournaments');
-        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
-    } catch (error) {
-        console.error("Failed to parse tournaments from localStorage", error);
-        allTournaments = initialMockTournaments;
-        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
-    }
-    setTournaments(allTournaments);
-    
-    const currentTournament = allTournaments.find(t => t.id === id);
-    setTournament(currentTournament);
+    if (!firestore || !id) return;
 
-    if (currentTournament) {
-        setRoomId(currentTournament.roomId || '');
-        setRoomPassword(currentTournament.roomPassword || '');
-        setLiveStreamLink(currentTournament.liveStreamLink || '');
-        setNewPrizePool(currentTournament.prizePool);
-    } else {
+    const unsub = onSnapshot(doc(firestore, 'tournaments', id), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        const t = {
+          id: snap.id,
+          ...data,
+          matchTime: data.matchTime instanceof Timestamp ? data.matchTime.toDate() : (data.matchTime ? new Date(data.matchTime) : new Date())
+        } as Tournament;
+        setTournament(t);
+        setRoomId(t.roomId || '');
+        setRoomPassword(t.roomPassword || '');
+        setLiveStreamLink(t.liveStreamLink || '');
+        setNewPrizePool(t.prizePool);
+      } else {
         router.push('/admin/tournaments');
-    }
-  }, [id, router]);
+      }
+    });
+
+    return () => unsub();
+  }, [firestore, id, router]);
 
 
   if (!tournament) {
-    return <div>Loading...</div>;
-  }
-
-  const updateAndSaveTournaments = (updatedTournaments: Tournament[]) => {
-      setTournaments(updatedTournaments);
-      localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
+    return <div className="p-8 text-center">Loading match details...</div>;
   }
   
-  const handleUpdateAndGoLive = () => {
-    if (!roomId || !roomPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing Details',
-        description: 'Please provide both a Room ID and a Password.',
-      });
+  const handleUpdateAndGoLive = async () => {
+    if (!roomId || !roomPassword || !firestore) {
+      toast({ variant: 'destructive', title: 'Missing Details', description: 'Room ID and Password are required.' });
       return;
     }
     
-    const updatedTournaments = tournaments.map(t => 
-        t.id === tournament.id 
-          ? { ...t, status: 'Live' as const, roomId, roomPassword, liveStreamLink } 
-          : t
-      );
-    
-    updateAndSaveTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === id));
-    setIsEditingRoom(false);
-
-    toast({
-      title: 'Tournament is Live!',
-      description: 'Room details have been updated and status is set to Live.',
-    });
+    try {
+      await updateDoc(doc(firestore, 'tournaments', id), {
+        status: 'Live',
+        roomId,
+        roomPassword,
+        liveStreamLink
+      });
+      setIsEditingRoom(false);
+      toast({ title: 'Tournament is Live!', description: 'Room details updated.' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status.' });
+    }
   };
 
-  const handleSaveRoomDetails = () => {
-    if (!roomId || !roomPassword) {
-      toast({
-        variant: 'destructive',
-        title: 'Missing Details',
-        description: 'Please provide both a Room ID and a Password.',
-      });
+  const handleSaveRoomDetails = async () => {
+    if (!roomId || !roomPassword || !firestore) {
+      toast({ variant: 'destructive', title: 'Missing Details' });
       return;
     }
 
-    const updatedTournaments = tournaments.map(t => 
-      t.id === tournament.id 
-        ? { ...t, roomId, roomPassword, liveStreamLink } 
-        : t
-    );
-
-    updateAndSaveTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === id));
-    setIsEditingRoom(false);
-
-    toast({
-      title: 'Room Details Updated',
-      description: 'The match details have been successfully updated.',
-    });
-  };
-
-  const handleUpdatePrizePool = () => {
-    if (newPrizePool < 0) {
-        toast({ variant: 'destructive', title: "Invalid Amount", description: "Prize pool cannot be negative." });
-        return;
+    try {
+      await updateDoc(doc(firestore, 'tournaments', id), {
+        roomId,
+        roomPassword,
+        liveStreamLink
+      });
+      setIsEditingRoom(false);
+      toast({ title: 'Room Details Updated' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error' });
     }
-
-    const updatedTournaments = tournaments.map(t => 
-        t.id === tournament.id 
-          ? { ...t, prizePool: newPrizePool } 
-          : t
-      );
-    
-    updateAndSaveTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === id));
-    setIsEditPrizeDialogOpen(false);
-
-    toast({
-      title: 'Prize Pool Updated',
-      description: `The prize pool for "${tournament.title}" has been updated to ₹${newPrizePool.toLocaleString()}.`,
-    });
   };
 
-  const handleCompleteTournament = () => {
-     const updatedTournaments = tournaments.map(t => 
-        t.id === tournament.id 
-          ? { ...t, status: 'Completed' as const } 
-          : t
-      );
-    
-    updateAndSaveTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === id));
-
-    toast({
-      title: 'Tournament Completed',
-      description: 'The tournament status has been manually set to Completed.',
-    });
-  };
-  
-  const handleWinnerDeclaration = (updatedTournament: Tournament) => {
-    const updatedTournaments = tournaments.map(t => t.id === updatedTournament.id ? updatedTournament : t);
-    updateAndSaveTournaments(updatedTournaments);
-    setTournament(updatedTournament);
+  const handleUpdatePrizePool = async () => {
+    if (newPrizePool < 0 || !firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'tournaments', id), { prizePool: newPrizePool });
+      setIsEditPrizeDialogOpen(false);
+      toast({ title: 'Prize Pool Updated' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error' });
+    }
   };
 
-  const handleDeleteTournament = () => {
-    const storedTournaments = localStorage.getItem('allTournaments');
-    const allTournaments: Tournament[] = storedTournaments ? JSON.parse(storedTournaments) : [];
-    const updatedTournaments = allTournaments.filter(t => t.id !== id);
-    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
-    
-    toast({
-        title: "Tournament Deleted",
-        description: `The tournament "${tournament.title}" has been successfully deleted.`,
-    });
-    
-    router.push('/admin/tournaments');
+  const handleCompleteTournament = async () => {
+    if (!firestore) return;
+    try {
+      await updateDoc(doc(firestore, 'tournaments', id), { status: 'Completed' });
+      toast({ title: 'Tournament Completed' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error' });
+    }
   };
 
-  const handleRemoveParticipant = () => {
-    if (!participantToRemove || !tournament) return;
+  const handleDeleteTournament = async () => {
+    if (!firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'tournaments', id));
+      toast({ title: "Tournament Deleted" });
+      router.push('/admin/tournaments');
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error' });
+    }
+  };
 
-    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-    let allTournaments: Tournament[] = JSON.parse(localStorage.getItem('allTournaments') || '[]');
+  const handleRemoveParticipant = async () => {
+    if (!participantToRemove || !tournament || !firestore) return;
 
-    // 1. Refund the user
-    const userIndex = allUsers.findIndex(u => u.id === participantToRemove.user.id);
-    if (userIndex !== -1) {
-        allUsers[userIndex].walletBalance += tournament.entryFee;
-        
-        // 2. Add refund transaction
-        const refundTx: Transaction = {
-            id: `tx-refund-${Date.now()}`,
-            userId: participantToRemove.user.id,
+    try {
+      const userRef = doc(firestore, 'users', participantToRemove.user.id);
+      const txRef = doc(collection(firestore, 'users', participantToRemove.user.id, 'transactions'));
+      const tournamentRef = doc(firestore, 'tournaments', tournament.id);
+
+      await runTransaction(firestore, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        const tourSnap = await transaction.get(tournamentRef);
+
+        if (!userSnap.exists() || !tourSnap.exists()) throw new Error("Missing document.");
+
+        const userData = userSnap.data() as User;
+        const tourData = tourSnap.data() as Tournament;
+
+        const updatedParticipants = (tourData.participants || []).filter(p => p.id !== participantToRemove.id);
+
+        transaction.update(userRef, { walletBalance: (userData.walletBalance || 0) + tournament.entryFee });
+        transaction.update(tournamentRef, { participants: updatedParticipants });
+        transaction.set(txRef, {
             amount: tournament.entryFee,
             type: 'credit',
             description: `Refund for removal from tournament: ${tournament.title}`,
-            createdAt: new Date(),
+            createdAt: Timestamp.now(),
             status: 'completed',
-        };
-        allTransactions.unshift(refundTx);
+            userId: participantToRemove.user.id
+        });
+      });
+
+      toast({ title: "Participant Removed", description: "User has been refunded." });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Transaction failed.' });
+    } finally {
+      setParticipantToRemove(null);
     }
-
-    // 3. Remove from tournament
-    const updatedTournaments = allTournaments.map(t => {
-        if (t.id === tournament.id) {
-            return {
-                ...t,
-                participants: t.participants.filter(p => p.id !== participantToRemove.id)
-            };
-        }
-        return t;
-    });
-
-    localStorage.setItem('allUsers', JSON.stringify(allUsers));
-    localStorage.setItem('allTransactions', JSON.stringify(allTransactions));
-    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
-
-    setTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === tournament.id));
-    
-    toast({
-        title: "Participant Removed",
-        description: `${participantToRemove.user.username} has been removed and refunded ₹${tournament.entryFee}.`,
-    });
-    
-    setParticipantToRemove(null);
   };
 
-  const handleDeleteAccount = () => {
-    if (!accountToDelete) return;
-
-    let allUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]');
-    let allTournaments: Tournament[] = JSON.parse(localStorage.getItem('allTournaments') || '[]');
-    let allTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]');
-
-    // 1. Remove user from all users
-    const updatedUsers = allUsers.filter(u => u.id !== accountToDelete.id);
-    
-    // 2. Remove user from all tournaments participant lists
-    const updatedTournaments = allTournaments.map(t => ({
-        ...t,
-        participants: t.participants.filter(p => p.user.id !== accountToDelete.id)
-    }));
-
-    // 3. Remove user transactions
-    const updatedTransactions = allTransactions.filter(tx => tx.userId !== accountToDelete.id);
-
-    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
-    localStorage.setItem('allTournaments', JSON.stringify(updatedTournaments));
-    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
-
-    // Update local state
-    setTournaments(updatedTournaments);
-    setTournament(updatedTournaments.find(t => t.id === id));
-    
-    toast({
-        title: "Account Deleted",
-        description: `User account for ${accountToDelete.username} has been permanently deleted.`,
-    });
-    
-    setAccountToDelete(null);
-    setIsAccountDeleteDialogOpen(false);
+  const handleDeleteAccount = async () => {
+    if (!accountToDelete || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'users', accountToDelete.id));
+      toast({ title: "Account Deleted" });
+      setAccountToDelete(null);
+      setIsAccountDeleteDialogOpen(false);
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error' });
+    }
   };
 
   const statCards = [
     { title: "Status", value: tournament.status, icon: Clock },
     { title: "Prize Pool", value: `₹${tournament.prizePool.toLocaleString()}`, icon: Trophy },
     { title: "Entry Fee", value: `₹${tournament.entryFee.toLocaleString()}`, icon: DollarSign },
-    { title: "Participants", value: `${tournament.participants.length} / ${tournament.slots || 100}`, icon: Users },
+    { title: "Participants", value: `${tournament.participants?.length || 0} / ${tournament.slots || 100}`, icon: Users },
   ];
 
-  const filteredParticipants = tournament.participants.filter(p => {
+  const filteredParticipants = (tournament.participants || []).filter(p => {
     const searchLower = participantSearch.toLowerCase();
     return p.user.username.toLowerCase().includes(searchLower) || 
-           (p.user.inGameUsername && p.user.inGameUsername.toLowerCase().includes(searchLower)) ||
-           (p.user.inGameId && p.user.inGameId.toLowerCase().includes(searchLower));
+           (p.user.email?.toLowerCase().includes(searchLower)) ||
+           (p.user.id.toLowerCase().includes(searchLower));
   });
 
   return (
@@ -328,7 +255,7 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
             </Link>
             <div>
                 <h1 className="font-headline text-3xl font-bold">{tournament.title}</h1>
-                <p className="text-muted-foreground">Manage details for this tournament.</p>
+                <p className="text-muted-foreground">Manage match details in real-time.</p>
             </div>
         </div>
         <AlertDialog>
@@ -342,12 +269,12 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
                 <AlertDialogHeader>
                     <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
                     <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the tournament "{tournament.title}", including all participant data and room details.
+                        This will permanently delete the tournament and all its data from Firestore.
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive hover:bg-destructive/90">
+                    <AlertDialogAction onClick={handleDeleteTournament} className="bg-destructive">
                         Delete Permanently
                     </AlertDialogAction>
                 </AlertDialogFooter>
@@ -394,50 +321,26 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
                     size="icon" 
                     onClick={() => setIsEditingRoom(!isEditingRoom)}
                     disabled={tournament.status === 'Completed'}
-                    title="Edit room details"
                 >
                     <Pencil className={cn("h-4 w-4", isEditingRoom && "text-primary")} />
-                    <span className="sr-only">Edit room details</span>
                 </Button>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="room-id">Room ID</Label>
-                    <Input 
-                        id="room-id" 
-                        value={roomId} 
-                        onChange={(e) => setRoomId(e.target.value)} 
-                        disabled={!isEditingRoom && tournament.status !== 'Upcoming'} 
-                    />
+                    <Input id="room-id" value={roomId} onChange={(e) => setRoomId(e.target.value)} disabled={!isEditingRoom && tournament.status !== 'Upcoming'} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="room-password">Room Password</Label>
-                    <Input 
-                        id="room-password" 
-                        value={roomPassword} 
-                        onChange={(e) => setRoomPassword(e.target.value)} 
-                        disabled={!isEditingRoom && tournament.status !== 'Upcoming'}
-                    />
+                    <Input id="room-password" value={roomPassword} onChange={(e) => setRoomPassword(e.target.value)} disabled={!isEditingRoom && tournament.status !== 'Upcoming'} />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="live-stream">Live Stream URL (Optional)</Label>
-                    <Input 
-                        id="live-stream" 
-                        value={liveStreamLink} 
-                        onChange={(e) => setLiveStreamLink(e.target.value)} 
-                        placeholder="https://..." 
-                        disabled={!isEditingRoom && tournament.status === 'Completed'} 
-                    />
+                    <Input id="live-stream" value={liveStreamLink} onChange={(e) => setLiveStreamLink(e.target.value)} placeholder="https://..." disabled={!isEditingRoom && tournament.status === 'Completed'} />
                 </div>
                 <div className="flex gap-2">
-                    <Button 
-                        onClick={tournament.status === 'Upcoming' ? handleUpdateAndGoLive : handleSaveRoomDetails} 
-                        disabled={tournament.status === 'Completed' || (tournament.status === 'Live' && !isEditingRoom)} 
-                        className="w-full"
-                    >
-                        {tournament.status === 'Upcoming' ? 'Update & Go Live' : 
-                         tournament.status === 'Live' && isEditingRoom ? 'Save Changes' : 
-                         `Already ${tournament.status}`}
+                    <Button onClick={tournament.status === 'Upcoming' ? handleUpdateAndGoLive : handleSaveRoomDetails} disabled={tournament.status === 'Completed' || (tournament.status === 'Live' && !isEditingRoom)} className="w-full">
+                        {tournament.status === 'Upcoming' ? 'Update & Go Live' : tournament.status === 'Live' && isEditingRoom ? 'Save Changes' : `Already ${tournament.status}`}
                     </Button>
                     <Button onClick={handleCompleteTournament} variant="destructive" disabled={tournament.status !== 'Live'} className="w-full">
                         Complete Tournament
@@ -450,16 +353,11 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
             <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1.5">
                     <CardTitle className="font-headline">Participants</CardTitle>
-                    <CardDescription>List of all players who joined this tournament.</CardDescription>
+                    <CardDescription>Real-time list of joined players.</CardDescription>
                 </div>
                 <div className="relative w-full max-w-[200px]">
                     <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search user..." 
-                        className="pl-8 h-8 text-xs" 
-                        value={participantSearch}
-                        onChange={(e) => setParticipantSearch(e.target.value)}
-                    />
+                    <Input placeholder="Search user..." className="pl-8 h-8 text-xs" value={participantSearch} onChange={(e) => setParticipantSearch(e.target.value)} />
                 </div>
             </CardHeader>
             <CardContent>
@@ -467,9 +365,7 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>App Username</TableHead>
-                            <TableHead>Game Username</TableHead>
-                            <TableHead>Game ID</TableHead>
+                            <TableHead>Username</TableHead>
                             <TableHead>Result</TableHead>
                             <TableHead className="text-right">Action</TableHead>
                         </TableRow>
@@ -477,74 +373,36 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
                     <TableBody>
                         {filteredParticipants.map(p => (
                             <TableRow key={p.id}>
-                                <TableCell className="font-medium">{p.user.username}</TableCell>
-                                <TableCell>{p.user.inGameUsername || 'N/A'}</TableCell>
-                                <TableCell>{p.user.inGameId || 'N/A'}</TableCell>
+                                <TableCell className="font-medium text-xs">
+                                  <p>{p.user.username}</p>
+                                  <p className="text-[10px] text-muted-foreground">{p.user.email}</p>
+                                </TableCell>
                                 <TableCell>
-                                    <Badge variant={p.result === 'Winner' ? 'default' : 'outline'}>
+                                    <Badge variant={p.result === 'Winner' ? 'default' : 'outline'} className="text-[10px]">
                                         {p.result ?? 'N/A'}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <div className="flex items-center justify-end gap-2">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                    <span className="sr-only">Open menu</span>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem asChild>
-                                                    <Link href={`/admin/users/edit/${p.user.id}`}>
-                                                        View / Edit Profile
-                                                    </Link>
-                                                </DropdownMenuItem>
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem 
-                                                    className="text-destructive"
-                                                    onClick={() => setParticipantToRemove(p)}
-                                                    disabled={tournament.status === 'Completed'}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" />
-                                                    Remove & Refund
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-8 w-8 text-orange-500 hover:bg-orange-500/10"
-                                            onClick={() => setParticipantToRemove(p)}
-                                            disabled={tournament.status === 'Completed'}
-                                            title="Delete User Joining (Refund)"
-                                        >
-                                            <UserMinus className="h-4 w-4" />
-                                            <span className="sr-only">Delete User Joining</span>
-                                        </Button>
-                                        <Button 
-                                            variant="ghost" 
-                                            size="icon" 
-                                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                            onClick={() => {
-                                                setAccountToDelete(p.user);
-                                                setIsAccountDeleteDialogOpen(true);
-                                            }}
-                                            title="Delete User Account Permanently"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                            <span className="sr-only">Delete User Account</span>
-                                        </Button>
-                                    </div>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                            <DropdownMenuItem asChild><Link href={`/admin/users/edit/${p.user.id}`}>Edit Profile</Link></DropdownMenuItem>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem className="text-destructive" onClick={() => setParticipantToRemove(p)} disabled={tournament.status === 'Completed'}>
+                                                <UserMinus className="mr-2 h-4 w-4" />
+                                                Remove & Refund
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
                                 </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-                {filteredParticipants.length === 0 && (
-                    <p className="text-center text-muted-foreground py-8">No matching participants found.</p>
-                )}
               </ScrollArea>
             </CardContent>
         </Card>
@@ -552,43 +410,20 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
 
        <Separator />
       
-       <WinnerSuggestion tournament={tournament} onWinnerDeclare={handleWinnerDeclaration} />
+       <WinnerSuggestion tournament={tournament} onWinnerDeclare={setTournament} />
 
        <AlertDialog open={!!participantToRemove} onOpenChange={(open) => !open && setParticipantToRemove(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Participant?</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <strong>{participantToRemove?.user.username}</strong> from this tournament?
-              <br /><br />
-              The entry fee of <strong>₹{tournament.entryFee}</strong> will be refunded to their wallet.
+              Are you sure? User will be refunded <strong>₹{tournament.entryFee}</strong>.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive hover:bg-destructive/90">
+            <AlertDialogAction onClick={handleRemoveParticipant} className="bg-destructive">
               Confirm & Refund
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-       <AlertDialog open={isAccountDeleteDialogOpen} onOpenChange={setIsAccountDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Permanently Delete User Account?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you absolutely sure you want to delete <strong>{accountToDelete?.username}</strong>?
-              <br /><br />
-              This action is <strong>permanent</strong>. It will remove the user from the system, all tournaments they are in, and delete their entire profile. 
-              <br /><br />
-              <em>Note: No refunds are issued automatically when deleting an account. Use "Remove & Refund" first if needed.</em>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setAccountToDelete(null)}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteAccount} className="bg-destructive hover:bg-destructive/90 text-white">
-              Permanently Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -596,33 +431,17 @@ export default function ManageTournamentPage({ params }: { params: Promise<{ id:
 
       <Dialog open={isEditPrizeDialogOpen} onOpenChange={setIsEditPrizeDialogOpen}>
         <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Edit Prize Pool</DialogTitle>
-            <DialogDescription>
-              Update the total prize pool for this tournament. This change will be visible to all users.
-            </DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Edit Prize Pool</DialogTitle></DialogHeader>
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-prize-pool">Prize Pool (₹)</Label>
-              <Input 
-                id="new-prize-pool" 
-                type="number" 
-                value={newPrizePool} 
-                onChange={(e) => setNewPrizePool(Number(e.target.value))} 
-                placeholder="Enter amount"
-              />
-            </div>
+            <Label htmlFor="new-prize-pool">Prize Pool (₹)</Label>
+            <Input id="new-prize-pool" type="number" value={newPrizePool} onChange={(e) => setNewPrizePool(Number(e.target.value))} />
           </div>
           <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
             <Button onClick={handleUpdatePrizePool}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }

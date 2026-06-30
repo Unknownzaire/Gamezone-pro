@@ -1,320 +1,108 @@
-
 'use client';
 
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { Tournament, PrizeDistribution, User } from '@/lib/types';
-import { mockTournaments as initialMockTournaments, mockUsers } from '@/lib/mock-data';
+import { Tournament, PrizeDistribution } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ArrowLeft, Trash2, Loader2, Pencil, Plus } from 'lucide-react';
+import { ArrowLeft, Trash2, Loader2, Plus, Pencil } from 'lucide-react';
 import Link from 'next/link';
 import { DateTimePicker } from '@/components/ui/datetime-picker';
 import { compressImage } from '@/lib/utils';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from "@/components/ui/dialog";
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { doc, onSnapshot, updateDoc, Timestamp, setDoc } from 'firebase/firestore';
 
 export default function EditTournamentPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const router = useRouter();
   const { toast } = useToast();
+  const { firestore } = useFirebase();
 
-  const [tournament, setTournament] = useState<Tournament | null>(null);
-  const [formData, setFormData] = useState<Partial<Omit<Tournament, 'matchTime' | 'prizeDistribution'>>>({
-    title: '',
-    gameName: '',
-    matchType: 'Solo',
-    entryFee: 0,
-    prizePool: 0,
-    slots: 100,
-    commissionPercentage: 0,
-    liveStreamLink: '',
-    imageUrl: '',
-    imageHint: '',
-  });
+  const [formData, setFormData] = useState<Partial<Tournament>>({});
   const [matchTime, setMatchTime] = useState<Date | undefined>(undefined);
-   const [imageFile, setImageFile] = useState<File | null>(null);
-   const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
-   const [isSubmitting, setIsSubmitting] = useState(false);
-   
-    const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD', 'OTHER']);
-    const [isAddGameDialogOpen, setIsAddGameDialogOpen] = useState(false);
-    const [newGameName, setNewGameName] = useState('');
-    const [isEditGameDialogOpen, setIsEditGameDialogOpen] = useState(false);
-    const [tempGameList, setTempGameList] = useState<string[]>([]);
-    const [users, setUsers] = useState<User[]>([]);
-
-    useEffect(() => {
-        const storedGames = localStorage.getItem('gameList');
-        if (storedGames) {
-            setGameList(JSON.parse(storedGames));
-        }
-        const storedUsers = localStorage.getItem('allUsers');
-        if (storedUsers) {
-            setUsers(JSON.parse(storedUsers));
-        } else {
-            setUsers(mockUsers);
-        }
-    }, []);
-   
-   const totalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [prizeDistributions, setPrizeDistributions] = useState<PrizeDistribution[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [gameList, setGameList] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!id) return;
-    let allTournaments: Tournament[];
-    try {
-        const storedTournaments = localStorage.getItem('allTournaments');
-        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
-    } catch (error) {
-        console.error("Failed to parse tournaments from localStorage", error);
-        allTournaments = initialMockTournaments;
-        localStorage.setItem('allTournaments', JSON.stringify(initialMockTournaments));
-    }
-    
-    const tournamentToEdit = allTournaments.find(t => t.id === id);
-    if (tournamentToEdit) {
-      setTournament(tournamentToEdit);
-      const { matchTime, prizeDistribution, ...rest } = tournamentToEdit;
-      setFormData(prev => ({ ...prev, ...rest }));
-      setMatchTime(new Date(matchTime));
-      setPrizeDistributions(prizeDistribution || [
-          { rank: '1', percentage: 50 },
-          { rank: '2', percentage: 25 },
-          { rank: '3', percentage: 15 },
-          { rank: '4-10', percentage: 10 },
-      ]);
-    } else {
-      router.push('/admin/tournaments');
-    }
-  }, [id, router]);
+    if (!firestore || !id) return;
+
+    const unsubTournament = onSnapshot(doc(firestore, 'tournaments', id), (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as Tournament;
+        setFormData(data);
+        setMatchTime(data.matchTime instanceof Timestamp ? data.matchTime.toDate() : new Date(data.matchTime));
+        setPrizeDistributions(data.prizeDistribution || []);
+      }
+    });
+
+    const unsubGames = onSnapshot(doc(firestore, 'settings', 'games'), (snap) => {
+      if (snap.exists()) {
+        setGameList(snap.data().list || []);
+      }
+    });
+
+    return () => {
+        unsubTournament();
+        unsubGames();
+    };
+  }, [firestore, id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type } = e.target;
-    const val = type === 'number' ? parseFloat(value) : value;
-    setFormData(prev => ({
-      ...prev,
-      [name]: val
-    }));
+    setFormData(prev => ({ ...prev, [name]: type === 'number' ? Number(value) : value }));
   };
 
-  const handleSelectChange = (name: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+  const handlePrizeChange = (index: number, field: keyof PrizeDistribution, value: string | number) => {
+    const newDist = [...prizeDistributions];
+    newDist[index] = { ...newDist[index], [field]: field === 'percentage' ? Number(value) : value };
+    setPrizeDistributions(newDist);
   };
-  
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        setImageFile(e.target.files[0]);
-    }
-  };
-
-    const handlePrizeChange = (index: number, field: keyof PrizeDistribution | 'amount', value: string | number) => {
-        const newDistributions = [...prizeDistributions];
-        const dist = { ...newDistributions[index] };
-        const prizePool = formData.prizePool || 0;
-        
-        let currentTotal = prizeDistributions.reduce((sum, item, i) => i === index ? sum : sum + (item.percentage || 0), 0);
-        
-        if (field === 'rank') {
-            const isDuplicate = newDistributions.some((d, i) => i !== index && d.rank === value);
-            if (isDuplicate) {
-                toast({
-                    variant: 'destructive',
-                    title: "Duplicate Rank",
-                    description: `The rank "${value}" is already defined. Ranks must be unique.`
-                });
-                return;
-            }
-            dist.rank = value as string;
-        } else if (field === 'percentage') {
-            const newPercentage = typeof value === 'string' ? parseFloat(value) || 0 : value;
-            if (currentTotal + newPercentage > 100) {
-                toast({
-                    variant: 'destructive',
-                    title: "Exceeds 100%",
-                    description: `Cannot set percentage to ${newPercentage} as it would exceed the 100% total.`
-                });
-                return;
-            }
-            dist.percentage = newPercentage;
-        } else if (field === 'amount') {
-            const amount = typeof value === 'string' ? parseFloat(value.replace(/[^0-9.]/g, '')) || 0 : value;
-            const newPercentage = prizePool > 0 ? parseFloat(((amount / prizePool) * 100).toPrecision(4)) : 0;
-             if (currentTotal + newPercentage > 100) {
-                toast({
-                    variant: 'destructive',
-                    title: "Exceeds 100%",
-                    description: `Amount translates to ${newPercentage.toFixed(2)}%, which would exceed the 100% total.`
-                });
-                return;
-            }
-            dist.percentage = newPercentage;
-        }
-
-        newDistributions[index] = dist;
-        setPrizeDistributions(newDistributions);
-    };
-
-  const addPrizeRow = () => {
-      if (totalPercentage >= 100) {
-          toast({ variant: 'destructive', title: "Distribution at 100%", description: "Cannot add more prize tiers." });
-          return;
-      }
-      setPrizeDistributions([...prizeDistributions, { rank: '', percentage: 0 }]);
-  };
-
-  const removePrizeRow = (index: number) => {
-      const newDistributions = prizeDistributions.filter((_, i) => i !== index);
-      setPrizeDistributions(newDistributions);
-  };
-  
-    const handleAddNewGame = () => {
-        if (newGameName.trim() === '') {
-            toast({ variant: 'destructive', title: 'Game name cannot be empty.' });
-            return;
-        }
-        if (gameList.some(game => game.toLowerCase() === newGameName.trim().toLowerCase())) {
-            toast({ variant: 'destructive', title: 'Game already exists.' });
-            return;
-        }
-        const updatedGameList = [...gameList, newGameName.trim()];
-        setGameList(updatedGameList);
-        localStorage.setItem('gameList', JSON.stringify(updatedGameList));
-        handleSelectChange('gameName', newGameName.trim()); // also select the new game
-        toast({ title: 'Game added successfully.' });
-        setNewGameName('');
-        setIsAddGameDialogOpen(false);
-    };
-
-    const handleSaveGameList = () => {
-        const trimmedList = tempGameList.map(g => g.trim());
-        if (trimmedList.some(g => g === '')) {
-            toast({ variant: 'destructive', title: 'Invalid Name', description: 'Game names cannot be empty.' });
-            return;
-        }
-        const lowercasedSet = new Set(trimmedList.map(g => g.toLowerCase()));
-        if (lowercasedSet.size !== trimmedList.length) {
-            toast({ variant: 'destructive', title: 'Duplicate Names', description: 'Game names must be unique.' });
-            return;
-        }
-    
-        if (formData.gameName && !trimmedList.includes(formData.gameName)) {
-            handleSelectChange('gameName', '');
-        }
-        
-        setGameList(trimmedList);
-        localStorage.setItem('gameList', JSON.stringify(trimmedList));
-        toast({ title: 'Game List Updated' });
-        setIsEditGameDialogOpen(false);
-    };
-
-    const getUserCountForGame = (gameName: string) => {
-        return users.filter(user => user.primaryGame === gameName).length;
-    };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!firestore || !id) return;
 
-    if (!matchTime) {
-      toast({ variant: 'destructive', title: "Match Time Required", description: "Please select a match time." });
-      return;
-    }
-
-    if (!formData.gameName) {
-        toast({ variant: 'destructive', title: "Game Required", description: "Please select a game." });
-        return;
-    }
-
-    if (formData.entryFee && formData.entryFee < 0) {
-        toast({ variant: 'destructive', title: "Invalid Entry Fee", description: "Entry fee cannot be negative." });
-        return;
-    }
-    
-    if (formData.prizePool && formData.prizePool < 0) {
-        toast({ variant: 'destructive', title: "Invalid Prize Pool", description: "Prize pool cannot be negative." });
-        return;
-    }
-
-    const finalTotalPercentage = prizeDistributions.reduce((sum, item) => sum + (item.percentage || 0), 0);
-    if (Math.abs(finalTotalPercentage - 100) > 0.01) {
-        toast({
-            variant: 'destructive',
-            title: "Invalid Prize Distribution",
-            description: `Total prize percentage must be exactly 100%. Current total: ${finalTotalPercentage.toFixed(2)}%`
-        });
-        return;
-    }
-    
     setIsSubmitting(true);
     try {
         let finalImageUrl = formData.imageUrl;
-        
         if (imageFile) {
             finalImageUrl = await compressImage(imageFile, { maxWidth: 800, maxHeight: 450, quality: 0.6 });
         }
 
-        const updatedData: Tournament = {
-            ...(tournament as Tournament),
+        await updateDoc(doc(firestore, 'tournaments', id), {
             ...formData,
-            matchTime: matchTime,
-            imageUrl: finalImageUrl!,
+            matchTime: matchTime ? Timestamp.fromDate(matchTime) : formData.matchTime,
+            imageUrl: finalImageUrl,
             prizeDistribution: prizeDistributions,
-        } as Tournament;
-
-        let allTournaments: Tournament[];
-        try {
-            const storedTournaments = localStorage.getItem('allTournaments');
-            allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : initialMockTournaments;
-        } catch (error) {
-            console.error("Failed to parse tournaments from localStorage", error);
-            allTournaments = initialMockTournaments;
-        }
-        
-        allTournaments = allTournaments.map(t => t.id === id ? updatedData : t);
-        localStorage.setItem('allTournaments', JSON.stringify(allTournaments));
-
-        toast({
-            title: "Tournament Updated",
-            description: `Details for ${formData.title} have been updated.`,
         });
+
+        toast({ title: "Tournament Updated" });
         router.push('/admin/tournaments');
     } catch (error) {
-        console.error("Tournament update error:", error);
-        toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save the changes.' });
+        console.error(error);
+        toast({ variant: 'destructive', title: 'Update Failed' });
     } finally {
         setIsSubmitting(false);
     }
   };
 
-  const getPrizeAmount = (percentage: number) => {
-      const prizePool = formData.prizePool || 0;
-      if (!prizePool || !percentage) return 0;
-      const amount = (prizePool * percentage) / 100;
-      return Number(amount.toFixed(2));
-  };
-
-  if (!tournament) {
-    return <div>Loading...</div>;
-  }
+  if (!formData.title) return <div className="p-8 text-center">Loading...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/admin/tournaments">
-          <Button variant="outline" size="icon" disabled={isSubmitting}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-        </Link>
+        <Link href="/admin/tournaments"><Button variant="outline" size="icon" disabled={isSubmitting}><ArrowLeft className="h-4 w-4" /></Button></Link>
         <div>
           <h1 className="font-headline text-3xl font-bold">Edit Tournament</h1>
-          <p className="text-muted-foreground">Editing details for {tournament.title}</p>
+          <p className="text-muted-foreground">Changes reflect in real-time across the platform.</p>
         </div>
       </div>
 
@@ -322,235 +110,55 @@ export default function EditTournamentPage({ params }: { params: Promise<{ id: s
         <div className="grid gap-6 lg:grid-cols-5">
            <div className="lg:col-span-3 space-y-6">
                 <Card>
-                     <CardHeader>
-                        <CardTitle>Tournament Details</CardTitle>
-                     </CardHeader>
+                    <CardHeader><CardTitle>Details</CardTitle></CardHeader>
                     <CardContent className="pt-6 grid gap-4 md:grid-cols-2">
                       <div className="space-y-2 md:col-span-2">
-                        <Label htmlFor="title">Tournament Title</Label>
-                        <Input id="title" name="title" value={formData.title ?? ''} onChange={handleChange} required disabled={isSubmitting} />
+                        <Label>Title</Label>
+                        <Input name="title" value={formData.title ?? ''} onChange={handleChange} required />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="gameName">Game Name</Label>
-                        <div className="flex items-center gap-2">
-                          <Select value={formData.gameName ?? ''} onValueChange={(val) => handleSelectChange('gameName', val)} disabled={isSubmitting}>
-                              <SelectTrigger id="gameName">
-                                  <SelectValue placeholder="Select a game" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  {gameList.map(game => (
-                                      <SelectItem key={game} value={game}>{game}</SelectItem>
-                                  ))}
-                              </SelectContent>
-                          </Select>
-                            <Dialog open={isEditGameDialogOpen} onOpenChange={(isOpen) => {
-                                if (isOpen) setTempGameList(gameList);
-                                setIsEditGameDialogOpen(isOpen);
-                            }}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
-                                        <Pencil className="h-4 w-4" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Manage Games</DialogTitle>
-                                        <DialogDescription>
-                                            Edit or delete game names from the list. You cannot delete a game if users have it set as their primary game.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <ScrollArea className="h-72">
-                                      <div className="space-y-2 pr-4">
-                                          {tempGameList.map((game, index) => (
-                                              <div key={index} className="flex items-center gap-2">
-                                                  <Input
-                                                      value={game}
-                                                      onChange={(e) => {
-                                                          const newList = [...tempGameList];
-                                                          newList[index] = e.target.value;
-                                                          setTempGameList(newList);
-                                                      }}
-                                                  />
-                                                  <Badge variant="secondary" className="whitespace-nowrap">{getUserCountForGame(game)} users</Badge>
-                                                  <Button
-                                                      variant="ghost"
-                                                      size="icon"
-                                                      type="button"
-                                                      onClick={() => {
-                                                          const gameToDelete = tempGameList[index];
-                                                          const userCount = getUserCountForGame(gameToDelete);
-                                                          if (userCount > 0) {
-                                                              toast({
-                                                                  variant: 'destructive',
-                                                                  title: 'Cannot Delete Game',
-                                                                  description: `"${gameToDelete}" cannot be deleted as ${userCount} user(s) have it as their primary game.`,
-                                                              });
-                                                          } else {
-                                                              const newList = tempGameList.filter((_, i) => i !== index);
-                                                              setTempGameList(newList);
-                                                          }
-                                                      }}
-                                                  >
-                                                      <Trash2 className="h-4 w-4 text-destructive" />
-                                                  </Button>
-                                              </div>
-                                          ))}
-                                      </div>
-                                    </ScrollArea>
-                                    <DialogFooter>
-                                        <DialogClose asChild>
-                                            <Button variant="outline" type="button">Cancel</Button>
-                                        </DialogClose>
-                                        <Button onClick={handleSaveGameList} type="button">Save Changes</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                           <Dialog open={isAddGameDialogOpen} onOpenChange={setIsAddGameDialogOpen}>
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" size="icon" type="button" disabled={isSubmitting}>
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Add a New Game</DialogTitle>
-                                        <DialogDescription>
-                                            Enter the name of the new game to add it to the list.
-                                        </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="new-game-name">Game Name</Label>
-                                        <Input id="new-game-name" value={newGameName} onChange={(e) => setNewGameName(e.target.value)} />
-                                    </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild>
-                                            <Button variant="outline">Cancel</Button>
-                                        </DialogClose>
-                                        <Button onClick={handleAddNewGame}>Add Game</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </div>
+                        <Label>Game</Label>
+                        <Select value={formData.gameName ?? ''} onValueChange={(v) => setFormData(p => ({...p, gameName: v}))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                {gameList.map(g => <SelectItem key={g} value={g}>{g}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="matchType">Match Type</Label>
-                          <Select value={formData.matchType ?? 'Solo'} onValueChange={(value) => handleSelectChange('matchType', value as 'Solo' | 'Duo' | 'Squad')} disabled={isSubmitting}>
-                              <SelectTrigger id="matchType">
-                                  <SelectValue placeholder="Select match type" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="Solo">Solo</SelectItem>
-                                  <SelectItem value="Duo">Duo</SelectItem>
-                                  <SelectItem value="Squad">Squad</SelectItem>
-                              </SelectContent>
-                          </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="matchTime">Match Time</Label>
+                        <Label>Match Time</Label>
                         <DateTimePicker date={matchTime} setDate={setMatchTime} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="entryFee">Entry Fee (₹)</Label>
-                        <Input id="entryFee" name="entryFee" type="number" value={formData.entryFee ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
+                        <Label>Entry Fee (₹)</Label>
+                        <Input name="entryFee" type="number" value={formData.entryFee ?? 0} onChange={handleChange} required />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="prizePool">Prize Pool (₹)</Label>
-                        <Input id="prizePool" name="prizePool" type="number" value={formData.prizePool ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="slots">Entry Limit</Label>
-                        <Input id="slots" name="slots" type="number" value={formData.slots ?? 100} onChange={handleChange} required min="1" max="10000" disabled={isSubmitting} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="commissionPercentage">Commission (%)</Label>
-                        <Input id="commissionPercentage" name="commissionPercentage" type="number" value={formData.commissionPercentage ?? 0} onChange={handleChange} required min="0" disabled={isSubmitting} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="liveStreamLink">Live Stream URL (Optional)</Label>
-                          <Input id="liveStreamLink" name="liveStreamLink" value={formData.liveStreamLink ?? ''} onChange={handleChange} placeholder="https://youtube.com/live/..." disabled={isSubmitting} />
-                      </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="imageHint">Image Hint</Label>
-                          <Input id="imageHint" name="imageHint" value={formData.imageHint ?? ''} onChange={handleChange} disabled={isSubmitting} />
-                      </div>
-                      <div className="space-y-2 md:col-span-2">
-                          <Label htmlFor="imageFile">Tournament Image</Label>
-                          <Input id="imageFile" type="file" accept="image/*" onChange={handleFileChange} disabled={isSubmitting} />
-                          {formData.imageUrl && !imageFile && <p className="text-xs text-muted-foreground pt-1">Current image is set. Upload a new file to replace it.</p>}
+                        <Label>Prize Pool (₹)</Label>
+                        <Input name="prizePool" type="number" value={formData.prizePool ?? 0} onChange={handleChange} required />
                       </div>
                     </CardContent>
                 </Card>
             </div>
             <div className="lg:col-span-2">
                 <Card>
-                    <CardHeader>
-                        <CardTitle>Prize Distribution</CardTitle>
-                        <CardDescription>Define how the prize pool is distributed.</CardDescription>
-                    </CardHeader>
+                    <CardHeader><CardTitle>Prize Distribution</CardTitle></CardHeader>
                     <CardContent className="space-y-4">
                         {prizeDistributions.map((dist, index) => (
-                            <div key={index} className="flex items-end gap-2">
-                                <div className="grid w-full grid-cols-3 gap-2">
-                                    <div className="space-y-1">
-                                        <Label htmlFor={`rank-${index}`} className="text-xs">Rank(s)</Label>
-                                        <Input 
-                                            id={`rank-${index}`}
-                                            placeholder="e.g., 1 or 4-10" 
-                                            value={dist.rank ?? ''}
-                                            onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor={`percentage-${index}`} className="text-xs">Percentage</Label>
-                                        <Input
-                                            id={`percentage-${index}`}
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            placeholder="e.g., 50"
-                                            value={dist.percentage ?? 0}
-                                            onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-                                    <div className="space-y-1">
-                                        <Label htmlFor={`amount-${index}`} className="text-xs">Amount</Label>
-                                        <Input
-                                            id={`amount-${index}`}
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            placeholder="e.g., 2500"
-                                            value={getPrizeAmount(dist.percentage)} 
-                                            onChange={(e) => handlePrizeChange(index, 'amount', e.target.value)}
-                                            disabled={isSubmitting}
-                                        />
-                                    </div>
-                                </div>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => removePrizeRow(index)}
-                                    type="button"
-                                    disabled={prizeDistributions.length <= 1 || isSubmitting}
-                                >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                </Button>
+                            <div key={index} className="grid grid-cols-[1fr,1fr,auto] gap-2 items-end">
+                                <Input value={dist.rank} onChange={(e) => handlePrizeChange(index, 'rank', e.target.value)} />
+                                <Input type="number" value={dist.percentage} onChange={(e) => handlePrizeChange(index, 'percentage', e.target.value)} />
+                                <Button variant="ghost" size="icon" onClick={() => setPrizeDistributions(p => p.filter((_, i) => i !== index))}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                             </div>
                         ))}
-                        <Button variant="outline" size="sm" onClick={addPrizeRow} type="button" disabled={totalPercentage >= 100 || isSubmitting}>Add Prize Tier</Button>
-                        <p className="text-xs text-muted-foreground pt-2">
-                            Total percentage distributed: {totalPercentage.toFixed(2)}%
-                        </p>
+                        <Button variant="outline" size="sm" onClick={() => setPrizeDistributions(p => [...p, { rank: '', percentage: 0 }])}>Add Tier</Button>
                     </CardContent>
                 </Card>
             </div>
         </div>
         <div className="mt-6 flex justify-end">
             <Button type="submit" size="lg" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isSubmitting ? 'Saving Changes...' : 'Save Changes'}
+                {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Save Changes'}
             </Button>
         </div>
       </form>
