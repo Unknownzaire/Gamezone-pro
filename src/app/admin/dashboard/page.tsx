@@ -1,8 +1,8 @@
+
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { mockTournaments, mockUsers, mockTransactions as initialTransactions } from "@/lib/mock-data";
 import { User, Transaction, Tournament, PromotionalAd, SupportTicket, RedeemCode } from '@/lib/types';
 import { DollarSign, Swords, Users, BarChart3, Banknote, RefreshCw, Settings, History, ArrowDownLeft, ArrowUpRight, Gift, Megaphone, UserPlus, LifeBuoy, Ticket, Pencil, Tags } from "lucide-react";
 import Link from "next/link";
@@ -18,7 +18,22 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 
+// FIREBASE IMPORTS
+import { 
+  collection, 
+  collectionGroup, 
+  query, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  runTransaction, 
+  Timestamp, 
+  orderBy 
+} from 'firebase/firestore';
+import { useFirebase } from '@/firebase';
+
 export default function AdminDashboardPage() {
+  const { firestore } = useFirebase();
   const [totalUsers, setTotalUsers] = useState(0);
   const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
   const [pendingWithdrawals, setPendingWithdrawals] = useState<Transaction[]>([]);
@@ -30,7 +45,6 @@ export default function AdminDashboardPage() {
   const [activeRoyalPassCount, setActiveRoyalPassCount] = useState(0);
   const [activeGiveawaysCount, setActiveGiveawaysCount] = useState(0);
   const [activeRedeemCodesCount, setActiveRedeemCodesCount] = useState(0);
-
 
   const { toast } = useToast();
   
@@ -44,167 +58,172 @@ export default function AdminDashboardPage() {
   const [editAmountValue, setEditAmountValue] = useState('');
   const [isEditAmountDialogOpen, setIsEditAmountDialogOpen] = useState(false);
 
-  const loadData = useCallback(() => {
-    try {
-      const storedUsers = localStorage.getItem('allUsers');
-      const users: User[] = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : mockUsers;
-      setAllUsers(users);
-      setTotalUsers(users.length);
-
-      const storedTransactions = localStorage.getItem('allTransactions');
-      const transactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : initialTransactions;
-      setAllTransactions(transactions);
-
-      setPendingWithdrawals(transactions.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
-      setPendingDeposits(transactions.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
-
-      let tournamentsData: Tournament[] = [];
-      const storedTournaments = localStorage.getItem('allTournaments');
-      tournamentsData = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
-      setAllTournaments(tournamentsData);
-
-      const storedAds = localStorage.getItem('promotionalAds');
-      const ads: PromotionalAd[] = storedAds ? JSON.parse(storedAds) : [];
-      setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
-
-      const storedTickets = localStorage.getItem('supportTickets');
-      const tickets: SupportTicket[] = storedTickets ? JSON.parse(storedTickets) : [];
-      setOpenSupportTicketsCount(tickets.filter(ticket => ticket.status === 'open').length);
-
-      setActiveRoyalPassCount(users.filter(u => u.hasRoyalPass).length);
-
-      const storedGiveaways = localStorage.getItem('luckyDrawSettingsList');
-      if (storedGiveaways) {
-          const giveaways = JSON.parse(storedGiveaways);
-          setActiveGiveawaysCount(giveaways.filter((g: any) => g.isActive).length);
-      }
-
-      const storedRedeemCodes = localStorage.getItem('redeemCodes');
-      if (storedRedeemCodes) {
-          const codes: RedeemCode[] = JSON.parse(storedRedeemCodes);
-          setActiveRedeemCodesCount(codes.filter(c => c.status === 'active').length);
-      }
-
-    } catch (e) {
-      console.error("Failed to load data from localStorage", e);
-    }
-  }, []);
-
   useEffect(() => {
-    loadData();
-    const handleStorageChange = (event: StorageEvent) => {
-      if (['allUsers', 'allTransactions', 'allTournaments', 'promotionalAds', 'supportTickets', 'luckyDrawSettingsList', 'redeemCodes'].includes(event.key || '')) {
-        loadData();
-      }
-    };
-    
-    const interval = setInterval(loadData, 15000);
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', loadData);
+    if (!firestore) return;
+
+    // Users listener
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[];
+      setAllUsers(usersData);
+      setTotalUsers(usersData.length);
+      setActiveRoyalPassCount(usersData.filter(u => u.hasRoyalPass).length);
+    });
+
+    // Tournaments listener
+    const unsubTournaments = onSnapshot(collection(firestore, 'tournaments'), (snapshot) => {
+      const tournamentsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          matchTime: data.matchTime instanceof Timestamp ? data.matchTime.toDate() : (data.matchTime ? new Date(data.matchTime) : new Date())
+        };
+      }) as Tournament[];
+      setAllTournaments(tournamentsData);
+    });
+
+    // Transactions listener (Collection Group)
+    const unsubTransactions = onSnapshot(query(collectionGroup(firestore, 'transactions'), orderBy('createdAt', 'desc')), (snapshot) => {
+      const transactionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        };
+      }) as Transaction[];
+      setAllTransactions(transactionsData);
+      setPendingWithdrawals(transactionsData.filter(tx => tx.status === 'pending' && tx.type === 'debit'));
+      setPendingDeposits(transactionsData.filter(tx => tx.status === 'pending' && tx.type === 'credit'));
+    });
+
+    // Promotional Ads listener
+    const unsubAds = onSnapshot(collection(firestore, 'promotionalAds'), (snapshot) => {
+      const ads = snapshot.docs.map(doc => doc.data()) as PromotionalAd[];
+      setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
+    });
+
+    // Support Tickets listener
+    const unsubTickets = onSnapshot(collection(firestore, 'supportTickets'), (snapshot) => {
+      const tickets = snapshot.docs.map(doc => doc.data()) as SupportTicket[];
+      setOpenSupportTicketsCount(tickets.filter(ticket => ticket.status === 'open').length);
+    });
+
+    // Giveaways listener
+    const unsubGiveaways = onSnapshot(collection(firestore, 'luckyDrawSettingsList'), (snapshot) => {
+      const giveaways = snapshot.docs.map(doc => doc.data()) as any[];
+      setActiveGiveawaysCount(giveaways.filter(g => g.isActive).length);
+    });
+
+    // Redeem Codes listener
+    const unsubCodes = onSnapshot(collection(firestore, 'redeemCodes'), (snapshot) => {
+      const codes = snapshot.docs.map(doc => doc.data()) as RedeemCode[];
+      setActiveRedeemCodesCount(codes.filter(c => c.status === 'active').length);
+    });
 
     return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', loadData);
+      unsubUsers();
+      unsubTournaments();
+      unsubTransactions();
+      unsubAds();
+      unsubTickets();
+      unsubGiveaways();
+      unsubCodes();
     };
-  }, [loadData]);
+  }, [firestore]);
 
-  const completedTournaments = allTournaments.filter((t: Tournament) => t.status === 'Completed');
+  const completedTournaments = useMemo(() => allTournaments.filter((t: Tournament) => t.status === 'Completed'), [allTournaments]);
   const totalTournaments = completedTournaments.length;
-  const totalPrizeDistributed = completedTournaments.reduce((acc, t) => acc + t.prizePool, 0);
+  const totalPrizeDistributed = useMemo(() => completedTournaments.reduce((acc, t) => acc + t.prizePool, 0), [completedTournaments]);
 
-  const totalRevenue = completedTournaments.reduce((acc, t) => {
-    const totalCollected = t.participants.length * t.entryFee;
+  const totalRevenue = useMemo(() => completedTournaments.reduce((acc, t) => {
+    const totalCollected = (t.participants?.length || 0) * t.entryFee;
     const revenueFromTournament = totalCollected * (t.commissionPercentage / 100);
     return acc + revenueFromTournament;
-  }, 0);
+  }, 0), [completedTournaments]);
 
-
-  const totalDeposits = allTransactions
+  const totalDeposits = useMemo(() => allTransactions
     .filter(tx => tx.type === 'credit' && tx.status === 'completed')
-    .reduce((acc, tx) => acc + tx.amount, 0);
+    .reduce((acc, tx) => acc + tx.amount, 0), [allTransactions]);
 
-  const totalWithdrawals = allTransactions
+  const totalWithdrawals = useMemo(() => allTransactions
     .filter(tx => tx.type === 'debit' && tx.status === 'completed' && tx.description.toLowerCase().includes('withdrawal'))
-    .reduce((acc, tx) => acc + tx.amount, 0);
+    .reduce((acc, tx) => acc + tx.amount, 0), [allTransactions]);
     
-  const totalPromotions = allTransactions
+  const totalPromotions = useMemo(() => allTransactions
     .filter(tx => tx.type === 'credit' && tx.status === 'completed' && (tx.description.toLowerCase().includes('promotion') || tx.description.toLowerCase().includes('bonus')))
-    .reduce((acc, tx) => acc + tx.amount, 0);
+    .reduce((acc, tx) => acc + tx.amount, 0), [allTransactions]);
 
-  const totalReferredUsers = allUsers.filter(u => u.referredBy).length;
+  const totalReferredUsers = useMemo(() => allUsers.filter(u => u.referredBy).length, [allUsers]);
 
-  const stats = [
+  const stats = useMemo(() => [
     { title: "Total Revenue", value: `₹${totalRevenue.toLocaleString()}`, icon: DollarSign, href: '/admin/revenue-report' },
-    { title: "Total Users", value: totalUsers, icon: Users, href: '/admin/users' },
+    { title: "All Users", value: totalUsers, icon: Users, href: '/admin/users' },
     { title: "Active Giveaways", value: activeGiveawaysCount, icon: Gift, href: '/admin/royal-pass'},
     { title: "Redeem Codes", value: activeRedeemCodesCount, icon: Tags, href: '/admin/redeem-codes' },
     { title: "Prize Distributed", value: `₹${totalPrizeDistributed.toLocaleString()}`, icon: BarChart3, href: '/admin/reports' },
     { title: "Total Tournaments", value: totalTournaments, icon: Swords, href: '/admin/tournaments' },
-  ];
+  ], [totalRevenue, totalUsers, activeGiveawaysCount, activeRedeemCodesCount, totalPrizeDistributed, totalTournaments]);
   
-  const handleRequest = (transactionId: string, newStatus: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
-    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
-    let localAllUsers: User[] = JSON.parse(localStorage.getItem('allUsers') || '[]').map((u: any) => ({ ...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() }));
-    
-    const transactionIndex = currentAllTransactions.findIndex(tx => tx.id === transactionId);
-    if (transactionIndex === -1) {
-        toast({ variant: 'destructive', title: "Error", description: "Transaction not found." });
-        return;
-    }
-    
-    const originalTransaction = currentAllTransactions[transactionIndex];
-    if (originalTransaction.status !== 'pending') {
-        toast({ variant: 'destructive', title: "Error", description: "This transaction is not pending." });
-        loadData();
-        return;
+  const handleRequest = async (transactionId: string, newStatus: 'completed' | 'declined', type: 'credit' | 'debit', reason?: string) => {
+    if (!firestore) return;
+
+    const tx = allTransactions.find(t => t.id === transactionId);
+    if (!tx || !tx.userId) {
+      toast({ variant: 'destructive', title: "Error", description: "Transaction details not found." });
+      return;
     }
 
-    const transaction = { ...originalTransaction, status: newStatus, declineReason: reason };
-    
-    const userIndex = localAllUsers.findIndex(u => u.id === transaction.userId);
+    const userId = tx.userId;
+    const userRef = doc(firestore, 'users', userId);
+    const txRef = doc(firestore, 'users', userId, 'transactions', transactionId);
 
-    if (userIndex !== -1) {
+    try {
+      await runTransaction(firestore, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        const txSnap = await transaction.get(txRef);
+
+        if (!userSnap.exists() || !txSnap.exists()) throw new Error("Missing document.");
+
+        const userData = userSnap.data() as User;
+        const txData = txSnap.data() as Transaction;
+
+        if (txData.status !== 'pending') throw new Error("Transaction is not pending.");
+
+        transaction.update(txRef, { status: newStatus, declineReason: reason || null });
+
         if (type === 'credit' && newStatus === 'completed') {
-            localAllUsers[userIndex].walletBalance += transaction.amount;
+          transaction.update(userRef, { walletBalance: (userData.walletBalance || 0) + txData.amount });
         }
+        
         if (type === 'debit' && newStatus === 'declined') {
-            localAllUsers[userIndex].walletBalance += transaction.amount;
-            
-            const refundTx: Transaction = {
-                id: `tx-refund-${Date.now()}-${Math.random()}`,
-                userId: transaction.userId,
-                amount: transaction.amount,
-                type: 'credit',
-                description: `Refund for declined withdrawal: ${transaction.description}`,
-                createdAt: new Date(),
-                status: 'completed',
-            };
-            currentAllTransactions.push(refundTx);
+          transaction.update(userRef, { walletBalance: (userData.walletBalance || 0) + txData.amount });
+          
+          const refundRef = doc(collection(firestore, 'users', userId, 'transactions'));
+          transaction.set(refundRef, {
+            userId,
+            amount: txData.amount,
+            type: 'credit',
+            description: `Refund for declined withdrawal: ${txData.description}`,
+            createdAt: Timestamp.now(),
+            status: 'completed'
+          });
         }
-    }
+      });
 
-    currentAllTransactions[transactionIndex] = transaction;
-
-    localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
-    localStorage.setItem('allUsers', JSON.stringify(localAllUsers));
-
-    loadData();
-
-    toast({
+      toast({
         title: `Request ${newStatus === 'completed' ? 'Approved' : 'Declined'}`,
-        description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${transaction.amount} has been ${newStatus}.`,
-    });
-
-    if (type === 'debit' && pendingWithdrawals.length <= 1) setIsWithdrawalModalOpen(false);
-    if (type === 'credit' && pendingDeposits.length <= 1) setIsDepositModalOpen(false);
-};
+        description: `The ${type === 'credit' ? 'deposit' : 'withdrawal'} request for ₹${tx.amount} has been ${newStatus}.`,
+      });
+    } catch (e: any) {
+      console.error(e);
+      toast({ variant: 'destructive', title: "Error", description: e.message || "Operation failed." });
+    }
+  };
   
-  const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
+  const getUserById = useCallback((userId: string) => allUsers.find(u => u.id === userId), [allUsers]);
 
-  const openDeclineDialog = (tx: Transaction) => {
-    setTransactionToDecline(tx);
-  }
+  const openDeclineDialog = (tx: Transaction) => setTransactionToDecline(tx);
 
   const confirmDecline = () => {
     if (!transactionToDecline) return;
@@ -213,31 +232,30 @@ export default function AdminDashboardPage() {
     setDeclineReason('');
   }
 
-  const handleSaveAmount = () => {
-    if (!transactionToEditAmount || !editAmountValue) return;
+  const handleSaveAmount = async () => {
+    if (!transactionToEditAmount || !editAmountValue || !firestore) return;
     const amount = parseFloat(editAmountValue);
     if (isNaN(amount) || amount <= 0) {
-      toast({ variant: 'destructive', title: "Invalid Amount", description: "Please enter a valid amount." });
+      toast({ variant: 'destructive', title: "Invalid Amount" });
       return;
     }
 
-    let currentAllTransactions: Transaction[] = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({ ...t, createdAt: new Date(t.createdAt) }));
-    const index = currentAllTransactions.findIndex(t => t.id === transactionToEditAmount.id);
-    if (index !== -1) {
-      currentAllTransactions[index].amount = amount;
-      localStorage.setItem('allTransactions', JSON.stringify(currentAllTransactions));
-      loadData();
-      toast({ title: "Amount Updated", description: "Deposit amount has been adjusted." });
+    try {
+      const txRef = doc(firestore, 'users', transactionToEditAmount.userId, 'transactions', transactionToEditAmount.id);
+      await updateDoc(txRef, { amount });
+      toast({ title: "Amount Updated" });
       setIsEditAmountDialogOpen(false);
       setTransactionToEditAmount(null);
       setEditAmountValue('');
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: "Error" });
     }
   };
   
   const handleRefreshClick = (e: React.MouseEvent, type: 'withdrawals' | 'deposits') => {
     e.stopPropagation();
-    loadData();
-    toast({ title: "Dashboard Updated", description: `Pending ${type} have been refreshed.` });
+    toast({ title: "Synced", description: `Pending ${type} are up to date.` });
   };
   
   return (
@@ -264,7 +282,6 @@ export default function AdminDashboardPage() {
               </CardContent>
             </Card>
           );
-          
           return stat.href ? <Link href={stat.href} key={index}>{cardContent}</Link> : <div key={index}>{cardContent}</div>;
         })}
       </div>
@@ -447,7 +464,7 @@ export default function AdminDashboardPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No pending deposits.</p>
+                <p className="text-center text-muted-foreground py-8">show user payment request</p>
               )}
             </ScrollArea>
           </DialogContent>
@@ -557,57 +574,38 @@ export default function AdminDashboardPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No pending withdrawals.</p>
+                <p className="text-center text-muted-foreground py-8">show user payment request</p>
               )}
             </ScrollArea>
           </DialogContent>
         </Dialog>
       </div>
-
        <AlertDialog open={!!transactionToDecline} onOpenChange={(open) => {if(!open) {setTransactionToDecline(null); setDeclineReason('');}}}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Reason for Decline</AlertDialogTitle>
-            <AlertDialogDescription>
-              Please provide a reason for declining this transaction. This will be visible to the user.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Please provide a reason for declining this transaction.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-2">
             <Label htmlFor="decline-reason" className="sr-only">Decline Reason</Label>
-            <Textarea 
-              id="decline-reason" 
-              placeholder="e.g., Invalid UPI reference number, screenshot unclear, etc." 
-              value={declineReason}
-              onChange={(e) => setDeclineReason(e.target.value)}
-            />
+            <Textarea id="decline-reason" placeholder="Reason..." value={declineReason} onChange={(e) => setDeclineReason(e.target.value)} />
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => {setTransactionToDecline(null); setDeclineReason('');}}>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDecline} disabled={!declineReason}>
-              Confirm Decline
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDecline} disabled={!declineReason}>Confirm Decline</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
       <Dialog open={isEditAmountDialogOpen} onOpenChange={setIsEditAmountDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Edit Deposit Amount</DialogTitle>
-            <DialogDescription>
-              Adjust the amount for this pending deposit request.
-            </DialogDescription>
+            <DialogDescription>Adjust the amount for this pending request.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="edit-amount">New Amount (₹)</Label>
-              <Input 
-                id="edit-amount" 
-                type="number" 
-                value={editAmountValue} 
-                onChange={(e) => setEditAmountValue(e.target.value)} 
-                placeholder="Enter correct amount"
-              />
+              <Input id="edit-amount" type="number" value={editAmountValue} onChange={(e) => setEditAmountValue(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
@@ -616,7 +614,6 @@ export default function AdminDashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 }
