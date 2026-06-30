@@ -5,7 +5,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { mockTransactions, mockUsers } from "@/lib/mock-data";
 import { Transaction, User } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -39,7 +38,12 @@ import { Separator } from '@/components/ui/separator';
 import { Input } from '@/components/ui/input';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, collectionGroup, onSnapshot, doc, deleteDoc, query, orderBy, Timestamp } from 'firebase/firestore';
+
 export default function AdminTransactionsPage() {
+  const { firestore } = useFirebase();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const searchParams = useSearchParams();
@@ -48,58 +52,98 @@ export default function AdminTransactionsPage() {
   const [transactionToDelete, setTransactionToDelete] = useState<Transaction | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const loadData = useCallback(() => {
-    const storedUsers = localStorage.getItem('allUsers');
-    setUsers(storedUsers ? JSON.parse(storedUsers) : mockUsers);
-
-    const storedTransactions = localStorage.getItem('allTransactions');
-    const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt)})) : mockTransactions;
-    setTransactions(allTransactions.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-  }, []);
-
   useEffect(() => {
-    loadData();
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'allUsers' || event.key === 'allTransactions') {
-        loadData();
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', loadData);
-    
+    if (!firestore) return;
+
+    // Listen to all users
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as User[];
+      setUsers(usersData);
+    });
+
+    // Listen to all transactions across all users using collectionGroup
+    // Also listen to a top-level "deposits" collection as requested by the user
+    // We will merge them into a single transactions list for the UI
+    const q = query(collectionGroup(firestore, 'transactions'), orderBy('createdAt', 'desc'));
+    const unsubTransactions = onSnapshot(q, (snapshot) => {
+      const transactionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        };
+      }) as Transaction[];
+      
+      // Also listen to the specific "deposits" collection if it exists
+      // For simplicity in this real-time view, we combine them
+      setTransactions(transactionsData);
+    });
+
+    // Specific "deposits" collection listener as requested
+    const unsubDeposits = onSnapshot(collection(firestore, 'deposits'), (snapshot) => {
+        const depositsData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+            };
+        }) as Transaction[];
+        
+        // Merge with existing transactions if not already present
+        setTransactions(prev => {
+            const combined = [...prev];
+            depositsData.forEach(dep => {
+                if (!combined.some(tx => tx.id === dep.id)) {
+                    combined.push(dep);
+                }
+            });
+            return combined.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+        });
+    });
+
     return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('focus', loadData);
+      unsubUsers();
+      unsubTransactions();
+      unsubDeposits();
     };
-  }, [loadData]);
+  }, [firestore]);
   
   const getUserForTx = (userId: string) => users.find(u => u.id === userId);
   
   const handleRefresh = () => {
-    loadData();
-    toast({ title: 'Transactions Reloaded', description: 'The transaction list has been updated.' });
+    toast({ title: 'Transactions Synced', description: 'Data is being updated in real-time from Firestore.' });
   }
 
-  const handleDeleteTransaction = () => {
-    if (!transactionToDelete) return;
+  const handleDeleteTransaction = async () => {
+    if (!transactionToDelete || !firestore) return;
     
-    // Read directly from storage to ensure we have the full global list
-    const stored = localStorage.getItem('allTransactions');
-    let allTransactions: Transaction[] = stored ? JSON.parse(stored) : [];
+    try {
+      // If it's a subcollection transaction, we need the userId to construct the path
+      if (transactionToDelete.userId) {
+          await deleteDoc(doc(firestore, 'users', transactionToDelete.userId, 'transactions', transactionToDelete.id));
+      }
+      
+      // Also attempt to delete from top-level deposits collection just in case it's there
+      await deleteDoc(doc(firestore, 'deposits', transactionToDelete.id));
+
+      toast({
+        title: "Transaction Deleted",
+        description: `The transaction has been removed from Firestore.`,
+      });
+    } catch (e) {
+        console.error(e);
+        toast({
+            variant: 'destructive',
+            title: "Error",
+            description: "Failed to delete the transaction.",
+        });
+    }
     
-    // Remove the specific transaction from global storage
-    const updatedTransactions = allTransactions.filter(tx => tx.id !== transactionToDelete.id);
-    
-    // Save back to global storage so it's removed from user panels too
-    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
-    
-    // Update local state for immediate feedback
-    setTransactions(updatedTransactions.map(t => ({...t, createdAt: new Date(t.createdAt)})).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
-    
-    toast({
-      title: "Transaction Deleted",
-      description: `The transaction has been removed from both admin and user history panels.`,
-    });
     setTransactionToDelete(null);
   };
   
@@ -405,7 +449,7 @@ export default function AdminTransactionsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the transaction record from both the admin and the user panels.
+              This action cannot be undone. This will permanently delete the transaction record from Firestore.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
