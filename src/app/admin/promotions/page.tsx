@@ -1,23 +1,32 @@
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
 import { User, Transaction } from '@/lib/types';
-import { mockUsers, mockTransactions } from '@/lib/mock-data';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
-import { ArrowLeft, ChevronsUpDown } from 'lucide-react';
+import { ArrowLeft, ChevronsUpDown, Loader2 } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-const generateUniqueId = (prefix: string, userId: string) => `${prefix}-${userId}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  runTransaction, 
+  Timestamp, 
+  query, 
+  orderBy 
+} from 'firebase/firestore';
 
 export default function AdminPromotionsPage() {
+  const { firestore } = useFirebase();
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUserId, setSelectedUserId] = useState<string>('');
   const [amount, setAmount] = useState('');
@@ -25,23 +34,25 @@ export default function AdminPromotionsPage() {
   const { toast } = useToast();
   const [isUserSelectorOpen, setIsUserSelectorOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-
-
-  const loadUsers = useCallback(() => {
-    const storedUsers = localStorage.getItem('allUsers');
-    setUsers(storedUsers ? JSON.parse(storedUsers) : mockUsers);
-  }, []);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    loadUsers();
-    window.addEventListener('storage', loadUsers);
-    return () => {
-      window.removeEventListener('storage', loadUsers);
-    };
-  }, [loadUsers]);
+    if (!firestore) return;
 
-  const handleGrantBonus = () => {
-    if (!selectedUserId || !amount || !description) {
+    // Listen for users in Firestore to populate the selector
+    const unsubUsers = onSnapshot(query(collection(firestore, 'users'), orderBy('username', 'asc')), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as User[];
+      setUsers(usersData);
+    });
+
+    return () => unsubUsers();
+  }, [firestore]);
+
+  const handleGrantBonus = async () => {
+    if (!selectedUserId || !amount || !description || !firestore) {
       toast({
         variant: 'destructive',
         title: 'Missing Information',
@@ -60,36 +71,60 @@ export default function AdminPromotionsPage() {
       return;
     }
 
-    const storedTransactions = localStorage.getItem('allTransactions');
-    const allTransactions: Transaction[] = storedTransactions ? JSON.parse(storedTransactions) : mockTransactions;
+    setIsSubmitting(true);
 
-    const newTransaction: Transaction = {
-      id: generateUniqueId('tx-promo', selectedUserId),
-      userId: selectedUserId,
-      amount: bonusAmount,
-      type: 'credit',
-      description: `Promotion: ${description}`,
-      createdAt: new Date(),
-      status: 'completed',
-    };
-    
-    const updatedTransactions = [newTransaction, ...allTransactions];
-    localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
-    
-    const updatedUsers = users.map(u => 
-      u.id === selectedUserId ? { ...u, walletBalance: u.walletBalance + bonusAmount } : u
-    );
-    localStorage.setItem('allUsers', JSON.stringify(updatedUsers));
-    setUsers(updatedUsers);
+    try {
+      const userRef = doc(firestore, 'users', selectedUserId);
+      const userTxRef = doc(collection(firestore, 'users', selectedUserId, 'transactions'));
+      const promoRef = doc(collection(firestore, 'promotions'));
 
-    toast({
-      title: 'Bonus Granted!',
-      description: `₹${bonusAmount.toLocaleString()} credited to ${users.find(u => u.id === selectedUserId)?.username}.`,
-    });
-    
-    setSelectedUserId('');
-    setAmount('');
-    setDescription('');
+      await runTransaction(firestore, async (transaction) => {
+        const userSnap = await transaction.get(userRef);
+        if (!userSnap.exists()) throw new Error("User does not exist!");
+
+        const currentBalance = userSnap.data().walletBalance || 0;
+        
+        // 1. Update user wallet balance
+        transaction.update(userRef, { walletBalance: currentBalance + bonusAmount });
+
+        const timestamp = Timestamp.now();
+        const promoData = {
+          userId: selectedUserId,
+          amount: bonusAmount,
+          type: 'credit',
+          description: `Promotion: ${description}`,
+          createdAt: timestamp,
+          status: 'completed',
+        };
+
+        // 2. Add to user's private transaction history
+        transaction.set(userTxRef, promoData);
+
+        // 3. Add to global promotions record
+        transaction.set(promoRef, {
+          ...promoData,
+          id: promoRef.id,
+        });
+      });
+
+      toast({
+        title: 'Bonus Granted!',
+        description: `₹${bonusAmount.toLocaleString()} credited to ${users.find(u => u.id === selectedUserId)?.username}.`,
+      });
+      
+      setSelectedUserId('');
+      setAmount('');
+      setDescription('');
+    } catch (e: any) {
+      console.error(e);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: e.message || 'Failed to grant bonus. Please try again.',
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   const handleUserSelect = (userId: string) => {
@@ -121,7 +156,7 @@ export default function AdminPromotionsPage() {
         <CardHeader>
           <CardTitle>Grant a Bonus</CardTitle>
           <CardDescription>
-            Select a user and specify the bonus amount and reason. The amount will be instantly credited to their wallet.
+            Select a user and specify the bonus amount and reason. The amount will be instantly credited to their wallet in Cloud Firestore.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -137,6 +172,7 @@ export default function AdminPromotionsPage() {
                 <Button
                   variant="outline"
                   className="w-full justify-between"
+                  disabled={isSubmitting}
                 >
                   {selectedUserId
                     ? users.find((user) => user.id === selectedUserId)?.username
@@ -165,6 +201,9 @@ export default function AdminPromotionsPage() {
                                     <Button size="sm" onClick={() => handleUserSelect(user.id)}>Select</Button>
                                 </div>
                             ))}
+                            {filteredUsers.length === 0 && (
+                              <p className="text-center text-muted-foreground py-8">No users found.</p>
+                            )}
                         </div>
                     </ScrollArea>
                 </div>
@@ -179,6 +218,7 @@ export default function AdminPromotionsPage() {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="e.g., 100"
+              disabled={isSubmitting}
             />
           </div>
           <div className="space-y-2">
@@ -188,10 +228,18 @@ export default function AdminPromotionsPage() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="e.g., Welcome bonus, Special event reward, etc."
+              disabled={isSubmitting}
             />
           </div>
-          <Button onClick={handleGrantBonus} className="w-full">
-            Grant Bonus
+          <Button onClick={handleGrantBonus} className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              'Grant Bonus'
+            )}
           </Button>
         </CardContent>
       </Card>
