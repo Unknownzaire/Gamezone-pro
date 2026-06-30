@@ -54,6 +54,7 @@ export default function LoginPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [gameList, setGameList] = useState<string[]>([]);
+  const [isSigningUp, setIsSigningUp] = useState(false);
   
   const usernameRef = useRef<HTMLInputElement>(null);
   const inGameUsernameRef = useRef<HTMLInputElement>(null);
@@ -150,7 +151,7 @@ export default function LoginPage() {
     }
     try {
       await signInWithEmailAndPassword(auth, loginForm.email, loginForm.password);
-      const loggedIn = login(loginForm.email, loginForm.password);
+      const loggedIn = await login(loginForm.email);
       if (loggedIn === true) {
         // Successful login is handled by useEffect
       } else if (loggedIn === 'blocked') {
@@ -205,10 +206,11 @@ export default function LoginPage() {
         return;
     }
     
+    setIsSigningUp(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
-      const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string} = {
+      const newUserDetails = {
           username: signupForm.username,
           email: signupForm.email,
           mobile: signupForm.mobile,
@@ -217,23 +219,22 @@ export default function LoginPage() {
           inGameId: signupForm.inGameId,
           referralCode: signupForm.referralCode,
           googleId: userCredential.user.uid,
-          otp: '',
       };
       
-      const result = signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
+      const result = await signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
 
       if (result === 'success') {
+        toast({
+          title: 'Account Created',
+          description: 'Your account has been successfully created. You can now log in.',
+        });
         setActiveTab('login');
         setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
-        setSignupForm({
-            username: '',
-            primaryGame: gameList.length > 0 ? gameList[0] : '',
-            inGameUsername: '',
-            inGameId: '',
-            mobile: '',
-            email: '',
-            password: '',
-            referralCode: '',
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Signup Error',
+          description: 'Could not create your profile in the database. Please try again.',
         });
       }
     } catch (error: any) {
@@ -250,6 +251,8 @@ export default function LoginPage() {
         title: 'Sign Up Failed',
         description: description,
       });
+    } finally {
+      setIsSigningUp(false);
     }
   };
 
@@ -266,7 +269,7 @@ export default function LoginPage() {
       const existingUser = allUsers.find(u => u.email === googleUser.email);
 
       if (existingUser) {
-        if (login(existingUser.email, existingUser.password!)) {
+        if (await login(existingUser.email)) {
           // Successful login handled by useEffect
         } else {
            toast({
@@ -278,29 +281,25 @@ export default function LoginPage() {
       } else {
         // New user: auto-signup and login
         const randomPassword = Math.random().toString(36).slice(-8);
-        const newUserDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string} = {
+        const newUserDetails = {
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
             email: googleUser.email!,
             googleId: googleUser.uid,
-            otp: '',
         };
 
-        const signupResult = signup(newUserDetails, randomPassword, true, false);
+        const signupResult = await signup(newUserDetails, randomPassword, true, false);
 
         if (signupResult === 'success') {
-          const loginResult = login(googleUser.email!, randomPassword);
-          if (loginResult === true) {
-             toast({
-              title: 'Welcome!',
-              description: 'Your account has been created.',
-            });
-            // Successful login handled by useEffect
-          }
+          await login(googleUser.email!);
+          toast({
+            title: 'Welcome!',
+            description: 'Your account has been created.',
+          });
         } else {
             toast({
                 variant: 'destructive',
                 title: 'Sign Up Failed',
-                description: 'Could not create your account. Please try again.',
+                description: 'Could not create your account profile. Please try again.',
             });
         }
       }
@@ -453,7 +452,10 @@ export default function LoginPage() {
                         <Label htmlFor="signup-referralCode">Referral Code (Optional)</Label>
                         <Input id="signup-referralCode" name="referralCode" placeholder="Enter referral code" onChange={handleSignupChange} value={signupForm.referralCode} ref={referralCodeRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
-                    <Button type="submit" className="w-full" ref={signupButtonRef}>Sign Up</Button>
+                    <Button type="submit" className="w-full" ref={signupButtonRef} disabled={isSigningUp}>
+                      {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                      {isSigningUp ? 'Creating Account...' : 'Sign Up'}
+                    </Button>
                     <div className="relative">
                       <div className="absolute inset-0 flex items-center">
                           <span className="w-full border-t" />
@@ -464,7 +466,7 @@ export default function LoginPage() {
                           </span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn}>
+                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isSigningUp}>
                         <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
                         Sign up with Google
                     </Button>

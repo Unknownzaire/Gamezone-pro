@@ -122,23 +122,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signup = async (userDetails: any, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string): Promise<"success" | "error"> => {
-    if (!allUsersData || !firestore) return 'error';
+    if (!firestore) return 'error';
     
-    if (allUsersData.some(u => u.email.toLowerCase() === userDetails.email?.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Email Taken' });
-        return 'error';
-    }
-
     let newUserBonus = 0;
     let referredBy: string | null = null;
     if (referralCode && referralSettings) {
-        const referrer = allUsersData.find(u => u.referralCode === referralCode);
+        // Try to find referrer in local data if available
+        const referrer = allUsersData?.find(u => u.referralCode === referralCode);
         if (referrer) {
             referredBy = referrer.id;
             newUserBonus = referralSettings.newUserBonus;
-        } else {
-           toast({ variant: 'destructive', title: 'Invalid Referral Code' });
-           return 'error';
         }
     }
 
@@ -150,7 +143,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         username: userDetails.username,
         email: userDetails.email,
         mobile: userDetails.mobile || null,
-        primaryGame: userDetails.primaryGame,
+        primaryGame: userDetails.primaryGame || 'BGMI',
         referralCode: referralCodeGenerated,
         googleId: userDetails.googleId || null,
         password: password || null,
@@ -159,7 +152,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
-        referredBy: referredBy,
+        referredBy: referredBy || null, // Ensure this is never undefined
         emailVerified,
         mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
@@ -184,7 +177,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         }
         return 'success';
     } catch (e) {
-        console.error(e);
+        console.error("Signup Firestore error:", e);
         return 'error';
     }
   };
