@@ -20,6 +20,7 @@ import {
   Timestamp, 
   runTransaction,
   arrayUnion,
+  getDocs,
   getDoc
 } from 'firebase/firestore';
 
@@ -177,7 +178,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 type: 'credit',
                 description: `Sign-up bonus (referred)`,
                 createdAt: Timestamp.now(),
-                status: 'completed'
+                status: 'completed',
+                userId: newUserId
             });
         }
         return 'success';
@@ -254,11 +256,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
                 result: null,
                 joinedAt: new Date(),
             } as Participant);
-
-            // Handle referral bonus for first tournament
-            const txQuery = query(collection(firestore, 'users', utj.id, 'transactions'), where('description', '>=', 'Joined "'), where('description', '<=', 'Joined "' + '\uf8ff'));
-            // Since we are in a transaction, we can't easily check for previous tournament entries via query.
-            // Simplified logic: usersToJoin are usually the ones initiating.
         }
 
         transaction.update(tRef, { 
@@ -291,17 +288,51 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!userData || !firestore) return 'error';
 
     try {
-        const result = await runTransaction(firestore, async (transaction) => {
-            const q = query(collection(firestore, 'redeem_codes'), where('code', '==', code.toUpperCase()));
-            // collection queries aren't allowed in transactions directly, we need a doc ref
-            // but we don't know the ID. We'll use getDocs first (outside or inside via a workaround)
-            // Simplified for prototype:
-            return 'success';
+        const codesRef = collection(firestore, 'redeem_codes');
+        const q = query(codesRef, where('code', '==', code.toUpperCase()));
+        const querySnap = await getDocs(q);
+        
+        if (querySnap.empty) return 'invalid';
+        
+        const codeDoc = querySnap.docs[0];
+        const codeData = codeDoc.data() as RedeemCode;
+        
+        if (codeData.usedCount >= codeData.usageLimit) return 'invalid';
+        if (codeData.usedBy?.includes(userData.id)) return 'already_used';
+
+        await runTransaction(firestore, async (transaction) => {
+            const uRef = doc(firestore, 'users', userData.id);
+            const cRef = doc(firestore, 'redeem_codes', codeDoc.id);
+            
+            const userSnap = await transaction.get(uRef);
+            if (!userSnap.exists()) throw new Error("User missing");
+            
+            const codeSnap = await transaction.get(cRef);
+            if (!codeSnap.exists()) throw new Error("Code missing");
+            
+            const finalUserData = userSnap.data() as User;
+            const finalCodeData = codeSnap.data() as RedeemCode;
+            
+            transaction.update(uRef, { walletBalance: finalUserData.walletBalance + finalCodeData.amount });
+            transaction.update(cRef, {
+                usedCount: finalCodeData.usedCount + 1,
+                usedBy: arrayUnion(userData.id)
+            });
+            
+            const txRef = doc(collection(firestore, 'users', userData.id, 'transactions'));
+            transaction.set(txRef, {
+                amount: finalCodeData.amount,
+                type: 'credit',
+                description: `Voucher Redeem: ${code.toUpperCase()}`,
+                createdAt: Timestamp.now(),
+                status: 'completed',
+                userId: userData.id
+            });
         });
-        // We'll use the existing page logic for redeemCode as it's complex for a generic hook.
-        // I will implement the logic inside the wallet page directly or keep it here if I can.
-        return 'success'; 
+        
+        return 'success';
     } catch (e) {
+        console.error(e);
         return 'error';
     }
   };
@@ -385,9 +416,9 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
 
   const value = {
     user: userData || null,
-    setUser: () => {}, // Handled by useDoc
+    setUser: () => {}, 
     transactions: userTransactions || [],
-    allTransactions: [], // Avoid fetching all transactions in User Panel
+    allTransactions: [], 
     tournaments: tournamentsData || [],
     setTournaments: () => {},
     promotionalAds: adsData || [],
@@ -407,7 +438,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     login,
     signup,
     logout,
-    reload: () => {}, // Listeners are automatic
+    reload: () => {}, 
     toast,
     hasUserJoinedTournament,
     moveReferralBonusToWallet,

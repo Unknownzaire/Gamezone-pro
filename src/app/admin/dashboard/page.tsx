@@ -28,7 +28,8 @@ import {
   updateDoc, 
   runTransaction, 
   Timestamp, 
-  orderBy 
+  orderBy,
+  where
 } from 'firebase/firestore';
 import { useFirebase } from '@/firebase';
 
@@ -42,7 +43,6 @@ export default function AdminDashboardPage() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [activeAdsCount, setActiveAdsCount] = useState(0);
   const [openSupportTicketsCount, setOpenSupportTicketsCount] = useState(0);
-  const [activeRoyalPassCount, setActiveRoyalPassCount] = useState(0);
   const [activeGiveawaysCount, setActiveGiveawaysCount] = useState(0);
   const [activeRedeemCodesCount, setActiveRedeemCodesCount] = useState(0);
 
@@ -66,7 +66,6 @@ export default function AdminDashboardPage() {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as User[];
       setAllUsers(usersData);
       setTotalUsers(usersData.length);
-      setActiveRoyalPassCount(usersData.filter(u => u.hasRoyalPass).length);
     });
 
     // Tournaments listener
@@ -98,27 +97,27 @@ export default function AdminDashboardPage() {
     });
 
     // Promotional Ads listener
-    const unsubAds = onSnapshot(collection(firestore, 'promotionalAds'), (snapshot) => {
+    const unsubAds = onSnapshot(collection(firestore, 'promotional_ads'), (snapshot) => {
       const ads = snapshot.docs.map(doc => doc.data()) as PromotionalAd[];
       setActiveAdsCount(ads.filter(ad => ad.status === 'active').length);
     });
 
     // Support Tickets listener
-    const unsubTickets = onSnapshot(collection(firestore, 'supportTickets'), (snapshot) => {
+    const unsubTickets = onSnapshot(collection(firestore, 'support'), (snapshot) => {
       const tickets = snapshot.docs.map(doc => doc.data()) as SupportTicket[];
       setOpenSupportTicketsCount(tickets.filter(ticket => ticket.status === 'open').length);
     });
 
     // Giveaways listener
-    const unsubGiveaways = onSnapshot(collection(firestore, 'luckyDrawSettingsList'), (snapshot) => {
-      const giveaways = snapshot.docs.map(doc => doc.data()) as any[];
-      setActiveGiveawaysCount(giveaways.filter(g => g.isActive).length);
+    const unsubGiveaways = onSnapshot(query(collection(firestore, 'royal_pass'), where('docType', '==', 'giveaway')), (snapshot) => {
+      const giveaways = snapshot.docs.map(doc => doc.data());
+      setActiveGiveawaysCount(giveaways.filter((g: any) => g.isActive).length);
     });
 
     // Redeem Codes listener
-    const unsubCodes = onSnapshot(collection(firestore, 'redeemCodes'), (snapshot) => {
+    const unsubCodes = onSnapshot(collection(firestore, 'redeem_codes'), (snapshot) => {
       const codes = snapshot.docs.map(doc => doc.data()) as RedeemCode[];
-      setActiveRedeemCodesCount(codes.filter(c => c.status === 'active').length);
+      setActiveRedeemCodesCount(codes.filter(c => c.usedCount < c.usageLimit).length);
     });
 
     return () => {
@@ -464,7 +463,7 @@ export default function AdminDashboardPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-muted-foreground py-8">show user payment request</p>
+                <p className="text-center text-muted-foreground py-8">No pending deposit requests.</p>
               )}
             </ScrollArea>
           </DialogContent>
@@ -574,7 +573,7 @@ export default function AdminDashboardPage() {
                   </TableBody>
                 </Table>
               ) : (
-                <p className="text-center text-muted-foreground py-8">show user payment request</p>
+                <p className="text-center text-muted-foreground py-8">No pending withdrawal requests.</p>
               )}
             </ScrollArea>
           </DialogContent>

@@ -2,7 +2,6 @@
 'use client';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockTournaments, mockUsers } from "@/lib/mock-data";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useSearchParams } from "next/navigation";
 import {
@@ -15,8 +14,8 @@ import {
 import { useRouter } from "next/navigation";
 import { Trophy } from "lucide-react";
 import { Participant, Tournament, User } from "@/lib/types";
-import { useEffect, useState, useCallback } from "react";
-
+import { useUser } from "@/hooks/use-user.tsx";
+import { useMemo } from "react";
 
 const getRank = (participant: Participant) => {
     if (participant.result === 'Winner') return 1;
@@ -29,55 +28,31 @@ const getRank = (participant: Participant) => {
 export default function LeaderboardPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { tournaments: allTournaments, allUsers } = useUser();
   const tournamentId = searchParams.get('tournamentId');
-  const [allTournaments, setAllTournaments] = useState<Tournament[]>([]);
-  const [allUsers, setAllUsers] = useState<User[]>([]);
-
-  const loadData = useCallback(() => {
-    try {
-      const storedTournaments = localStorage.getItem('allTournaments');
-      const tournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime)})) : mockTournaments;
-      setAllTournaments(tournaments);
-
-      const storedUsers = localStorage.getItem('allUsers');
-      const users = storedUsers ? JSON.parse(storedUsers) : mockUsers;
-      setAllUsers(users);
-    } catch (error) {
-      console.error("Failed to parse data from localStorage", error);
-      setAllTournaments(mockTournaments);
-      setAllUsers(mockUsers);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-    window.addEventListener('storage', loadData);
-    return () => {
-      window.removeEventListener('storage', loadData);
-    };
-  }, [loadData]);
 
   const handleTournamentChange = (value: string) => {
     router.push(`/leaderboard?tournamentId=${value}`);
   };
   
-  const usersWithPoints = allUsers.map(user => {
-      const points = allTournaments.reduce((acc, t) => {
-          const p = t.participants.find(part => part.user.id === user.id);
-          if (p) {
-              if(p.result === 'Winner') return acc + 10;
-              if(p.result === 'Participated' || (p.result?.startsWith('Rank #'))) return acc + 1;
-          }
-          return acc;
-      }, 0);
-      return { ...user, points };
-  }).sort((a,b) => b.points - a.points);
+  const usersWithPoints = useMemo(() => {
+    return allUsers.map(user => {
+        const points = allTournaments.reduce((acc, t) => {
+            const p = t.participants.find(part => part.user.id === user.id);
+            if (p) {
+                if(p.result === 'Winner') return acc + 10;
+                if(p.result === 'Participated' || (p.result?.startsWith('Rank #'))) return acc + 1;
+            }
+            return acc;
+        }, 0);
+        return { ...user, points };
+    }).sort((a,b) => b.points - a.points);
+  }, [allUsers, allTournaments]);
 
-
-  const currentTournament = allTournaments.find((t: any) => t.id === tournamentId);
-  const tournamentParticipants = currentTournament ? currentTournament.participants : [];
-  const rankedParticipants = tournamentParticipants.filter((p: Participant) => getRank(p) !== null);
-
+  const currentTournament = allTournaments.find((t) => t.id === tournamentId);
+  const rankedParticipants = useMemo(() => {
+    return currentTournament ? currentTournament.participants.filter((p: Participant) => getRank(p) !== null) : [];
+  }, [currentTournament]);
 
   return (
     <div className="space-y-6">
