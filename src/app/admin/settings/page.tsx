@@ -26,6 +26,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { doc, getDoc, setDoc, onSnapshot } from 'firebase/firestore';
+
 export interface WalletSettings {
     minWithdrawal: number;
     maxWithdrawal: number;
@@ -58,6 +62,7 @@ function SettingsContent() {
     const showOnly = searchParams.get('show');
     const { toast } = useToast();
     const router = useRouter();
+    const { firestore } = useFirebase();
 
     const [adminUsername, setAdminUsername] = useState('unknownzaire94');
     const [currentPasswordInput, setCurrentPasswordInput] = useState('');
@@ -91,50 +96,61 @@ function SettingsContent() {
     const [showResetPassword, setShowResetPassword] = useState(false);
 
     useEffect(() => {
-        const storedAdmin = localStorage.getItem('adminCredentials');
-        if (storedAdmin) {
-            try {
-                const parsed = JSON.parse(storedAdmin);
-                setAdminUsername(parsed.username || 'unknownzaire94');
-            } catch (e) {}
-        }
+        if (!firestore) return;
 
-        const storedWalletSettings = localStorage.getItem('walletSettings');
-        if (storedWalletSettings) {
-            try {
-                setWalletSettings(JSON.parse(storedWalletSettings));
-            } catch (e) {}
-        }
-        const storedReferralSettings = localStorage.getItem('referralSettings');
-        if (storedReferralSettings) {
-            try {
-                setReferralSettings(JSON.parse(storedReferralSettings));
-            } catch (e) {}
-        }
-        const storedSocialMediaSettings = localStorage.getItem('socialMediaLinks');
-        if (storedSocialMediaSettings) {
-            try {
-                setSocialMediaLinks(JSON.parse(storedSocialMediaSettings));
-            } catch (e) {}
-        }
-        const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
-        if (storedHelpSettings) {
-            try {
-                setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
-            } catch (e) {}
-        }
-    }, []);
+        // Sync Admin Credentials
+        const unsubAdmin = onSnapshot(doc(firestore, 'settings', 'admin'), (snap) => {
+            if (snap.exists()) {
+                setAdminUsername(snap.data().username || 'unknownzaire94');
+            }
+        });
 
-    const handleSecurityUpdate = (e: React.FormEvent) => {
+        // Sync Wallet Settings
+        const unsubWallet = onSnapshot(doc(firestore, 'settings', 'wallet'), (snap) => {
+            if (snap.exists()) {
+                setWalletSettings(snap.data() as WalletSettings);
+            }
+        });
+
+        // Sync Referral Settings
+        const unsubReferral = onSnapshot(doc(firestore, 'settings', 'referral'), (snap) => {
+            if (snap.exists()) {
+                setReferralSettings(snap.data() as ReferralSettings);
+            }
+        });
+
+        // Sync Social Media Links
+        const unsubSocial = onSnapshot(doc(firestore, 'settings', 'social'), (snap) => {
+            if (snap.exists()) {
+                setSocialMediaLinks(snap.data().links || []);
+            }
+        });
+
+        // Sync Help & Support Settings
+        const unsubHelp = onSnapshot(doc(firestore, 'settings', 'help'), (snap) => {
+            if (snap.exists()) {
+                setHelpAndSupportSettings(snap.data() as HelpAndSupportSettings);
+            }
+        });
+
+        return () => {
+            unsubAdmin();
+            unsubWallet();
+            unsubReferral();
+            unsubSocial();
+            unsubHelp();
+        };
+    }, [firestore]);
+
+    const handleSecurityUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!firestore) return;
         
-        const storedAdmin = localStorage.getItem('adminCredentials');
+        const adminDoc = await getDoc(doc(firestore, 'settings', 'admin'));
         const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
         let credentials = defaultAdmin;
-        if (storedAdmin) {
-            try {
-                credentials = JSON.parse(storedAdmin);
-            } catch (e) {}
+        if (adminDoc.exists()) {
+            credentials = adminDoc.data() as typeof defaultAdmin;
         }
 
         if (currentPasswordInput !== credentials.password) {
@@ -151,7 +167,7 @@ function SettingsContent() {
             password: newPasswordInput || credentials.password
         };
 
-        localStorage.setItem('adminCredentials', JSON.stringify(newCredentials));
+        await setDoc(doc(firestore, 'settings', 'admin'), newCredentials);
 
         toast({
             title: "Security Settings Updated",
@@ -163,18 +179,19 @@ function SettingsContent() {
     
     const handleWalletUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!firestore) return;
         setIsUpdatingWallet(true);
 
-        const saveSettings = (settings: WalletSettings) => {
+        const saveSettings = async (settings: WalletSettings) => {
             try {
-                localStorage.setItem('walletSettings', JSON.stringify(settings));
+                await setDoc(doc(firestore, 'settings', 'wallet'), settings);
                 toast({
                     title: "Wallet Settings Updated",
                     description: "The global wallet settings have been saved."
                 });
             } catch (error) {
                 console.error("Wallet update save error:", error);
-                toast({ variant: 'destructive', title: 'Update Failed', description: 'Storage limit reached. Try using a smaller QR image.' });
+                toast({ variant: 'destructive', title: 'Update Failed', description: 'Could not save to Firestore.' });
             } finally {
                 setIsUpdatingWallet(false);
             }
@@ -206,27 +223,30 @@ function SettingsContent() {
         saveSettings(updatedSettings);
     }
 
-    const handleReferralUpdate = (e: React.FormEvent) => {
+    const handleReferralUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('referralSettings', JSON.stringify(referralSettings));
+        if (!firestore) return;
+        await setDoc(doc(firestore, 'settings', 'referral'), referralSettings);
         toast({
             title: "Referral Settings Updated",
             description: "The referral program settings have been saved."
         });
     }
 
-    const handleSocialMediaUpdate = (e: React.FormEvent) => {
+    const handleSocialMediaUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('socialMediaLinks', JSON.stringify(socialMediaLinks));
+        if (!firestore) return;
+        await setDoc(doc(firestore, 'settings', 'social'), { links: socialMediaLinks });
         toast({
             title: "Social Media Links Updated",
             description: "The app's social media links have been saved."
         });
     }
 
-    const handleHelpAndSupportUpdate = (e: React.FormEvent) => {
+    const handleHelpAndSupportUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
-        localStorage.setItem('helpAndSupportSettings', JSON.stringify(helpAndSupportSettings));
+        if (!firestore) return;
+        await setDoc(doc(firestore, 'settings', 'help'), helpAndSupportSettings);
         toast({
             title: "Help & Support Settings Updated",
             description: "The support contact details have been saved."
@@ -283,14 +303,13 @@ function SettingsContent() {
         }));
     }
 
-    const handleResetAppData = () => {
-        const storedAdmin = localStorage.getItem('adminCredentials');
+    const handleResetAppData = async () => {
+        if (!firestore) return;
+        const adminDoc = await getDoc(doc(firestore, 'settings', 'admin'));
         const defaultAdmin = { username: 'unknownzaire94', password: 'z@!re4515' };
         let credentials = defaultAdmin;
-        if (storedAdmin) {
-            try {
-                credentials = JSON.parse(storedAdmin);
-            } catch (e) {}
+        if (adminDoc.exists()) {
+            credentials = adminDoc.data() as typeof defaultAdmin;
         }
 
         if (resetPasswordInput !== credentials.password) {
@@ -306,7 +325,7 @@ function SettingsContent() {
         localStorage.clear();
         toast({
             title: "App Data Reset",
-            description: "All local storage has been cleared. The app will now reload with defaults."
+            description: "All local storage has been cleared. Note: Cloud Firestore settings persist. The app will now reload."
         });
         setTimeout(() => {
             window.location.href = '/login';
@@ -324,7 +343,7 @@ function SettingsContent() {
                 </Link>
                 <div>
                     <h1 className="font-headline text-3xl font-bold">Settings</h1>
-                    <p className="text-muted-foreground">Update your admin and application settings.</p>
+                    <p className="text-muted-foreground">Update your admin and application settings in Firestore.</p>
                 </div>
             </div>
 
