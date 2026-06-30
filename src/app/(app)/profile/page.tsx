@@ -1,3 +1,4 @@
+
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, AlertTriangle, Users, Plus, Trash2, Loader2 } from 'lucide-react';
+import { CheckCircle, Edit2, Mail, Phone, MessageSquare, Bot, Ticket, Link as LinkIcon, Users, Plus, Trash2 } from 'lucide-react';
 import { useUser } from '@/hooks/use-user.tsx';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger, DialogClose } from '@/components/ui/dialog';
@@ -20,12 +21,10 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import Image from 'next/image';
-import type { User, SocialLink, GameProfile } from '@/lib/types';
+import type { User, SocialLink } from '@/lib/types';
 import Link from 'next/link';
-import type { HelpAndSupportSettings } from '@/app/admin/settings/page';
 import { EmailAuthProvider, reauthenticateWithCredential, updatePassword, updateEmail, sendPasswordResetEmail } from 'firebase/auth';
 import { useFirebase } from '@/firebase';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -78,13 +77,23 @@ const SocialIcon = ({ name, icon, url }: { name: string; icon: SocialLink['icon'
 export default function ProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
-  const { user: currentUser, updateUser, logout, allUsers, addNotification, removeUserFromTeam } = useUser();
+  const { 
+    user: currentUser, 
+    updateUser, 
+    logout, 
+    allUsers, 
+    addNotification, 
+    removeUserFromTeam,
+    gameList,
+    socialMediaLinks,
+    helpAndSupportSettings
+  } = useUser();
   const { auth, user: firebaseUser } = useFirebase();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [primaryGame, setPrimaryGame] = useState<string | undefined>();
-  const [gameProfiles, setGameProfiles] = useState<{ [key: string]: Partial<GameProfile> }>({});
+  const [gameProfiles, setGameProfiles] = useState<{ [key: string]: any }>({});
   const [teamName, setTeamName] = useState('');
   const [mobile, setMobile] = useState('');
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -102,51 +111,24 @@ export default function ProfilePage() {
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   
-   const [helpAndSupportSettings, setHelpAndSupportSettings] = useState<HelpAndSupportSettings>({
-        helplineNumber: '+911234567890',
-        supportEmail: 'support@gamezonepro.com',
-    });
-    const [socialMediaLinks, setSocialMediaLinks] = useState<SocialLink[]>([]);
-    const [gameList, setGameList] = useState<string[]>([]);
-    
   const teamMembers = currentUser?.teamName ? allUsers.filter(u => u.teamName === currentUser.teamName) : [];
-  const sortedTeamMembers = [...teamMembers].sort(
-    (a, b) => {
-        if (a.teamJoinedAt && b.teamJoinedAt) {
-            return new Date(a.teamJoinedAt).getTime() - new Date(b.teamJoinedAt).getTime();
-        }
-        if (a.teamJoinedAt) return -1;
-        if (b.teamJoinedAt) return 1;
-        // Fallback for old data that might not have teamJoinedAt
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-    }
-  );
+  const sortedTeamMembers = [...teamMembers].sort((a, b) => {
+    if (a.teamJoinedAt && b.teamJoinedAt) return new Date(a.teamJoinedAt).getTime() - new Date(b.teamJoinedAt).getTime();
+    return 0;
+  });
   const teamLeader = sortedTeamMembers.length > 0 ? sortedTeamMembers[0] : null;
   const isLeader = currentUser?.id === teamLeader?.id;
 
   useEffect(() => {
-    const storedGames = localStorage.getItem('gameList');
-    const games = storedGames ? JSON.parse(storedGames) : ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
-    const filteredGames = games.filter((g: string) => g !== 'OTHER');
-    setGameList(filteredGames);
-
     if (currentUser) {
       setUsername(currentUser.username || '');
       setEmail(currentUser.email || '');
-      setPrimaryGame(currentUser.primaryGame || (filteredGames.length > 0 ? filteredGames[0] : undefined));
+      setPrimaryGame(currentUser.primaryGame || (gameList.length > 0 ? gameList[0] : undefined));
       setGameProfiles(currentUser.gameProfiles || {});
       setTeamName(currentUser.teamName || '');
       setMobile(currentUser.mobile || '');
     }
-     const storedHelpSettings = localStorage.getItem('helpAndSupportSettings');
-    if (storedHelpSettings) {
-        setHelpAndSupportSettings(JSON.parse(storedHelpSettings));
-    }
-    const storedSocialLinks = localStorage.getItem('socialMediaLinks');
-    if (storedSocialLinks) {
-        setSocialMediaLinks(JSON.parse(storedSocialLinks));
-    }
-  }, [currentUser]);
+  }, [currentUser, gameList]);
   
   const handleGameProfileChange = (game: string, field: 'inGameUsername' | 'inGameId', value: string) => {
     setGameProfiles(prev => ({
@@ -170,22 +152,9 @@ export default function ProfilePage() {
     }
 
     if (currentUser) {
-      // Validate uniqueness for Username and Team Name
       if (username !== currentUser.username && allUsers.some(u => u.id !== currentUser.id && u.username.toLowerCase() === username.toLowerCase())) {
-          toast({ variant: 'destructive', title: "Username Taken", description: "This username is already in use." });
+          toast({ variant: 'destructive', title: "Username Taken" });
           return;
-      }
-
-      if (teamName && teamName !== currentUser.teamName) {
-          const isTeamNameTaken = allUsers.some(u => u.id !== currentUser.id && u.teamName?.toLowerCase() === teamName.toLowerCase());
-          if (isTeamNameTaken) {
-              toast({
-                  variant: 'destructive',
-                  title: "Team Name Taken",
-                  description: "This team name is already in use by another team. Please choose a unique name or join via invite."
-              });
-              return;
-          }
       }
 
       const updatedFields: Partial<User> = {
@@ -193,15 +162,11 @@ export default function ProfilePage() {
         mobile,
         primaryGame,
         teamName,
-        gameProfiles: gameProfiles,
+        gameProfiles,
       };
       
-      if (mobile !== currentUser.mobile) {
-        updatedFields.mobileVerified = false;
-      }
-
       updateUser(updatedFields);
-      toast({ title: "Profile Updated", description: "Your profile information has been saved." });
+      toast({ title: "Profile Updated" });
       setIsEditing(false);
     }
   };
@@ -221,171 +186,67 @@ export default function ProfilePage() {
   const handleEmailChange = async () => {
     if (!firebaseUser || !currentUser || !currentUser.email) return;
 
-    if (!emailReauthPassword) {
-      toast({ variant: 'destructive', title: "Password Required", description: "Please enter your current password to change your email." });
-      return;
-    }
-
     try {
       const credential = EmailAuthProvider.credential(currentUser.email, emailReauthPassword);
       await reauthenticateWithCredential(firebaseUser, credential);
       await updateEmail(firebaseUser, email);
 
-      const updatedFields: Partial<User> = {
-          username,
-          mobile,
-          email,
-          emailVerified: false,
-          primaryGame,
-          gameProfiles,
-          teamName,
-      };
-      
-      updateUser(updatedFields);
-      toast({ title: "Profile & Email Updated", description: "Your profile information has been saved. A verification email has been sent to your new address." });
+      updateUser({ email, emailVerified: false });
+      toast({ title: "Email Updated" });
       setIsEditing(false);
       setIsEmailChangeOpen(false);
       setEmailReauthPassword('');
-
     } catch (error: any) {
-        let description = "An error occurred while updating your email.";
-        if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-            description = "The password you entered is incorrect.";
-        } else if (error.code === 'auth/email-already-in-use') {
-            description = "This email address is already in use by another account.";
-        }
-        toast({ variant: 'destructive', title: "Email Change Failed", description });
+        toast({ variant: 'destructive', title: "Email Change Failed", description: error.message });
     }
   };
 
-
   const handleAvatarUpdate = async () => {
     if (currentUser && avatarFile) {
-        try {
-            // Compress image to 200x200 for avatar
-            const avatarUrl = await compressImage(avatarFile, { maxWidth: 200, maxHeight: 200, quality: 0.8 });
-            updateUser({ avatarUrl });
-            toast({ title: "Avatar Updated", description: "Your profile picture has been changed." });
-        } catch (error) {
-            console.error("Avatar compression error:", error);
-            toast({ variant: 'destructive', title: "Update Failed", description: "Could not process the image. Please try a different one." });
-        }
-    } else {
-        toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your avatar."});
+        const avatarUrl = await compressImage(avatarFile, { maxWidth: 200, maxHeight: 200 });
+        updateUser({ avatarUrl });
+        toast({ title: "Avatar Updated" });
     }
   };
   
   const handleCoverImageUpdate = async () => {
     if (currentUser && coverImageFile) {
-        try {
-            // Compress cover image to a reasonable banner size
-            const coverImageUrl = await compressImage(coverImageFile, { maxWidth: 1000, maxHeight: 400, quality: 0.7 });
-            updateUser({ coverImageUrl });
-            toast({ title: "Cover Image Updated", description: "Your profile background has been changed." });
-        } catch (error) {
-            console.error("Cover image compression error:", error);
-            toast({ variant: 'destructive', title: "Update Failed", description: "Could not process the image. Please try a different one." });
-        }
-    } else {
-        toast({ variant: 'destructive', title: "No file selected", description: "Please select an image file to update your cover image."});
-    }
-  };
-
-  const handleAvatarFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        setAvatarFile(e.target.files[0]);
-    }
-  };
-
-  const handleCoverImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-        setCoverImageFile(e.target.files[0]);
+        const coverImageUrl = await compressImage(coverImageFile, { maxWidth: 1000, maxHeight: 400 });
+        updateUser({ coverImageUrl });
+        toast({ title: "Cover Image Updated" });
     }
   };
 
   const handleChangePassword = async () => {
-    if (!firebaseUser || !firebaseUser.email) {
-      toast({ variant: 'destructive', title: "Error", description: "You must be logged in to change your password." });
-      return;
-    }
-
-    if (!currentPassword || !newPassword) {
-      toast({ variant: 'destructive', title: "Fields Required", description: "Please enter both your current and new password." });
-      return;
-    }
-
+    if (!firebaseUser || !firebaseUser.email) return;
     try {
       const credential = EmailAuthProvider.credential(firebaseUser.email, currentPassword);
       await reauthenticateWithCredential(firebaseUser, credential);
       await updatePassword(firebaseUser, newPassword);
-
-      updateUser({ password: newPassword });
-
-      toast({ title: "Password Changed", description: "Your password has been successfully updated." });
+      toast({ title: "Password Changed" });
       setCurrentPassword('');
       setNewPassword('');
     } catch (error: any) {
-      let description = "An unexpected error occurred.";
-      if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-        description = "The current password you entered is incorrect.";
-      } else if (error.code === 'auth/weak-password') {
-        description = "The new password is too weak. It must be at least 6 characters long.";
-      }
-      console.error("Password change error:", error);
-      toast({ variant: 'destructive', title: "Password Change Failed", description });
+      toast({ variant: 'destructive', title: "Password Change Failed", description: error.message });
     }
   };
 
   const handleForgotPassword = async () => {
     if (!auth || !currentUser?.email) return;
-    try {
-      await sendPasswordResetEmail(auth, currentUser.email);
-      toast({
-        title: "Reset Email Sent",
-        description: `A password reset link has been sent to ${currentUser.email}.`,
-      });
-    } catch (error: any) {
-      console.error("Forgot password error:", error);
-      toast({
-        variant: 'destructive',
-        title: "Error",
-        description: "Could not send reset email. Please try again later.",
-      });
-    }
+    await sendPasswordResetEmail(auth, currentUser.email);
+    toast({ title: "Reset Email Sent" });
   };
 
-  const handleLogout = () => {
-    logout();
-    toast({ title: "Logged Out", description: "You have been successfully logged out." });
-  };
-  
   const handleGenerateInvite = (userToInvite: User) => {
     if (!teamName || !currentUser) return;
-
-    if (teamMembers.length >= 4) {
-      toast({
-        variant: 'destructive',
-        title: "Team is Full",
-        description: "Your team already has 4 members. You cannot invite more players.",
-      });
-      setIsInviteDialogOpen(false);
-      return;
-    }
-    
     addNotification({
       userId: userToInvite.id,
       title: 'Team Invitation',
       description: `${currentUser.username} has invited you to join team "${teamName}".`,
       type: 'team-invite',
-      payload: {
-          teamName: teamName,
-      },
+      payload: { teamName },
     });
-
-    toast({
-        title: "Invitation Sent!",
-        description: `A notification has been sent to ${userToInvite.username}.`,
-    });
+    toast({ title: "Invitation Sent!" });
     setIsInviteDialogOpen(false);
   };
   
@@ -393,43 +254,21 @@ export default function ProfilePage() {
     removeUserFromTeam(memberId);
   };
 
-  const usersToInvite = allUsers.filter(u => u.id !== currentUser?.id && u.teamName !== teamName);
-  const searchedUsersToInvite = inviteSearch ? usersToInvite.filter(u => u.username.toLowerCase().includes(inviteSearch.toLowerCase())) : usersToInvite;
+  const searchedUsersToInvite = inviteSearch ? allUsers.filter(u => u.id !== currentUser?.id && u.username.toLowerCase().includes(inviteSearch.toLowerCase())) : allUsers.filter(u => u.id !== currentUser?.id);
 
-  
-  if (!currentUser) {
-    return (
-      <div className="space-y-6">
-        <h1 className="font-headline text-3xl font-bold px-4">My Profile</h1>
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex flex-col items-center space-y-4">
-              <Skeleton className="h-24 w-24 rounded-full" />
-              <div className="text-center space-y-2">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-5 w-48" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-  
+  if (!currentUser) return <div className="p-8 text-center">Loading profile...</div>;
+
   const currentInGameUsername = (primaryGame && gameProfiles[primaryGame]?.inGameUsername) || '';
   const currentInGameId = (primaryGame && gameProfiles[primaryGame]?.inGameId) || '';
 
   return (
     <div className="space-y-6">
-      <div id="recaptcha-container" />
       <h1 className="font-headline text-3xl font-bold px-4">My Profile</h1>
 
       <div className="-mx-4">
         <Card className="overflow-hidden rounded-none border-x-0">
           <div className="relative h-32 bg-muted">
-              {currentUser.coverImageUrl && (
-                  <Image src={currentUser.coverImageUrl} alt="Cover image" fill={{objectFit: 'cover'}} />
-              )}
+              {currentUser.coverImageUrl && <Image src={currentUser.coverImageUrl} alt="Cover" fill className="object-cover" />}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="ghost" size="icon" className="absolute top-2 right-2 bg-black/50 hover:bg-black/70">
@@ -437,16 +276,9 @@ export default function ProfilePage() {
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Change Cover Image</DialogTitle>
-                    <DialogDescription>Upload a new background image for your profile.</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-2">
-                    <Label htmlFor="coverImageFile">Image</Label>
-                    <Input id="coverImageFile" type="file" accept="image/*" onChange={handleCoverImageFileChange} />
-                  </div>
+                  <DialogHeader><DialogTitle>Change Cover Image</DialogTitle></DialogHeader>
+                  <Input type="file" accept="image/*" onChange={(e) => setCoverImageFile(e.target.files?.[0] || null)} />
                   <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                     <DialogClose asChild><Button onClick={handleCoverImageUpdate}>Save</Button></DialogClose>
                   </DialogFooter>
                 </DialogContent>
@@ -467,35 +299,21 @@ export default function ProfilePage() {
                   </div>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Change Profile Picture</DialogTitle>
-                    <DialogDescription>Upload an image file to update your avatar.</DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-2">
-                    <Label htmlFor="avatarFile">Image</Label>
-                    <Input id="avatarFile" type="file" accept="image/*" onChange={handleAvatarFileChange} />
-                  </div>
+                  <DialogHeader><DialogTitle>Change Profile Picture</DialogTitle></DialogHeader>
+                  <Input type="file" accept="image/*" onChange={(e) => setAvatarFile(e.target.files?.[0] || null)} />
                   <DialogFooter>
-                    <DialogClose asChild>
-                      <Button variant="outline">Cancel</Button>
-                    </DialogClose>
-                    <DialogClose asChild>
-                      <Button onClick={handleAvatarUpdate}>Save</Button>
-                    </DialogClose>
+                    <DialogClose asChild><Button onClick={handleAvatarUpdate}>Save</Button></DialogClose>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
               <div className="text-center">
-                 <div className="flex items-center gap-2 justify-center">
-                    <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
-                 </div>
+                <p className="font-headline text-2xl font-bold">{currentUser.username}</p>
                 <p className="text-muted-foreground">{currentUser.email}</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
 
       <div className="px-4 space-y-6">
         <Card>
@@ -507,45 +325,33 @@ export default function ProfilePage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="primaryGame">Primary Game</Label>
-                <Select value={primaryGame} onValueChange={(value) => setPrimaryGame(value)} disabled={!isEditing}>
-                    <SelectTrigger id="primaryGame">
-                        <SelectValue placeholder="Select your main game" />
-                    </SelectTrigger>
+                <Select value={primaryGame} onValueChange={setPrimaryGame} disabled={!isEditing}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                        {gameList.map(game => (
-                            <SelectItem key={game} value={game}>{game}</SelectItem>
-                        ))}
+                        {gameList.map(game => <SelectItem key={game} value={game}>{game}</SelectItem>)}
                     </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="inGameUsername">{primaryGame || 'Game'} Username</Label>
-                <Input id="inGameUsername" value={currentInGameUsername} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameUsername', e.target.value)} placeholder="Your in-game name" disabled={!isEditing || !primaryGame || !!(currentUser.gameProfiles?.[primaryGame]?.inGameUsername)} />
+                <Label>{primaryGame || 'Game'} Username</Label>
+                <Input value={currentInGameUsername} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameUsername', e.target.value)} disabled={!isEditing || !primaryGame} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="inGameId">{primaryGame || 'Game'} User ID</Label>
-                <Input id="inGameId" value={currentInGameId} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameId', e.target.value)} placeholder="Your numeric game ID" disabled={!isEditing || !primaryGame || !!(currentUser.gameProfiles?.[primaryGame]?.inGameId)} />
+                <Label>{primaryGame || 'Game'} User ID</Label>
+                <Input value={currentInGameId} onChange={(e) => handleGameProfileChange(primaryGame!, 'inGameId', e.target.value)} disabled={!isEditing || !primaryGame} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="teamName">Team Name</Label>
+                <Label>Team Name</Label>
                 <div className="flex items-center gap-2">
-                  <Input id="teamName" value={teamName} onChange={(e) => setTeamName(e.target.value)} placeholder="Your team name" disabled={!isEditing} />
+                  <Input value={teamName} onChange={(e) => setTeamName(e.target.value)} disabled={!isEditing} />
                   {teamName && (
                     <>
                         <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
                             <DialogTrigger asChild>
-                            <Button variant="outline" size="icon" disabled={!teamName || isEditing}>
-                                <Users className="h-4 w-4" />
-                                <span className="sr-only">View Team Members</span>
-                            </Button>
+                              <Button variant="outline" size="icon" disabled={isEditing}><Users className="h-4 w-4" /></Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <DialogHeader>
-                                <DialogTitle>Team: {teamName}</DialogTitle>
-                                <DialogDescription>
-                                    Members of your team.
-                                </DialogDescription>
-                                </DialogHeader>
+                                <DialogHeader><DialogTitle>Team: {teamName}</DialogTitle></DialogHeader>
                                 <ScrollArea className="h-72">
                                 <div className="space-y-4 pr-4">
                                     {sortedTeamMembers.map((member, index) => (
@@ -553,154 +359,68 @@ export default function ProfilePage() {
                                         <div className="flex items-center gap-4">
                                             <span className="font-bold text-muted-foreground w-4 text-xs">{index + 1}.</span>
                                             <Avatar className="h-10 w-10">
-                                            <AvatarImage src={member.avatarUrl} alt={member.username} />
-                                            <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
+                                              <AvatarImage src={member.avatarUrl} />
+                                              <AvatarFallback>{member.username.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
-                                            <p className="font-semibold">{member.username}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {member.gameProfiles?.[primaryGame || '']?.inGameUsername || 'No in-game name'}{member.gameProfiles?.[primaryGame || '']?.inGameId && ` (${member.gameProfiles?.[primaryGame || '']?.inGameId})`}
-                                            </p>
+                                              <p className="font-semibold">{member.username}</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            {teamLeader && member.id === teamLeader.id && (
-                                                <Badge>Leader</Badge>
-                                            )}
+                                            {teamLeader && member.id === teamLeader.id && <Badge>Leader</Badge>}
                                             {isLeader && member.id !== currentUser.id && (
-                                                <AlertDialog>
-                                                    <AlertDialogTrigger asChild>
-                                                        <Button variant="ghost" size="icon">
-                                                            <Trash2 className="h-4 w-4 text-destructive" />
-                                                        </Button>
-                                                    </AlertDialogTrigger>
-                                                    <AlertDialogContent>
-                                                        <AlertDialogHeader>
-                                                            <AlertDialogTitle>Remove {member.username}?</AlertDialogTitle>
-                                                            <AlertDialogDescription>
-                                                                Are you sure you want to remove {member.username} from your team? They will need a new invite to rejoin.
-                                                            </AlertDialogDescription>
-                                                        </AlertDialogHeader>
-                                                        <AlertDialogFooter>
-                                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                            <AlertDialogAction onClick={() => handleRemoveMember(member.id)} className="bg-destructive hover:bg-destructive/90">
-                                                                Remove
-                                                            </AlertDialogAction>
-                                                        </AlertDialogFooter>
-                                                    </AlertDialogContent>
-                                                </AlertDialog>
+                                                <Button variant="ghost" size="icon" onClick={() => handleRemoveMember(member.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
                                             )}
                                         </div>
                                     </div>
                                     ))}
                                 </div>
                                 </ScrollArea>
-                                <DialogFooter>
-                                    <DialogClose asChild>
-                                        <Button>Close</Button>
-                                    </DialogClose>
-                                </DialogFooter>
                             </DialogContent>
                         </Dialog>
 
                         <Dialog open={isInviteDialogOpen} onOpenChange={setIsInviteDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" size="icon" disabled={!teamName || isEditing || teamMembers.length >= 4}>
-                                    <Plus className="h-4 w-4" />
-                                    <span className="sr-only">Send Invite Request</span>
-                                </Button>
+                                <Button variant="outline" size="icon" disabled={isEditing || teamMembers.length >= 4}><Plus className="h-4 w-4" /></Button>
                             </DialogTrigger>
                             <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Invite a player to '{teamName}'</DialogTitle>
-                                    <DialogDescription>Search for a user to create a personalized invite.</DialogDescription>
-                                </DialogHeader>
-                                <div className="space-y-4">
-                                    <Input placeholder="Search for player by username..." value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} />
-                                    <ScrollArea className="h-72">
-                                        <div className="space-y-2 pr-4">
-                                            {searchedUsersToInvite.map(userToInvite => (
-                                                <div key={userToInvite.id} className="flex items-center justify-between p-2 rounded-md border">
-                                                    <div className="flex items-center gap-3">
-                                                        <Avatar className="h-8 w-8">
-                                                            <AvatarImage src={userToInvite.avatarUrl} alt={userToInvite.username} />
-                                                            <AvatarFallback>{userToInvite.username.charAt(0)}</AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="font-semibold">{userToInvite.username}</p>
-                                                            <p className="text-xs text-muted-foreground">{userToInvite.primaryGame}</p>
-                                                        </div>
-                                                    </div>
-                                                    <Button size="sm" onClick={() => handleGenerateInvite(userToInvite)}>Invite</Button>
+                                <DialogHeader><DialogTitle>Invite a player</DialogTitle></DialogHeader>
+                                <Input placeholder="Search..." value={inviteSearch} onChange={(e) => setInviteSearch(e.target.value)} />
+                                <ScrollArea className="h-72">
+                                    <div className="space-y-2 pr-4">
+                                        {searchedUsersToInvite.map(userToInvite => (
+                                            <div key={userToInvite.id} className="flex items-center justify-between p-2 rounded-md border">
+                                                <div className="flex items-center gap-3">
+                                                    <Avatar className="h-8 w-8"><AvatarImage src={userToInvite.avatarUrl} /></Avatar>
+                                                    <span className="font-semibold">{userToInvite.username}</span>
                                                 </div>
-                                            ))}
-                                            {searchedUsersToInvite.length === 0 && (
-                                                <p className="text-sm text-center text-muted-foreground py-8">No users found.</p>
-                                            )}
-                                        </div>
-                                    </ScrollArea>
-                                </div>
+                                                <Button size="sm" onClick={() => handleGenerateInvite(userToInvite)}>Invite</Button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </ScrollArea>
                             </DialogContent>
                         </Dialog>
                     </>
                   )}
                 </div>
               </div>
-              <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="flex items-center gap-2">
-                      <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} disabled={!isEditing} />
-                      {currentUser.emailVerified && <CheckCircle className="text-green-500" />}
-                  </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="mobile">Mobile Number</Label>
-                <div className="flex items-center gap-2">
-                      <Input id="mobile" type="tel" value={mobile} onChange={(e) => {
-                          const numericValue = e.target.value.replace(/[^0-9]/g, '');
-                          if (numericValue.length <= 10) {
-                            setMobile(numericValue);
-                          }
-                      }} disabled={!isEditing} />
-                      {currentUser.mobileVerified && <CheckCircle className="text-green-500" />}
-                  </div>
-              </div>
               {isEditing ? (
                 <div className="flex gap-4">
-                    <Button onClick={handleResetChanges} variant="outline" className="w-full" type="button">
-                        Cancel
-                    </Button>
-                    <Button onClick={handleUpdateProfile} className="w-full" type="button">
-                        Save Changes
-                    </Button>
+                    <Button onClick={handleResetChanges} variant="outline" className="w-full">Cancel</Button>
+                    <Button onClick={handleUpdateProfile} className="w-full">Save Changes</Button>
                 </div>
                 ) : (
-                <Button onClick={handleUpdateProfile} className="w-full" type="button">
-                    Edit Profile
-                </Button>
+                <Button onClick={handleUpdateProfile} className="w-full">Edit Profile</Button>
               )}
           </CardContent>
         </Card>
         
         <Dialog open={isEmailChangeOpen} onOpenChange={setIsEmailChangeOpen}>
             <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Confirm Email Change</DialogTitle>
-                    <DialogDescription>
-                        To change your email address, please re-enter your current password for security.
-                    </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2">
-                    <Label htmlFor="email-reauth-password">Current Password</Label>
-                    <Input
-                        id="email-reauth-password"
-                        type="password"
-                        value={emailReauthPassword}
-                        onChange={(e) => setEmailReauthPassword(e.target.value)}
-                    />
-                </div>
+                <DialogHeader><DialogTitle>Confirm Email Change</DialogTitle></DialogHeader>
+                <Input type="password" value={emailReauthPassword} onChange={(e) => setEmailReauthPassword(e.target.value)} placeholder="Current Password" />
                 <DialogFooter>
-                    <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
                     <Button onClick={handleEmailChange}>Confirm & Change Email</Button>
                 </DialogFooter>
             </DialogContent>
@@ -709,19 +429,11 @@ export default function ProfilePage() {
         <Card>
           <CardContent className="pt-6 space-y-4">
               <h2 className="font-headline text-xl font-semibold">Change Password</h2>
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
-                <Input id="current-password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
-                <Input id="new-password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
-              </div>
+              <Input type="password" placeholder="Current Password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} />
+              <Input type="password" placeholder="New Password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
               <div className="flex flex-col gap-2">
                 <Button onClick={handleChangePassword} className="w-full">Change Password</Button>
-                <Button onClick={handleForgotPassword} variant="link" className="text-muted-foreground text-xs h-auto py-0">
-                  Forgot Password?
-                </Button>
+                <Button onClick={handleForgotPassword} variant="link" className="text-muted-foreground text-xs h-auto py-0">Forgot Password?</Button>
               </div>
           </CardContent>
         </Card>
@@ -730,7 +442,6 @@ export default function ProfilePage() {
           <Card>
               <CardHeader>
                   <CardTitle className="font-headline text-xl font-semibold">Join Our Community</CardTitle>
-                  <CardDescription>Follow us on social media for updates and announcements.</CardDescription>
               </CardHeader>
               <CardContent>
                   <div className="flex justify-around flex-wrap gap-4">
@@ -742,52 +453,28 @@ export default function ProfilePage() {
           </Card>
         )}
 
-        <Card>
-            <CardHeader>
-                <CardTitle className="font-headline text-xl font-semibold">Help &amp; Support</CardTitle>
-                <CardDescription>Contact us if you need any assistance.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <Link href="/my-tickets" className='w-full'>
-                    <Button variant="outline" className="w-full">
-                        <Ticket className="mr-2 h-4 w-4" />
-                        My Support Tickets
-                    </Button>
-                </Link>
-                <Link href="/help-agent" className='w-full'>
-                    <Button variant="outline" className="w-full">
-                        <Bot className="mr-2 h-4 w-4" />
-                        Talk to Help Agent
-                    </Button>
-                </Link>
-                <div className="flex items-center gap-4">
-                    <Phone className="h-5 w-5 text-primary" />
-                    <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Helpline Number</span>
-                        <a href={`tel:${helpAndSupportSettings.helplineNumber}`} className="text-base font-medium hover:underline">{helpAndSupportSettings.helplineNumber}</a>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <Mail className="h-5 w-5 text-primary" />
-                    <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Support Email</span>
-                        <a href={`mailto:${helpAndSupportSettings.supportEmail}`} className="text-base font-medium hover:underline">{helpAndSupportSettings.supportEmail}</a>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4">
-                    <MessageSquare className="h-5 w-5 text-primary" />
-                    <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Text Message</span>
-                        <a href={`sms:${helpAndSupportSettings.helplineNumber}`} className="text-base font-medium hover:underline">Send us a message</a>
-                    </div>
-                </div>
-            </CardContent>
-        </Card>
+        {helpAndSupportSettings && (
+          <Card>
+              <CardHeader>
+                  <CardTitle className="font-headline text-xl font-semibold">Help &amp; Support</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                  <Link href="/my-tickets" className='w-full'><Button variant="outline" className="w-full"><Ticket className="mr-2 h-4 w-4" />My Support Tickets</Button></Link>
+                  <Link href="/help-agent" className='w-full'><Button variant="outline" className="w-full"><Bot className="mr-2 h-4 w-4" />Talk to Help Agent</Button></Link>
+                  <div className="flex items-center gap-4">
+                      <Phone className="h-5 w-5 text-primary" />
+                      <a href={`tel:${helpAndSupportSettings.helplineNumber}`} className="font-medium">{helpAndSupportSettings.helplineNumber}</a>
+                  </div>
+                  <div className="flex items-center gap-4">
+                      <Mail className="h-5 w-5 text-primary" />
+                      <a href={`mailto:${helpAndSupportSettings.supportEmail}`} className="font-medium">{helpAndSupportSettings.supportEmail}</a>
+                  </div>
+              </CardContent>
+          </Card>
+        )}
         
         <div className="pt-4">
-          <Button variant="destructive" className="w-full" onClick={handleLogout}>
-            Logout
-          </Button>
+          <Button variant="destructive" className="w-full" onClick={logout}>Logout</Button>
         </div>
       </div>
     </div>

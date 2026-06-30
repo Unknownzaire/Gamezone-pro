@@ -1,9 +1,9 @@
 
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SupportTicket, SupportTicketMessage, User } from "@/lib/types";
+import { useEffect, useState, useMemo } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { SupportTicket } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
@@ -18,98 +18,50 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import Image from 'next/image';
 import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
+import { useFirebase, useCollection, useMemoFirebase } from '@/firebase';
+import { query, collection, where, orderBy, Timestamp } from 'firebase/firestore';
 
 export default function MyTicketsPage() {
   const { user, addMessageToTicket } = useUser();
-  const [tickets, setTickets] = useState<SupportTicket[]>([]);
+  const { firestore } = useFirebase();
+  const { toast } = useToast();
+
+  const ticketsQuery = useMemoFirebase(() => 
+    user ? query(collection(firestore, 'support'), where('userId', '==', user.id), orderBy('createdAt', 'desc')) : null,
+    [firestore, user]
+  );
+  const { data: tickets = [] } = useCollection<SupportTicket>(ticketsQuery);
+
   const [reply, setReply] = useState('');
   const [replyImage, setReplyImage] = useState<File | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const { toast } = useToast();
 
-  const loadData = useCallback(() => {
-    if (!user) return;
-    try {
-      const storedTickets = localStorage.getItem('supportTickets');
-      const allTickets: SupportTicket[] = storedTickets 
-        ? JSON.parse(storedTickets).map((t: any) => ({
-            ...t, 
-            createdAt: new Date(t.createdAt), 
-            messages: t.messages.map((m: any) => ({...m, createdAt: new Date(m.createdAt)}))
-          })) 
-        : [];
-      
-      const userTickets = allTickets
-        .filter(t => t.userId === user.id)
-        .sort((a,b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-      
-      setTickets(userTickets);
-
-    } catch (e) {
-      console.error("Failed to load data from localStorage", e);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    loadData();
-    window.addEventListener('storage', loadData);
-    return () => {
-      window.removeEventListener('storage', loadData);
-    };
-  }, [loadData]);
-  
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files?.[0]) {
       const file = e.target.files[0];
       setReplyImage(file);
       const reader = new FileReader();
-      reader.onload = (event) => {
-        setPreviewImage(event.target?.result as string);
-      };
+      reader.onload = (event) => setPreviewImage(event.target?.result as string);
       reader.readAsDataURL(file);
     }
   };
   
-  const handleReply = (ticketId: string) => {
+  const handleReply = async (ticketId: string) => {
     if(!reply.trim() && !replyImage) return;
-
-    const sendMessage = (imageUrl?: string) => {
-      addMessageToTicket(ticketId, reply, imageUrl);
-      setReply('');
-      setReplyImage(null);
-      setPreviewImage(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
-      toast({ title: "Reply Sent", description: "Your message has been sent to support." });
-    };
-
-    if (replyImage) {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const imageUrl = event.target?.result as string;
-            sendMessage(imageUrl);
-        };
-        reader.readAsDataURL(replyImage);
-    } else {
-        sendMessage();
-    }
+    addMessageToTicket(ticketId, reply, previewImage || undefined);
+    setReply('');
+    setReplyImage(null);
+    setPreviewImage(null);
+    toast({ title: "Reply Sent" });
   }
+
+  if (!user) return <div className="p-8 text-center">Loading tickets...</div>;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Link href="/profile">
-            <Button variant="outline" size="icon" className="h-7 w-7">
-                <ArrowLeft className="h-4 w-4" />
-                <span className="sr-only">Back</span>
-            </Button>
-        </Link>
-        <div>
-            <h1 className="font-headline text-3xl font-bold">My Support Tickets</h1>
-            <p className="text-muted-foreground">History of your conversations with support.</p>
-        </div>
+        <Link href="/profile"><Button variant="outline" size="icon" className="h-7 w-7"><ArrowLeft className="h-4 w-4" /></Button></Link>
+        <h1 className="font-headline text-3xl font-bold">My Support Tickets</h1>
       </div>
       
       <Card>
@@ -120,87 +72,29 @@ export default function MyTicketsPage() {
                 <AccordionItem value={ticket.id} key={ticket.id}>
                   <AccordionTrigger>
                     <div className='flex justify-between items-center w-full pr-4'>
-                        <div className="text-left">
-                            <p className="font-semibold truncate max-w-[200px]">{ticket.subject}</p>
-                            <p className="text-xs text-muted-foreground">{format(ticket.createdAt, 'PP')}</p>
-                        </div>
-                        <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>
-                            {ticket.status}
-                        </Badge>
+                        <div className="text-left"><p className="font-semibold">{ticket.subject}</p><p className="text-xs text-muted-foreground">{format(new Date(ticket.createdAt), 'PP')}</p></div>
+                        <Badge variant={ticket.status === 'open' ? 'destructive' : 'secondary'}>{ticket.status}</Badge>
                     </div>
                   </AccordionTrigger>
                   <AccordionContent>
                     <div className="flex flex-col h-96">
-                      <ScrollArea className="flex-1 p-4">
-                        <div className="space-y-4">
-                          {ticket.messages.map((message, index) => (
-                            <div key={index} className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : ''}`}>
-                              {message.sender === 'admin' && (
-                                <Avatar className="h-8 w-8 self-start">
-                                  <AvatarFallback>A</AvatarFallback>
-                                </Avatar>
-                              )}
-                              <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                {message.imageUrl && (
-                                  <Dialog>
-                                    <DialogTrigger asChild>
-                                      <div className="relative h-32 w-48 mb-2 rounded-md overflow-hidden cursor-pointer">
-                                        <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="cover" />
-                                      </div>
-                                    </DialogTrigger>
-                                    <DialogContent className="max-w-3xl p-2">
-                                      <div className="relative aspect-video">
-                                        <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="contain" />
-                                      </div>
-                                    </DialogContent>
-                                  </Dialog>
-                                )}
-                                <p>{message.text}</p>
-                                <p className="text-xs opacity-70 mt-1">{format(message.createdAt, 'p')}</p>
-                              </div>
-                              {message.sender === 'user' && user && (
-                                 <Avatar className="h-8 w-8 self-start">
-                                  <AvatarImage src={user.avatarUrl} alt={user.username} />
-                                  <AvatarFallback>{user.username.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                              )}
+                      <ScrollArea className="flex-1 p-4 space-y-4">
+                        {ticket.messages.map((message, index) => (
+                          <div key={index} className={`flex items-end gap-2 ${message.sender === 'user' ? 'justify-end' : ''}`}>
+                            <div className={`max-w-xs rounded-lg p-3 text-sm ${message.sender === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                              {message.imageUrl && <Image src={message.imageUrl} alt="img" width={200} height={150} className="mb-2 rounded" />}
+                              <p>{message.text}</p>
+                              <p className="text-[10px] opacity-70 mt-1">{format(new Date(message.createdAt), 'p')}</p>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </ScrollArea>
                       <div className="p-4 border-t space-y-2">
-                          {previewImage && (
-                            <Dialog>
-                                <DialogTrigger asChild>
-                                    <div className="relative h-20 w-20 rounded-md overflow-hidden cursor-pointer">
-                                        <Image src={previewImage} alt="Reply preview" layout="fill" objectFit="cover" />
-                                    </div>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-3xl p-2">
-                                    <div className="relative aspect-video">
-                                        <Image src={previewImage} alt="Reply preview" layout="fill" objectFit="contain" />
-                                    </div>
-                                </DialogContent>
-                            </Dialog>
-                          )}
+                          {previewImage && <Image src={previewImage} alt="preview" width={80} height={80} className="rounded" />}
                           <div className="flex items-center gap-2">
-                            <Textarea 
-                              placeholder="Type your reply..."
-                              value={reply}
-                              onChange={(e) => setReply(e.target.value)}
-                              rows={1}
-                              className="min-h-0"
-                            />
-                            <Button asChild variant="ghost" size="icon">
-                              <label htmlFor={`file-upload-${ticket.id}`}>
-                                <Paperclip className="h-5 w-5" />
-                                <span className="sr-only">Attach image</span>
-                              </label>
-                            </Button>
-                            <Input id={`file-upload-${ticket.id}`} type="file" className="hidden" accept="image/*" onChange={handleFileChange} ref={fileInputRef} />
-                            <Button onClick={() => handleReply(ticket.id)} size="icon" disabled={!reply.trim() && !replyImage}>
-                              <Send className="h-4 w-4" />
-                            </Button>
+                            <Textarea placeholder="Reply..." value={reply} onChange={(e) => setReply(e.target.value)} rows={1} />
+                            <Button variant="ghost" size="icon" asChild><label><Paperclip className="h-5 w-5" /><input type="file" className="hidden" onChange={handleFileChange} /></label></Button>
+                            <Button onClick={() => handleReply(ticket.id)} size="icon" disabled={!reply.trim() && !replyImage}><Send className="h-4 w-4" /></Button>
                           </div>
                       </div>
                     </div>
@@ -208,11 +102,7 @@ export default function MyTicketsPage() {
                 </AccordionItem>
               ))}
             </Accordion>
-           ) : (
-            <p className="text-muted-foreground text-center py-16">
-              You haven't submitted any support tickets.
-            </p>
-           )}
+           ) : <p className="text-center py-16 text-muted-foreground">No tickets found.</p>}
         </CardContent>
       </Card>
     </div>

@@ -1,33 +1,30 @@
 
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tournament } from "@/lib/types";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
-import { Clock, Trophy, Users, PlayCircle, User as UserIcon, ChevronRight } from "lucide-react";
+import { Clock, Trophy, Users, User as UserIcon, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/hooks/use-user.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 import Autoplay from "embla-carousel-autoplay";
-import { useState, useEffect } from "react";
 
 const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
     const slots = tournament.slots || 100;
-    const progress = (tournament.participants.length / slots) * 100;
+    const participantCount = tournament.participants?.length || 0;
+    const progress = (participantCount / slots) * 100;
 
     return (
         <Card key={tournament.id} className="overflow-hidden group relative flex flex-row h-32 border-primary/10 bg-card hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 transition-all duration-300">
-            {/* Clickable Link Overlay */}
             <Link href={`/tournaments/${tournament.id}`} className="absolute inset-0 z-20">
                 <span className="sr-only">View tournament details</span>
             </Link>
             
-            {/* Left Side: Image with Status */}
             <div className="relative w-1/3 h-full overflow-hidden shrink-0 border-r border-white/5">
                 <Image
                     src={tournament.imageUrl}
@@ -46,7 +43,6 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                 </Badge>
             </div>
 
-            {/* Right Side: Content */}
             <CardContent className="p-3 flex-1 flex flex-col justify-between space-y-2 overflow-hidden">
                 <div className="space-y-1">
                     <h3 className="font-headline text-sm font-bold leading-tight line-clamp-1 group-hover:text-primary transition-colors">
@@ -95,7 +91,7 @@ const TournamentCard = ({ tournament }: { tournament: Tournament }) => {
                         <div className="space-y-1">
                             <div className="flex justify-between text-[9px] font-bold">
                                 <span className="text-muted-foreground uppercase">Spots Left</span>
-                                <span className="text-primary">{slots - tournament.participants.length} / {slots}</span>
+                                <span className="text-primary">{slots - participantCount} / {slots}</span>
                             </div>
                             <Progress value={progress} className="h-1 bg-muted" />
                         </div>
@@ -148,34 +144,9 @@ const GameContent = ({gameName, tournaments}: {gameName: string, tournaments: To
 };
 
 export default function HomePage() {
-  const { user, tournaments, promotionalAds } = useUser();
-  const [gameList, setGameList] = useState(['BGMI', 'FREE FIRE', 'COD']);
+  const { tournaments, promotionalAds, gameList } = useUser();
   const activeAds = promotionalAds.filter(ad => ad.status === 'active');
-  
-  useEffect(() => {
-    const loadGames = () => {
-        const storedGames = localStorage.getItem('gameList');
-        const defaultGames = ['BGMI', 'FREE FIRE', 'COD'];
-        let gamesToShow: string[] = [];
-
-        if (storedGames) {
-            try {
-                gamesToShow = JSON.parse(storedGames);
-            } catch (e) {
-                gamesToShow = defaultGames;
-            }
-        } else {
-            gamesToShow = defaultGames;
-        }
-
-        const otherFiltered = gamesToShow.filter(g => g.toUpperCase() !== 'OTHER');
-        setGameList(otherFiltered);
-    };
-    
-    loadGames();
-    window.addEventListener('storage', loadGames);
-    return () => window.removeEventListener('storage', loadGames);
-  }, []);
+  const normalizedGameList = gameList.filter(g => g.toUpperCase() !== 'OTHER');
 
   return (
     <div className="space-y-6">
@@ -222,14 +193,14 @@ export default function HomePage() {
       )}
       <h1 className="font-headline text-3xl font-bold">Tournaments</h1>
 
-      {gameList.length > 0 && (
-        <Tabs defaultValue={gameList[0].toLowerCase().replace(/ /g, '')} className="w-full">
-            <TabsList className="grid w-full mb-6" style={{gridTemplateColumns: `repeat(${gameList.length}, minmax(0, 1fr))`}}>
-                {gameList.map(game => (
+      {normalizedGameList.length > 0 && (
+        <Tabs defaultValue={normalizedGameList[0].toLowerCase().replace(/ /g, '')} className="w-full">
+            <TabsList className="grid w-full mb-6" style={{gridTemplateColumns: `repeat(${normalizedGameList.length}, minmax(0, 1fr))`}}>
+                {normalizedGameList.map(game => (
                     <TabsTrigger key={game} value={game.toLowerCase().replace(/ /g, '')}>{game.toUpperCase()}</TabsTrigger>
                 ))}
             </TabsList>
-            {gameList.map(game => (
+            {normalizedGameList.map(game => (
                 <TabsContent key={game} value={game.toLowerCase().replace(/ /g, '')} className="mt-0">
                     <GameContent gameName={game} tournaments={tournaments} />
                 </TabsContent>
