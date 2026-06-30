@@ -32,7 +32,7 @@ export default function LoginPage() {
   const initialTab = referralCodeFromUrl || (action === 'join' && joinTeamName) ? 'signup' : 'login';
   
   const [activeTab, setActiveTab] = useState(initialTab);
-  const { login, signup, user, allUsers, joinTeam } = useUser();
+  const { login, signup, user, allUsers, joinTeam, gameList } = useUser();
   const { auth, firestore } = useFirebase();
   
   const [loginForm, setLoginForm] = useState({
@@ -42,7 +42,7 @@ export default function LoginPage() {
 
   const [signupForm, setSignupForm] = useState({
       username: '',
-      primaryGame: '',
+      primaryGame: 'BGMI',
       inGameUsername: '',
       inGameId: '',
       mobile: '',
@@ -53,7 +53,6 @@ export default function LoginPage() {
 
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
-  const [gameList, setGameList] = useState<string[]>([]);
   const [isSigningUp, setIsSigningUp] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   
@@ -78,29 +77,6 @@ export default function LoginPage() {
     }
   }, [user, router, action, joinTeamName, joinTeam]);
 
-  useEffect(() => {
-    const loadGames = () => {
-        const storedGames = localStorage.getItem('gameList');
-        const defaultGames = ['BGMI', 'FREE FIRE', 'COD', 'OTHER'];
-        let gamesToShow: string[] = [];
-
-        if (storedGames) {
-            try {
-                gamesToShow = JSON.parse(storedGames);
-            } catch (e) {
-                gamesToShow = defaultGames;
-            }
-        } else {
-            gamesToShow = defaultGames;
-        }
-        setGameList(gamesToShow);
-        if (gamesToShow.length > 0) {
-            setSignupForm(prev => ({ ...prev, primaryGame: gamesToShow[0] }));
-        }
-    };
-    loadGames();
-  }, []);
-  
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>, nextFieldRef?: React.RefObject<HTMLInputElement>, isLastField = false) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -164,6 +140,7 @@ export default function LoginPage() {
           description: 'Your account has been blocked. Please contact support.',
         });
       } else {
+        // Doc might be missing even if Auth exists
         await signOut(auth);
         toast({
           variant: 'destructive',
@@ -203,28 +180,19 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Email Taken', description: 'This email address is already in use.' });
         return;
     }
-     if (signupForm.inGameUsername && allUsers.some(u => u.inGameUsername?.toLowerCase() === signupForm.inGameUsername?.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'In-Game Username Taken', description: 'This in-game username is already in use.' });
-        return;
-    }
-     if (signupForm.inGameId && allUsers.some(u => u.inGameId === signupForm.inGameId)) {
-        toast({ variant: 'destructive', title: 'In-Game User ID Taken', description: 'This in-game User ID is already in use.' });
-        return;
-    }
     
     setIsSigningUp(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
       
       const newUserDetails = {
+          uid: userCredential.user.uid,
           username: signupForm.username,
           email: signupForm.email,
           mobile: signupForm.mobile,
           primaryGame: signupForm.primaryGame,
           inGameUsername: signupForm.inGameUsername,
           inGameId: signupForm.inGameId,
-          referralCode: signupForm.referralCode,
-          googleId: userCredential.user.uid,
       };
       
       const result = await signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
@@ -232,10 +200,8 @@ export default function LoginPage() {
       if (result === 'success') {
         toast({
           title: 'Account Created',
-          description: 'Your account has been successfully created. You can now log in.',
+          description: 'Your account has been successfully created. Redirecting...',
         });
-        setActiveTab('login');
-        setLoginForm(prev => ({ ...prev, email: signupForm.email, password: '' }));
       } else {
         toast({
           variant: 'destructive',
@@ -280,58 +246,39 @@ export default function LoginPage() {
         const existingUser = docSnap.data() as User;
         if (existingUser.isBlocked) {
           await signOut(auth);
-          toast({
-            variant: 'destructive',
-            title: 'Account Blocked',
-            description: 'Your account has been blocked. Please contact support.',
-          });
+          toast({ variant: 'destructive', title: 'Account Blocked' });
           return;
         }
-        // User exists, login will proceed via useEffect watching 'user' state
         toast({ title: 'Welcome back!', description: `Logged in as ${existingUser.username}` });
       } else {
-        // New user from Google: create a matching Firestore document
+        // New user from Google
         const newUserDetails = {
+            uid: googleUser.uid,
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
             email: googleUser.email!,
-            googleId: googleUser.uid,
-            avatarUrl: googleUser.photoURL || undefined,
+            avatarUrl: googleUser.photoURL || "",
         };
 
-        // Determine if there is a referral code to apply
-        const appliedRefCode = signupForm.referralCode || referralCodeFromUrl || undefined;
+        const appliedRefCode = signupForm.referralCode || referralCodeFromUrl || "";
 
         const signupResult = await signup(
           newUserDetails, 
-          undefined, // No password for Google users
+          "", // No password for Google users
           true, 
           false, 
           appliedRefCode
         );
 
         if (signupResult === 'success') {
-          toast({
-            title: 'Welcome!',
-            description: 'Your account has been created via Google.',
-          });
+          toast({ title: 'Welcome!', description: 'Your account has been created via Google.' });
         } else {
-            // Roll back the authentication if profile creation fails
             await signOut(auth);
-            toast({
-                variant: 'destructive',
-                title: 'Sign Up Failed',
-                description: 'Could not create your account profile in the database. Please try again.',
-            });
+            toast({ variant: 'destructive', title: 'Sign Up Failed', description: 'Could not create profile.' });
         }
       }
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
-          console.error("Google Sign-In Error: ", error);
-          toast({
-            variant: 'destructive',
-            title: 'Google Sign-In Failed',
-            description: error.message || 'Could not sign in with Google. Please try again.',
-          });
+          toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message });
       }
     }
   };

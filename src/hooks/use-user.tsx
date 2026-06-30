@@ -48,7 +48,7 @@ interface UserContextType {
   joinTournament: (tournamentId: string, usersToJoin: User[]) => Promise<JoinTournamentResult | JoinTournamentFailure>;
   joinTeam: (teamName: string) => Promise<'success' | 'already_in_team' | 'team_full' | 'error'>;
   login: (email: string) => Promise<boolean | 'blocked'>;
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string, avatarUrl?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => Promise<"success" | "error">;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string, avatarUrl?: string, uid?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => Promise<"success" | "error">;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -133,56 +133,57 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!firestore) return 'error';
     
     let newUserBonus = 0;
-    let referredBy: string | null = null;
+    let referredBy: string = ""; // Default to empty string instead of undefined
+    
     if (referralCode && referralSettings) {
-        let referrer = allUsersData?.find(u => u.referralCode === referralCode);
-        
-        // Manual lookup if the real-time list isn't populated yet
-        if (!referrer) {
-           const usersRef = collection(firestore, 'users');
-           const q = query(usersRef, where('referralCode', '==', referralCode));
-           const snap = await getDocs(q);
-           if (!snap.empty) {
-               referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
-           }
-        }
-
-        if (referrer) {
+        // Try finding the referrer by code
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where('referralCode', '==', referralCode));
+        const snap = await getDocs(q);
+        if (!snap.empty) {
+            const referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
             referredBy = referrer.id;
             newUserBonus = referralSettings.newUserBonus;
         }
     }
 
     const referralCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
-    const newUserId = userDetails.googleId || auth?.currentUser?.uid || doc(collection(firestore, 'users')).id;
+    const newUserId = userDetails.uid || userDetails.googleId || auth?.currentUser?.uid;
 
-    const newUser: User = {
+    if (!newUserId) {
+        console.error("Signup failed: No UID provided.");
+        return 'error';
+    }
+
+    const newUser: any = {
         id: newUserId,
-        username: userDetails.username,
-        email: userDetails.email,
-        mobile: userDetails.mobile || null,
+        username: userDetails.username || "Player",
+        email: userDetails.email || "",
+        mobile: userDetails.mobile || "",
         primaryGame: userDetails.primaryGame || 'BGMI',
         referralCode: referralCodeGenerated,
-        googleId: userDetails.googleId || null,
-        password: password || null,
+        googleId: userDetails.googleId || "",
+        password: password || "",
         walletBalance: newUserBonus,
         referralBalance: 0,
         avatarUrl: userDetails.avatarUrl || `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
-        referredBy: referredBy || null,
-        emailVerified,
-        mobileVerified,
+        referredBy: referredBy,
+        emailVerified: !!emailVerified,
+        mobileVerified: !!mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
           [userDetails.primaryGame]: {
             inGameUsername: userDetails.inGameUsername,
             inGameId: userDetails.inGameId,
           }
-        } : {},
+        } : (userDetails.gameProfiles || {}),
     };
 
     try {
+        // Use setDoc to create or fully overwrite the document with sanitized data
         await setDoc(doc(firestore, 'users', newUserId), newUser);
+        
         if (newUserBonus > 0) {
             await addDoc(collection(firestore, 'users', newUserId, 'transactions'), {
                 amount: newUserBonus,
@@ -422,7 +423,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeUserFromTeam = (userId: string) => {
-    updateDoc(doc(firestore, 'users', userId), { teamName: null, teamJoinedAt: null });
+    updateDoc(doc(firestore, 'users', userId), { teamName: "", teamJoinedAt: null });
   };
 
   const value = {
