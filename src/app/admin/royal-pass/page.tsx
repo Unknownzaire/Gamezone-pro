@@ -39,6 +39,10 @@ import {
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Switch } from '@/components/ui/switch';
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, addDoc, updateDoc, query, where, orderBy, Timestamp } from 'firebase/firestore';
+
 interface Giveaway {
     id: string;
     jackpotName: string;
@@ -51,6 +55,7 @@ interface Giveaway {
 export default function AdminRoyalPassPage() {
     const { allUsers, allTransactions = [], addNotification, reload } = useUser();
     const { toast } = useToast();
+    const { firestore } = useFirebase();
 
     const [giveaways, setGiveaways] = useState<Giveaway[]>([]);
     const [isCreateDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -69,7 +74,7 @@ export default function AdminRoyalPassPage() {
     const [entryToDelete, setEntryToDelete] = useState<Transaction | null>(null);
     const [viewingReelUrl, setViewingReelUrl] = useState<string | null>(null);
 
-    // Automatic refresh every second
+    // Automatic refresh every second for local user data
     useEffect(() => {
         const interval = setInterval(() => {
             reload();
@@ -78,97 +83,95 @@ export default function AdminRoyalPassPage() {
     }, [reload]);
 
     useEffect(() => {
-        const stored = localStorage.getItem('luckyDrawSettingsList');
-        if (stored) {
-            try {
-                const parsed = JSON.parse(stored);
-                const migrated = parsed.map((g: any) => ({
-                    ...g,
-                    requiresReel: g.requiresReel !== undefined ? g.requiresReel : true
-                }));
-                setGiveaways(migrated);
-            } catch (e) {
-                console.error("Failed to parse luckyDrawSettingsList", e);
-            }
-        } else {
-            const defaultGiveaway = [{
-                id: 'default',
-                jackpotName: 'Daily Lucky Draw',
-                jackpotAmount: 5000,
-                entryFee: 10,
+        if (!firestore) return;
+
+        // Listen for Giveaways in Firestore
+        const qGiveaways = query(collection(firestore, 'royal_pass'), where('docType', '==', 'giveaway'));
+        const unsubGiveaways = onSnapshot(qGiveaways, (snapshot) => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            })) as Giveaway[];
+            setGiveaways(list);
+        });
+
+        // Listen for Winners in Firestore
+        const qWinners = query(collection(firestore, 'royal_pass'), where('docType', '==', 'winner'), orderBy('createdAt', 'desc'));
+        const unsubWinners = onSnapshot(qWinners, (snapshot) => {
+            const list = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            setRecentWinners(list);
+        });
+
+        return () => {
+            unsubGiveaways();
+            unsubWinners();
+        };
+    }, [firestore]);
+
+    const handleCreateGiveaway = async () => {
+        if (!newName.trim() || !firestore) return;
+        try {
+            await addDoc(collection(firestore, 'royal_pass'), {
+                docType: 'giveaway',
+                jackpotName: newName,
+                jackpotAmount: newAmount,
+                entryFee: newFee,
                 isActive: true,
-                requiresReel: true
-            }];
-            setGiveaways(defaultGiveaway);
-            localStorage.setItem('luckyDrawSettingsList', JSON.stringify(defaultGiveaway));
+                requiresReel: newRequiresReel,
+                createdAt: Timestamp.now()
+            });
+            setIsAddDialogOpen(false);
+            setNewName("");
+            setNewAmount(1000);
+            setNewFee(10);
+            setNewRequiresReel(true);
+            toast({ title: "Giveaway created successfully" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error creating giveaway" });
         }
-
-        const loadWinners = () => {
-            const storedWinners = localStorage.getItem('luckyDrawWinners');
-            if (storedWinners) {
-                setRecentWinners(JSON.parse(storedWinners));
-            } else {
-                const initialWinners = [
-                    { id: 'w1', name: "SkyKiller99", amount: 2500, date: "Feb 26", jackpot: "Daily Lucky Draw" },
-                    { id: 'w2', name: "BGMI_Pro_Z", amount: 1000, date: "Feb 25", jackpot: "Mini Draw" },
-                    { id: 'w3', name: "Legend_Zaire", amount: 5000, date: "Feb 24", jackpot: "Mega Jackpot" },
-                ];
-                setRecentWinners(initialWinners);
-                localStorage.setItem('luckyDrawWinners', JSON.stringify(initialWinners));
-            }
-        };
-
-        loadWinners();
-        window.addEventListener('storage', loadWinners);
-        return () => window.removeEventListener('storage', loadWinners);
-    }, []);
-
-    const saveGiveaways = (list: Giveaway[]) => {
-        setGiveaways(list);
-        localStorage.setItem('luckyDrawSettingsList', JSON.stringify(list));
     };
 
-    const handleCreateGiveaway = () => {
-        if (!newName.trim()) return;
-        const newGiveaway: Giveaway = {
-            id: `g-${Date.now()}`,
-            jackpotName: newName,
-            jackpotAmount: newAmount,
-            entryFee: newFee,
-            isActive: true,
-            requiresReel: newRequiresReel
-        };
-        saveGiveaways([...giveaways, newGiveaway]);
-        setIsAddDialogOpen(false);
-        setNewName("");
-        setNewAmount(1000);
-        setNewFee(10);
-        setNewRequiresReel(true);
-        toast({ title: "Giveaway created successfully" });
+    const handleUpdateGiveaway = async () => {
+        if (!editingGiveaway || !firestore) return;
+        try {
+            const { id, ...data } = editingGiveaway;
+            await updateDoc(doc(firestore, 'royal_pass', id), { ...data });
+            setIsConfigDialogOpen(false);
+            setEditingGiveaway(null);
+            toast({ title: "Giveaway updated successfully" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error updating giveaway" });
+        }
     };
 
-    const handleUpdateGiveaway = () => {
-        if (!editingGiveaway) return;
-        const updated = giveaways.map(g => g.id === editingGiveaway.id ? editingGiveaway : g);
-        saveGiveaways(updated);
-        setIsConfigDialogOpen(false);
-        setEditingGiveaway(null);
-        toast({ title: "Giveaway updated successfully" });
+    const handleDeleteGiveaway = async (id: string) => {
+        if (!firestore) return;
+        try {
+            await deleteDoc(doc(firestore, 'royal_pass', id));
+            toast({ title: "Giveaway deleted" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error deleting giveaway" });
+        }
     };
 
-    const handleDeleteGiveaway = (id: string) => {
-        const updated = giveaways.filter(g => g.id !== id);
-        saveGiveaways(updated);
-        toast({ title: "Giveaway deleted" });
+    const handleToggleStatus = async (id: string, status: boolean) => {
+        if (!firestore) return;
+        try {
+            await updateDoc(doc(firestore, 'royal_pass', id), { isActive: status });
+            toast({ title: status ? "Giveaway Activated" : "Giveaway Deactivated" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error toggling status" });
+        }
     };
 
-    const handleToggleStatus = (id: string, status: boolean) => {
-        const updated = giveaways.map(g => g.id === id ? { ...g, isActive: status } : g);
-        saveGiveaways(updated);
-        toast({ title: status ? "Giveaway Activated" : "Giveaway Deactivated" });
-    };
-
-    const dailyEntries = allTransactions.filter(tx => 
+    const dailyEntries = (allTransactions || []).filter(tx => 
         tx.description.startsWith(`Joined Lucky Draw:`) && 
         tx.status === 'completed'
     );
@@ -181,6 +184,7 @@ export default function AdminRoyalPassPage() {
     });
 
     const handleDeleteEntry = (transactionId: string) => {
+        // Keep this as it affects the transactions managed by useUser/localStorage for now
         const localAllTransactions = JSON.parse(localStorage.getItem('allTransactions') || '[]').map((t: any) => ({...t, createdAt: new Date(t.createdAt)}));
         const updatedTransactions = localAllTransactions.filter((tx: any) => tx.id !== transactionId);
         localStorage.setItem('allTransactions', JSON.stringify(updatedTransactions));
@@ -189,7 +193,8 @@ export default function AdminRoyalPassPage() {
         reload();
     };
 
-    const handlePickWinner = (giveaway: Giveaway, manualWinnerId?: string) => {
+    const handlePickWinner = async (giveaway: Giveaway, manualWinnerId?: string) => {
+        if (!firestore) return;
         const poolEntries = dailyEntries.filter(tx => tx.description === `Joined Lucky Draw: ${giveaway.jackpotName}`);
         
         if (poolEntries.length === 0) {
@@ -213,6 +218,7 @@ export default function AdminRoyalPassPage() {
 
         if (!winner || !winningTx) return;
 
+        // Update user balance in localStorage (as per current app structure)
         const localAllUsers = JSON.parse(localStorage.getItem('allUsers') || '[]');
         const userIndex = localAllUsers.findIndex((u: any) => u.id === winner.id);
         if (userIndex !== -1) {
@@ -238,17 +244,20 @@ export default function AdminRoyalPassPage() {
         
         localStorage.setItem('allTransactions', JSON.stringify([prizeTx, ...remainingTransactions]));
 
-        const newWinnerRecord = {
-            id: `hall-${Date.now()}`,
-            name: winner.username,
-            amount: giveaway.jackpotAmount,
-            date: format(new Date(), "MMM d"),
-            jackpot: giveaway.jackpotName,
-            reel: winningTx.paymentDetails?.reelUrl
-        };
-        const updatedWinners = [newWinnerRecord, ...recentWinners];
-        setRecentWinners(updatedWinners);
-        localStorage.setItem('luckyDrawWinners', JSON.stringify(updatedWinners));
+        // Add Winner record to Firestore
+        try {
+            await addDoc(collection(firestore, 'royal_pass'), {
+                docType: 'winner',
+                name: winner.username,
+                amount: giveaway.jackpotAmount,
+                date: format(new Date(), "MMM d"),
+                jackpot: giveaway.jackpotName,
+                reel: winningTx.paymentDetails?.reelUrl || null,
+                createdAt: Timestamp.now()
+            });
+        } catch (e) {
+            console.error("Error saving winner to Firestore:", e);
+        }
 
         addNotification({
             userId: winner.id,
@@ -266,11 +275,15 @@ export default function AdminRoyalPassPage() {
         reload();
     };
 
-    const handleDeleteWinner = (winnerId: string) => {
-        const updatedWinners = recentWinners.filter(w => w.id !== winnerId);
-        setRecentWinners(updatedWinners);
-        localStorage.setItem('luckyDrawWinners', JSON.stringify(updatedWinners));
-        toast({ title: "Winner removed from Hall of Fame" });
+    const handleDeleteWinner = async (winnerId: string) => {
+        if (!firestore) return;
+        try {
+            await deleteDoc(doc(firestore, 'royal_pass', winnerId));
+            toast({ title: "Winner removed from Hall of Fame" });
+        } catch (e) {
+            console.error(e);
+            toast({ variant: 'destructive', title: "Error deleting winner" });
+        }
     };
 
     const getUserById = (userId: string) => allUsers.find(u => u.id === userId);
