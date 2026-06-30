@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback, useMemo } from 'react';
@@ -133,17 +134,21 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!firestore) return 'error';
     
     let newUserBonus = 0;
-    let referredBy: string = ""; // Default to empty string instead of undefined
+    let referredBy: string = ""; // Standardize empty state to avoid 'undefined'
     
     if (referralCode && referralSettings) {
         // Try finding the referrer by code
-        const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where('referralCode', '==', referralCode));
-        const snap = await getDocs(q);
-        if (!snap.empty) {
-            const referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
-            referredBy = referrer.id;
-            newUserBonus = referralSettings.newUserBonus;
+        try {
+            const usersRef = collection(firestore, 'users');
+            const q = query(usersRef, where('referralCode', '==', referralCode));
+            const snap = await getDocs(q);
+            if (!snap.empty) {
+                const referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
+                referredBy = referrer.id;
+                newUserBonus = referralSettings.newUserBonus;
+            }
+        } catch (e) {
+            console.error("Referral lookup failed:", e);
         }
     }
 
@@ -155,6 +160,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         return 'error';
     }
 
+    // SANITIZE DATA: Ensure no fields are 'undefined' before calling Firestore
     const newUser: any = {
         id: newUserId,
         username: userDetails.username || "Player",
@@ -168,20 +174,20 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         referralBalance: 0,
         avatarUrl: userDetails.avatarUrl || `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
-        createdAt: new Date(),
+        createdAt: Timestamp.now(),
         referredBy: referredBy,
         emailVerified: !!emailVerified,
         mobileVerified: !!mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
           [userDetails.primaryGame]: {
-            inGameUsername: userDetails.inGameUsername,
-            inGameId: userDetails.inGameId,
+            inGameUsername: userDetails.inGameUsername || "",
+            inGameId: userDetails.inGameId || "",
           }
         } : (userDetails.gameProfiles || {}),
     };
 
     try {
-        // Use setDoc to create or fully overwrite the document with sanitized data
+        // Use setDoc to atomically create or overwrite the user profile
         await setDoc(doc(firestore, 'users', newUserId), newUser);
         
         if (newUserBonus > 0) {

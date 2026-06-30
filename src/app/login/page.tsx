@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -140,7 +141,7 @@ export default function LoginPage() {
           description: 'Your account has been blocked. Please contact support.',
         });
       } else {
-        // Doc might be missing even if Auth exists
+        // User document might be missing
         await signOut(auth);
         toast({
           variant: 'destructive',
@@ -171,16 +172,6 @@ export default function LoginPage() {
         return;
     }
 
-    // Uniqueness checks
-    if (signupForm.username && allUsers.some(u => u.username.toLowerCase() === signupForm.username.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Username Taken', description: 'This username is already in use.' });
-        return;
-    }
-    if (signupForm.email && allUsers.some(u => u.email.toLowerCase() === signupForm.email.toLowerCase())) {
-        toast({ variant: 'destructive', title: 'Email Taken', description: 'This email address is already in use.' });
-        return;
-    }
-    
     setIsSigningUp(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, signupForm.email, signupForm.password);
@@ -195,28 +186,29 @@ export default function LoginPage() {
           inGameId: signupForm.inGameId,
       };
       
+      // Await the signup function to ensure Firestore doc is created before proceeding
       const result = await signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
 
       if (result === 'success') {
         toast({
           title: 'Account Created',
-          description: 'Your account has been successfully created. Redirecting...',
+          description: 'Your account has been successfully created.',
         });
       } else {
+        // Rollback Auth if Firestore creation fails
+        await signOut(auth);
         toast({
           variant: 'destructive',
           title: 'Signup Error',
-          description: 'Could not create your profile in the database. Please try again.',
+          description: 'Could not create your profile. Please try again.',
         });
       }
     } catch (error: any) {
       let description = 'An error occurred during sign up.';
       if (error.code === 'auth/email-already-in-use') {
-        description = 'This email address is already in use by another account.';
+        description = 'This email address is already in use.';
       } else if (error.code === 'auth/weak-password') {
-        description = 'The password is too weak. It must be at least 6 characters long.';
-      } else if (error.code === 'auth/invalid-email') {
-        description = 'The email address is invalid.';
+        description = 'The password is too weak.';
       }
       toast({
         variant: 'destructive',
@@ -238,7 +230,7 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
-      // Check if user document already exists in Firestore
+      // Ensure the Firestore user document exists
       const docRef = doc(firestore, 'users', googleUser.uid);
       const docSnap = await getDoc(docRef);
 
@@ -251,7 +243,7 @@ export default function LoginPage() {
         }
         toast({ title: 'Welcome back!', description: `Logged in as ${existingUser.username}` });
       } else {
-        // New user from Google
+        // Create profile for new Google user
         const newUserDetails = {
             uid: googleUser.uid,
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
@@ -263,7 +255,7 @@ export default function LoginPage() {
 
         const signupResult = await signup(
           newUserDetails, 
-          "", // No password for Google users
+          "", // No password for Google
           true, 
           false, 
           appliedRefCode
@@ -273,7 +265,7 @@ export default function LoginPage() {
           toast({ title: 'Welcome!', description: 'Your account has been created via Google.' });
         } else {
             await signOut(auth);
-            toast({ variant: 'destructive', title: 'Sign Up Failed', description: 'Could not create profile.' });
+            toast({ variant: 'destructive', title: 'Sign Up Failed', description: 'Could not create database profile.' });
         }
       }
     } catch (error: any) {
