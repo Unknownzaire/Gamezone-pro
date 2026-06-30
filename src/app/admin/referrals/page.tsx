@@ -1,18 +1,19 @@
-
 'use client';
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers as initialUsers, mockTransactions as initialTransactions, mockTournaments } from "@/lib/mock-data";
 import { ArrowLeft, RefreshCw, Search, Settings, MoreHorizontal } from "lucide-react";
-import { useEffect, useState, useCallback } from "react";
-import { User, Transaction, Tournament } from "@/lib/types";
+import { useEffect, useState, useMemo } from "react";
+import { User, Transaction } from "@/lib/types";
 import Link from "next/link";
-import { format } from "date-fns";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { collection, onSnapshot, query, collectionGroup, Timestamp } from 'firebase/firestore';
 
 interface ReferrerStats {
   user: User;
@@ -21,74 +22,69 @@ interface ReferrerStats {
 }
 
 export default function AdminReferralsPage() {
+  const { firestore } = useFirebase();
   const [users, setUsers] = useState<User[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [tournaments, setTournaments] = useState<Tournament[]>([]);
-  const [referrerStats, setReferrerStats] = useState<ReferrerStats[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  
-  const loadData = useCallback(() => {
-    let allUsers: User[] = [];
-    let allTransactions: Transaction[] = [];
-    let allTournaments: Tournament[] = [];
-
-    try {
-        const storedUsers = localStorage.getItem('allUsers');
-        allUsers = storedUsers ? JSON.parse(storedUsers).map((u: any) => ({...u, createdAt: u.createdAt ? new Date(u.createdAt) : new Date() })) : initialUsers;
-
-        const storedTransactions = localStorage.getItem('allTransactions');
-        allTransactions = storedTransactions ? JSON.parse(storedTransactions).map((t: any) => ({...t, createdAt: new Date(t.createdAt) })) : initialTransactions;
-        
-        const storedTournaments = localStorage.getItem('allTournaments');
-        allTournaments = storedTournaments ? JSON.parse(storedTournaments).map((t: any) => ({...t, matchTime: new Date(t.matchTime) })) : mockTournaments;
-
-    } catch (e) {
-        console.error("Failed to load data from localStorage", e);
-    }
-    
-    setUsers(allUsers);
-    setTransactions(allTransactions);
-    setTournaments(allTournaments);
-
-    const stats: ReferrerStats[] = allUsers.map(user => {
-        const referredUsers = allUsers.filter(u => u.referredBy === user.id);
-        const totalReferrals = referredUsers.length;
-        
-        const totalEarnings = allTransactions
-            .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.description.startsWith('Referral bonus for'))
-            .reduce((acc, tx) => acc + tx.amount, 0);
-
-        return { user, totalReferrals, totalEarnings };
-    });
-
-    const sortedStats = stats.sort((a,b) => b.totalReferrals - a.totalReferrals);
-    setReferrerStats(sortedStats);
-
-  }, []);
 
   useEffect(() => {
-    loadData();
+    if (!firestore) return;
 
-    const handleStorageChange = (event: StorageEvent) => {
-        if (event.key === 'allUsers' || event.key === 'allTransactions') {
-            loadData();
-        }
-    };
+    // Listen for all users in real-time
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        } as User;
+      });
+      setUsers(usersData);
+    });
 
-    window.addEventListener('storage', handleStorageChange);
-    window.addEventListener('focus', loadData);
+    // Listen for referral bonus transactions using collectionGroup
+    const unsubTransactions = onSnapshot(query(collectionGroup(firestore, 'transactions')), (snapshot) => {
+      const transactionsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date())
+        } as Transaction;
+      });
+      setTransactions(transactionsData);
+    });
 
     return () => {
-        window.removeEventListener('storage', handleStorageChange);
-        window.removeEventListener('focus', loadData);
+      unsubUsers();
+      unsubTransactions();
     };
-  }, [loadData]);
+  }, [firestore]);
+
+  // Calculate referrer statistics reactively
+  const referrerStats = useMemo(() => {
+    return users.map(user => {
+      const referredUsers = users.filter(u => u.referredBy === user.id);
+      const totalReferrals = referredUsers.length;
+      
+      const totalEarnings = transactions
+        .filter(tx => tx.userId === user.id && tx.type === 'credit' && tx.description.toLowerCase().includes('referral bonus'))
+        .reduce((acc, tx) => acc + tx.amount, 0);
+
+      return { user, totalReferrals, totalEarnings };
+    }).sort((a, b) => b.totalReferrals - a.totalReferrals);
+  }, [users, transactions]);
   
   const filteredReferrerStats = referrerStats.filter(stat => 
     stat.user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
     stat.user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (stat.user.bgmiUsername && stat.user.bgmiUsername.toLowerCase().includes(searchTerm.toLowerCase()))
+    (stat.user.primaryGame && stat.user.gameProfiles?.[stat.user.primaryGame]?.inGameUsername?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const handleRefresh = () => {
+    // onSnapshot handles real-time updates automatically.
+  };
 
   return (
     <div className="space-y-6">
@@ -106,7 +102,7 @@ export default function AdminReferralsPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => loadData()}>
+            <Button variant="outline" size="icon" onClick={handleRefresh}>
                 <RefreshCw className="h-4 w-4" />
                 <span className="sr-only">Refresh referrals</span>
             </Button>
