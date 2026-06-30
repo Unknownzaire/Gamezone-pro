@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { mockUsers } from "@/lib/mock-data";
 import { SupportTicket, User, SupportTicketMessage } from "@/lib/types";
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -15,111 +14,130 @@ import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 
+// FIREBASE IMPORTS
+import { useFirebase } from '@/firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  doc, 
+  updateDoc, 
+  deleteDoc, 
+  query, 
+  orderBy, 
+  Timestamp,
+  arrayUnion 
+} from 'firebase/firestore';
+
 export default function AdminSupportPage() {
+  const { firestore } = useFirebase();
   const [tickets, setTickets] = useState<SupportTicket[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [replyMessage, setReplyMessage] = useState('');
-  const [activeTicket, setActiveTicket] = useState<SupportTicket | null>(null);
+  const [activeTicketId, setActiveTicketId] = useState<string | null>(null);
   const [ticketToDelete, setTicketToDelete] = useState<SupportTicket | null>(null);
   const { toast } = useToast();
 
-  const loadData = useCallback(() => {
-    try {
-      const storedUsers = localStorage.getItem('allUsers');
-      setUsers(storedUsers ? JSON.parse(storedUsers) : mockUsers);
+  useEffect(() => {
+    if (!firestore) return;
+
+    // Listen for users
+    const unsubUsers = onSnapshot(collection(firestore, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as User[];
+      setUsers(usersData);
+    });
+
+    // Listen for support tickets
+    const q = query(collection(firestore, 'support'), orderBy('createdAt', 'desc'));
+    const unsubTickets = onSnapshot(q, (snapshot) => {
+      const ticketsData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate() : (data.createdAt ? new Date(data.createdAt) : new Date()),
+          messages: (data.messages || []).map((m: any) => ({
+            ...m,
+            createdAt: m.createdAt instanceof Timestamp ? m.createdAt.toDate() : (m.createdAt ? new Date(m.createdAt) : new Date())
+          }))
+        };
+      }) as SupportTicket[];
       
-      const storedTickets = localStorage.getItem('supportTickets');
-      const allTickets: SupportTicket[] = storedTickets 
-        ? JSON.parse(storedTickets).map((t: any) => ({
-            ...t, 
-            createdAt: new Date(t.createdAt), 
-            messages: t.messages ? t.messages.map((m:any) => ({...m, createdAt: new Date(m.createdAt)})) : []
-          })) 
-        : [];
-      
-      setTickets(allTickets.sort((a,b) => {
+      setTickets(ticketsData.sort((a,b) => {
         if (a.status === 'open' && b.status !== 'open') return -1;
         if (a.status !== 'open' && b.status === 'open') return 1;
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        return b.createdAt.getTime() - a.createdAt.getTime();
       }));
+    });
 
-    } catch (e) {
-      console.error("Failed to load data from localStorage", e);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadData();
-    window.addEventListener('storage', loadData);
-    window.addEventListener('focus', loadData);
     return () => {
-      window.removeEventListener('storage', loadData);
-      window.removeEventListener('focus', loadData);
+      unsubUsers();
+      unsubTickets();
     };
-  }, [loadData]);
+  }, [firestore]);
 
   const handleRefresh = () => {
-    loadData();
-    toast({ title: 'Support tickets reloaded' });
+    toast({ title: 'Support tickets synced', description: 'Data is being updated in real-time.' });
   };
   
-  const handleToggleStatus = (ticketId: string) => {
-    const updatedTickets = tickets.map(t => {
-      if (t.id === ticketId) {
-        return { ...t, status: t.status === 'open' ? 'closed' : 'open' };
-      }
-      return t;
-    });
-    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    loadData();
-    toast({ title: 'Ticket status updated' });
+  const handleToggleStatus = async (ticket: SupportTicket) => {
+    if (!firestore) return;
+    try {
+      const ticketRef = doc(firestore, 'support', ticket.id);
+      await updateDoc(ticketRef, { 
+        status: ticket.status === 'open' ? 'closed' : 'open' 
+      });
+      toast({ title: 'Ticket status updated' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to update status.' });
+    }
   };
 
-  const handleSendReply = () => {
-    if (!activeTicket || !replyMessage.trim()) return;
+  const handleSendReply = async () => {
+    if (!activeTicketId || !replyMessage.trim() || !firestore) return;
 
-    const newMessage: SupportTicketMessage = {
+    const newMessage = {
       sender: 'admin',
       text: replyMessage,
-      createdAt: new Date(),
+      createdAt: Timestamp.now(),
     };
 
-    const updatedTickets = tickets.map(t => {
-      if (t.id === activeTicket.id) {
-        return { 
-          ...t, 
-          messages: [...t.messages, newMessage],
-          status: 'closed' as const
-        };
-      }
-      return t;
-    });
-    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    loadData();
-    
-    toast({ title: 'Reply Sent', description: 'The user has been notified.' });
-    setReplyMessage('');
-    // Keep dialog open to see new message
-    const updatedActiveTicket = updatedTickets.find(t => t.id === activeTicket.id);
-    setActiveTicket(updatedActiveTicket || null);
+    try {
+      const ticketRef = doc(firestore, 'support', activeTicketId);
+      await updateDoc(ticketRef, {
+        messages: arrayUnion(newMessage),
+        status: 'closed'
+      });
+      
+      toast({ title: 'Reply Sent', description: 'The user has been notified.' });
+      setReplyMessage('');
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to send reply.' });
+    }
   };
 
-  const handleDeleteTicket = () => {
-    if (!ticketToDelete) return;
-    const updatedTickets = tickets.filter(t => t.id !== ticketToDelete.id);
-    localStorage.setItem('supportTickets', JSON.stringify(updatedTickets));
-    loadData();
-    toast({ title: 'Ticket Deleted', description: 'The support ticket has been permanently removed.' });
+  const handleDeleteTicket = async () => {
+    if (!ticketToDelete || !firestore) return;
+    try {
+      await deleteDoc(doc(firestore, 'support', ticketToDelete.id));
+      toast({ title: 'Ticket Deleted', description: 'The support ticket has been permanently removed.' });
+    } catch (e) {
+      console.error(e);
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to delete ticket.' });
+    }
     setTicketToDelete(null);
   };
 
-
   const getUserForTicket = (userId: string) => users.find(u => u.id === userId);
+  const activeTicket = tickets.find(t => t.id === activeTicketId);
 
   return (
     <div className="space-y-6">
@@ -181,9 +199,9 @@ export default function AdminSupportPage() {
                 const lastMessage = ticket.messages[ticket.messages.length - 1];
                 return (
                  <Dialog key={ticket.id} onOpenChange={(isOpen) => {
-                   if (isOpen) setActiveTicket(ticket);
+                   if (isOpen) setActiveTicketId(ticket.id);
                    else {
-                    setActiveTicket(null);
+                    setActiveTicketId(null);
                     setReplyMessage('');
                    }
                  }}>
@@ -230,7 +248,7 @@ export default function AdminSupportPage() {
                              <DialogTrigger asChild>
                                 <DropdownMenuItem>View/Reply</DropdownMenuItem>
                             </DialogTrigger>
-                            <DropdownMenuItem onClick={() => handleToggleStatus(ticket.id)}>
+                            <DropdownMenuItem onClick={() => handleToggleStatus(ticket)}>
                                 {ticket.status === 'open' ? 'Mark as Closed' : 'Re-open Ticket'}
                             </DropdownMenuItem>
                             {user && (
@@ -260,7 +278,7 @@ export default function AdminSupportPage() {
                          <div className="flex flex-col h-[60vh]">
                             <ScrollArea className="flex-1 p-4 border rounded-md">
                                 <div className="space-y-4">
-                                {ticket.messages.map((message, index) => (
+                                {(activeTicket || ticket).messages.map((message, index) => (
                                     <div key={index} className={`flex items-end gap-2 ${message.sender === 'admin' ? 'justify-end' : ''}`}>
                                     {message.sender === 'user' && user && (
                                         <Avatar className="h-8 w-8 self-start">
@@ -273,12 +291,12 @@ export default function AdminSupportPage() {
                                           <Dialog>
                                             <DialogTrigger asChild>
                                               <div className="relative h-32 w-48 mb-2 rounded-md overflow-hidden cursor-pointer">
-                                                <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="cover" />
+                                                <Image src={message.imageUrl} alt="Attached image" fill className="object-cover" />
                                               </div>
                                             </DialogTrigger>
                                             <DialogContent className="max-w-3xl p-2">
                                               <div className="relative aspect-video">
-                                                <Image src={message.imageUrl} alt="Attached image" layout="fill" objectFit="contain" />
+                                                <Image src={message.imageUrl} alt="Attached image" fill className="object-contain" />
                                               </div>
                                             </DialogContent>
                                           </Dialog>
