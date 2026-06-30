@@ -272,6 +272,7 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
+      // Check if user document already exists in Firestore
       const docRef = doc(firestore, 'users', googleUser.uid);
       const docSnap = await getDoc(docRef);
 
@@ -286,40 +287,52 @@ export default function LoginPage() {
           });
           return;
         }
-        // Redirect handled by useEffect
+        // User exists, login will proceed via useEffect watching 'user' state
+        toast({ title: 'Welcome back!', description: `Logged in as ${existingUser.username}` });
       } else {
-        // New user: auto-signup and login
-        const randomPassword = Math.random().toString(36).slice(-8);
+        // New user from Google: create a matching Firestore document
         const newUserDetails = {
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
             email: googleUser.email!,
             googleId: googleUser.uid,
+            avatarUrl: googleUser.photoURL || undefined,
         };
 
-        const signupResult = await signup(newUserDetails, randomPassword, true, false);
+        // Determine if there is a referral code to apply
+        const appliedRefCode = signupForm.referralCode || referralCodeFromUrl || undefined;
+
+        const signupResult = await signup(
+          newUserDetails, 
+          undefined, // No password for Google users
+          true, 
+          false, 
+          appliedRefCode
+        );
 
         if (signupResult === 'success') {
           toast({
             title: 'Welcome!',
-            description: 'Your account has been created.',
+            description: 'Your account has been created via Google.',
           });
-          // Redirect handled by useEffect
         } else {
+            // Roll back the authentication if profile creation fails
             await signOut(auth);
             toast({
                 variant: 'destructive',
                 title: 'Sign Up Failed',
-                description: 'Could not create your account profile. Please try again.',
+                description: 'Could not create your account profile in the database. Please try again.',
             });
         }
       }
-    } catch (error) {
-      console.error("Google Sign-In Error: ", error);
-      toast({
-        variant: 'destructive',
-        title: 'Google Sign-In Failed',
-        description: 'Could not sign in with Google. Please try again.',
-      });
+    } catch (error: any) {
+      if (error.code !== 'auth/popup-closed-by-user') {
+          console.error("Google Sign-In Error: ", error);
+          toast({
+            variant: 'destructive',
+            title: 'Google Sign-In Failed',
+            description: error.message || 'Could not sign in with Google. Please try again.',
+          });
+      }
     }
   };
 

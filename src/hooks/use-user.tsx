@@ -48,7 +48,7 @@ interface UserContextType {
   joinTournament: (tournamentId: string, usersToJoin: User[]) => Promise<JoinTournamentResult | JoinTournamentFailure>;
   joinTeam: (teamName: string) => Promise<'success' | 'already_in_team' | 'team_full' | 'error'>;
   login: (email: string) => Promise<boolean | 'blocked'>;
-  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => Promise<"success" | "error">;
+  signup: (userDetails: Omit<User, 'id' | 'walletBalance' | 'avatarUrl' | 'isBlocked' | 'createdAt' | 'password' | 'referralBalance' | 'youtubeUrl' | 'instagramUrl' | 'discordUrl' | 'emailVerified' | 'mobileVerified' | 'teamJoinedAt' | 'gameProfiles'> & {inGameUsername?: string, inGameId?: string, avatarUrl?: string}, password: string | undefined, emailVerified: boolean, mobileVerified: boolean, referralCode?: string) => Promise<"success" | "error">;
   logout: () => void;
   reload: () => void;
   toast: ReturnType<typeof useToast>['toast'];
@@ -126,15 +126,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         console.error("Login verification error:", e);
       }
     }
-
-    // Fallback: check allUsersData if document fetch fails or is pending
-    if (allUsersData) {
-      const userToLogin = allUsersData.find(u => u.email.toLowerCase() === email.toLowerCase());
-      if (userToLogin) {
-        if (userToLogin.isBlocked) return 'blocked';
-        return true;
-      }
-    }
     return false;
   };
 
@@ -144,7 +135,18 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     let newUserBonus = 0;
     let referredBy: string | null = null;
     if (referralCode && referralSettings) {
-        const referrer = allUsersData?.find(u => u.referralCode === referralCode);
+        let referrer = allUsersData?.find(u => u.referralCode === referralCode);
+        
+        // Manual lookup if the real-time list isn't populated yet
+        if (!referrer) {
+           const usersRef = collection(firestore, 'users');
+           const q = query(usersRef, where('referralCode', '==', referralCode));
+           const snap = await getDocs(q);
+           if (!snap.empty) {
+               referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
+           }
+        }
+
         if (referrer) {
             referredBy = referrer.id;
             newUserBonus = referralSettings.newUserBonus;
@@ -165,7 +167,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         password: password || null,
         walletBalance: newUserBonus,
         referralBalance: 0,
-        avatarUrl: `https://picsum.photos/seed/${userDetails.username}/100/100`,
+        avatarUrl: userDetails.avatarUrl || `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: new Date(),
         referredBy: referredBy || null,
