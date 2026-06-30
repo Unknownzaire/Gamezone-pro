@@ -28,11 +28,41 @@ import { Transaction } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Timestamp } from "firebase/firestore";
 
 function TransactionList({ transactions, showStatus = false }: { transactions: Transaction[], showStatus?: boolean }) {
     if (transactions.length === 0) {
         return <p className="text-muted-foreground text-center p-8">No transactions found.</p>;
     }
+    
+    // Safely normalize and format dates from Firestore Timestamps or JS Dates
+    const safeFormat = (date: any) => {
+      if (!date) return "N/A";
+      try {
+        let jsDate: Date;
+        if (date instanceof Timestamp) {
+          jsDate = date.toDate();
+        } else if (date instanceof Date) {
+          jsDate = date;
+        } else if (typeof date?.toDate === 'function') {
+          jsDate = date.toDate();
+        } else if (typeof date === 'string' || typeof date === 'number') {
+          jsDate = new Date(date);
+        } else if (date && typeof date === 'object' && 'seconds' in date) {
+          jsDate = new Date(date.seconds * 1000);
+        } else {
+          return "Invalid date";
+        }
+        
+        if (isNaN(jsDate.getTime())) {
+          return "Invalid date";
+        }
+        
+        return format(jsDate, "PPp");
+      } catch (error) {
+        return "Invalid date";
+      }
+    };
     
     return (
         <div className="space-y-4">
@@ -44,7 +74,7 @@ function TransactionList({ transactions, showStatus = false }: { transactions: T
                         </div>
                         <div className="flex-1">
                             <p className="font-semibold">{tx.description}</p>
-                            <p className="text-sm text-muted-foreground">{format(new Date(tx.createdAt), 'PPp')}</p>
+                            <p className="text-sm text-muted-foreground">{safeFormat(tx.createdAt)}</p>
                         </div>
                         <div className="flex flex-col items-end">
                             <p className={`font-bold ${tx.type === 'credit' ? 'text-green-500' : 'text-red-500'}`}>
