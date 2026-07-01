@@ -7,26 +7,19 @@ import { getFirestore } from 'firebase/firestore';
 
 /**
  * Initializes Firebase if it hasn't been initialized yet.
- * In production, it attempts to use Firebase App Hosting environment variables.
- * In development, it falls back to the provided config object.
+ * Returns the core service instances.
  */
 export function initializeFirebase() {
-  if (!getApps().length) {
-    let firebaseApp;
-    try {
-      // Attempt to initialize via Firebase App Hosting environment variables
-      firebaseApp = initializeApp();
-    } catch (e) {
-      if (process.env.NODE_ENV === "production") {
-        console.warn('Automatic initialization failed. Falling back to firebase config object.', e);
-      }
-      firebaseApp = initializeApp(firebaseConfig);
-    }
-
-    return getSdks(firebaseApp);
+  let app: FirebaseApp;
+  
+  // In Next.js, ensure we don't initialize multiple apps during HMR
+  if (getApps().length === 0) {
+    app = initializeApp(firebaseConfig);
+  } else {
+    app = getApp();
   }
 
-  return getSdks(getApp());
+  return getSdks(app);
 }
 
 /**

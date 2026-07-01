@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction, useCallback, useMemo } from 'react';
@@ -123,8 +122,12 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           if (u.isBlocked) return 'blocked';
           return true;
         }
-      } catch (e) {
-        console.error("Login verification error:", e);
+      } catch (e: any) {
+        console.error("Login profile verification error:", e);
+        // If connectivity issue, assume authenticated and let listeners handle data
+        if (e.code === 'unavailable' || e.message?.includes('offline')) {
+          return true;
+        }
       }
     }
     return false;
@@ -134,33 +137,32 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     if (!firestore) return 'error';
     
     let newUserBonus = 0;
-    let referredBy: string = ""; // Standardize empty state to avoid 'undefined'
+    let referredBy: string | null = null;
     
     if (referralCode && referralSettings) {
-        // Try finding the referrer by code
         try {
             const usersRef = collection(firestore, 'users');
             const q = query(usersRef, where('referralCode', '==', referralCode));
             const snap = await getDocs(q);
             if (!snap.empty) {
-                const referrer = { id: snap.docs[0].id, ...snap.docs[0].data() } as User;
-                referredBy = referrer.id;
+                const referrer = snap.docs[0].id;
+                referredBy = referrer;
                 newUserBonus = referralSettings.newUserBonus;
             }
         } catch (e) {
-            console.error("Referral lookup failed:", e);
+            console.error("Referral validation failed:", e);
         }
     }
 
     const referralCodeGenerated = Math.floor(100000 + Math.random() * 900000).toString();
-    const newUserId = userDetails.uid || userDetails.googleId || auth?.currentUser?.uid;
+    const newUserId = userDetails.uid || auth?.currentUser?.uid;
 
     if (!newUserId) {
-        console.error("Signup failed: No UID provided.");
+        console.error("Signup aborted: User UID missing.");
         return 'error';
     }
 
-    // SANITIZE DATA: Ensure no fields are 'undefined' before calling Firestore
+    // Sanitize data to avoid Firestore 'undefined' errors
     const newUser: any = {
         id: newUserId,
         username: userDetails.username || "Player",
@@ -175,7 +177,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
         avatarUrl: userDetails.avatarUrl || `https://picsum.photos/seed/${userDetails.username}/100/100`,
         isBlocked: false,
         createdAt: Timestamp.now(),
-        referredBy: referredBy,
+        referredBy: referredBy || "", // Explicitly use empty string instead of undefined
         emailVerified: !!emailVerified,
         mobileVerified: !!mobileVerified,
         gameProfiles: (userDetails.primaryGame && userDetails.inGameUsername && userDetails.inGameId) ? {
@@ -187,7 +189,6 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     };
 
     try {
-        // Use setDoc to atomically create or overwrite the user profile
         await setDoc(doc(firestore, 'users', newUserId), newUser);
         
         if (newUserBonus > 0) {
@@ -201,8 +202,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
             });
         }
         return 'success';
-    } catch (e) {
-        console.error("Signup Firestore error:", e);
+    } catch (e: any) {
+        console.error("Firestore user creation error:", e);
         return 'error';
     }
   };

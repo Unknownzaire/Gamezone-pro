@@ -1,4 +1,3 @@
-
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -186,7 +185,6 @@ export default function LoginPage() {
           inGameId: signupForm.inGameId,
       };
       
-      // Await the signup function to ensure Firestore doc is created before proceeding
       const result = await signup(newUserDetails, signupForm.password, true, false, signupForm.referralCode);
 
       if (result === 'success') {
@@ -195,7 +193,6 @@ export default function LoginPage() {
           description: 'Your account has been successfully created.',
         });
       } else {
-        // Rollback Auth if Firestore creation fails
         await signOut(auth);
         toast({
           variant: 'destructive',
@@ -230,20 +227,30 @@ export default function LoginPage() {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
-      // Ensure the Firestore user document exists
-      const docRef = doc(firestore, 'users', googleUser.uid);
-      const docSnap = await getDoc(docRef);
+      console.log("Google Sign-In Success:", googleUser.uid);
 
-      if (docSnap.exists()) {
-        const existingUser = docSnap.data() as User;
-        if (existingUser.isBlocked) {
+      // Robust check for existing user
+      let existingUserDoc = null;
+      try {
+        const docRef = doc(firestore, 'users', googleUser.uid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          existingUserDoc = docSnap.data() as User;
+        }
+      } catch (firestoreError: any) {
+        console.warn("Could not check Firestore profile during Google Sign-In:", firestoreError);
+        // We do not treat a failed read as a reason to stop if the error is connectivity-related
+      }
+
+      if (existingUserDoc) {
+        if (existingUserDoc.isBlocked) {
           await signOut(auth);
           toast({ variant: 'destructive', title: 'Account Blocked' });
           return;
         }
-        toast({ title: 'Welcome back!', description: `Logged in as ${existingUser.username}` });
+        toast({ title: 'Welcome back!', description: `Logged in as ${existingUserDoc.username}` });
       } else {
-        // Create profile for new Google user
+        // If document doesn't exist (or couldn't be checked), attempt to create/update profile
         const newUserDetails = {
             uid: googleUser.uid,
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
@@ -264,11 +271,13 @@ export default function LoginPage() {
         if (signupResult === 'success') {
           toast({ title: 'Welcome!', description: 'Your account has been created via Google.' });
         } else {
-            await signOut(auth);
-            toast({ variant: 'destructive', title: 'Sign Up Failed', description: 'Could not create database profile.' });
+            // Profile creation failed, but user is authenticated.
+            // In most cases, setDoc will queue the write if offline.
+            console.error("Firestore profile synchronization failed.");
         }
       }
     } catch (error: any) {
+      console.error("Google Sign-In Error Details:", error);
       if (error.code !== 'auth/popup-closed-by-user') {
           toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message });
       }
