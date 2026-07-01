@@ -1,3 +1,4 @@
+
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -122,8 +123,8 @@ export default function LoginPage() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!auth) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+    if (isLoggingIn || !auth) {
+        if (!auth) toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
         return;
     }
     setIsLoggingIn(true);
@@ -166,8 +167,8 @@ export default function LoginPage() {
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!auth) {
-        toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
+    if (isSigningUp || !auth) {
+        if (!auth) toast({ variant: 'destructive', title: 'Error', description: 'Authentication service not available.' });
         return;
     }
 
@@ -222,14 +223,19 @@ export default function LoginPage() {
         toast({ variant: 'destructive', title: 'Error', description: 'Services not ready.' });
         return;
     }
+
+    // Prevent multiple simultaneous requests
+    if (isLoggingIn || isSigningUp) return;
+
+    setIsLoggingIn(true);
     const provider = new GoogleAuthProvider();
+    
     try {
       const result = await signInWithPopup(auth, provider);
       const googleUser = result.user;
 
       console.log("Google Sign-In Success:", googleUser.uid);
 
-      // Robust check for existing user
       let existingUserDoc = null;
       try {
         const docRef = doc(firestore, 'users', googleUser.uid);
@@ -239,7 +245,6 @@ export default function LoginPage() {
         }
       } catch (firestoreError: any) {
         console.warn("Could not check Firestore profile during Google Sign-In:", firestoreError);
-        // We do not treat a failed read as a reason to stop if the error is connectivity-related
       }
 
       if (existingUserDoc) {
@@ -250,7 +255,6 @@ export default function LoginPage() {
         }
         toast({ title: 'Welcome back!', description: `Logged in as ${existingUserDoc.username}` });
       } else {
-        // If document doesn't exist (or couldn't be checked), attempt to create/update profile
         const newUserDetails = {
             uid: googleUser.uid,
             username: googleUser.displayName || `user${Math.floor(Math.random()*10000)}`,
@@ -262,7 +266,7 @@ export default function LoginPage() {
 
         const signupResult = await signup(
           newUserDetails, 
-          "", // No password for Google
+          "", 
           true, 
           false, 
           appliedRefCode
@@ -270,17 +274,16 @@ export default function LoginPage() {
 
         if (signupResult === 'success') {
           toast({ title: 'Welcome!', description: 'Your account has been created via Google.' });
-        } else {
-            // Profile creation failed, but user is authenticated.
-            // In most cases, setDoc will queue the write if offline.
-            console.error("Firestore profile synchronization failed.");
         }
       }
     } catch (error: any) {
       console.error("Google Sign-In Error Details:", error);
-      if (error.code !== 'auth/popup-closed-by-user') {
+      // Don't show toast if user cancelled or another request was made
+      if (error.code !== 'auth/popup-closed-by-user' && error.code !== 'auth/cancelled-popup-request') {
           toast({ variant: 'destructive', title: 'Google Sign-In Failed', description: error.message });
       }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -333,7 +336,7 @@ export default function LoginPage() {
                       </Button>
                     </div>
                   </div>
-                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoggingIn}>
+                  <Button type="submit" className="w-full bg-primary text-primary-foreground hover:bg-primary/90" disabled={isLoggingIn || isSigningUp}>
                     {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     {isLoggingIn ? 'Logging in...' : 'Login'}
                   </Button>
@@ -347,9 +350,11 @@ export default function LoginPage() {
                           </span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoggingIn}>
-                        <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
-                        Sign in with Google
+                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isLoggingIn || isSigningUp}>
+                        {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                            <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
+                        )}
+                        {isLoggingIn ? 'Connecting...' : 'Sign in with Google'}
                     </Button>
                 </form>
               </CardContent>
@@ -426,7 +431,7 @@ export default function LoginPage() {
                         <Label htmlFor="signup-referralCode">Referral Code (Optional)</Label>
                         <Input id="signup-referralCode" name="referralCode" placeholder="Enter referral code" onChange={handleSignupChange} value={signupForm.referralCode} ref={referralCodeRef} onKeyDown={(e) => handleKeyDown(e, undefined, true)} />
                     </div>
-                    <Button type="submit" className="w-full" ref={signupButtonRef} disabled={isSigningUp}>
+                    <Button type="submit" className="w-full" ref={signupButtonRef} disabled={isSigningUp || isLoggingIn}>
                       {isSigningUp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                       {isSigningUp ? 'Creating Account...' : 'Sign Up'}
                     </Button>
@@ -440,9 +445,11 @@ export default function LoginPage() {
                           </span>
                       </div>
                     </div>
-                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isSigningUp}>
-                        <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
-                        Sign in with Google
+                    <Button variant="outline" className="w-full" type="button" onClick={handleGoogleSignIn} disabled={isSigningUp || isLoggingIn}>
+                        {isLoggingIn ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : (
+                            <svg className="mr-2 h-4 w-4" aria-hidden="true" focusable="false" data-prefix="fab" data-icon="google" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512"><path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 64.5C308.6 106.5 280.2 96 248 96c-84.3 0-152.3 67.9-152.3 152s68 152 152.3 152c92.1 0 135.2-63.5 140.8-95.3H248v-65.3h239.2c.4 12.3.6 24.6.6 37.1z"></path></svg>
+                        )}
+                        {isLoggingIn ? 'Connecting...' : 'Sign in with Google'}
                     </Button>
                 </form>
               </CardContent>
